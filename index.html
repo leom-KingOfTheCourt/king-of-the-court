@@ -1,0 +1,2353 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>King Of The Court</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#132743; --navy2:#1c3a63; --orange:#ff6a00; --orange2:#ffab4d;
+    --crimson:#e8283f; --bg:#0a0a0e; --card:#151319; --card2:#1c1a22; --border:#2c2933;
+    --text:#f4f2f0; --text-dim:#a29fae; --good:#35d488; --bad:#ff4757; --mid:#ffcc33;
+    --font-display:'Bebas Neue',sans-serif; --font-body:'Rajdhani',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:var(--font-body); font-weight:500; font-size:15px;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0 2px, transparent 2px 46px),
+      radial-gradient(circle at 85% 0%, rgba(232,40,63,.10), transparent 45%),
+      linear-gradient(180deg,var(--bg),#050506 65%);
+    background-attachment:fixed;
+    color:var(--text); padding:24px 16px 80px; position:relative;
+  }
+  body::after{
+    content:''; position:fixed; right:-60px; bottom:-40px; width:340px; height:170px; z-index:0; pointer-events:none;
+    opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 90'%3E%3Cpath d='M0 45 Q35 5 70 42 Q85 15 100 40 Q115 15 130 42 Q165 5 200 45' stroke='white' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-size:contain;
+  }
+  .wrap{max-width:1100px;margin:0 auto; position:relative; z-index:1;}
+  header{
+    display:flex; align-items:center; gap:16px; margin-bottom:26px;
+    background:linear-gradient(100deg, var(--crimson), var(--orange));
+    clip-path:polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 34px) 100%, 0 100%);
+    padding:22px 30px 34px; box-shadow:0 10px 28px rgba(255,90,0,.22); position:relative; overflow:hidden;
+  }
+  header::before{
+    content:''; position:absolute; inset:0;
+    background-image:repeating-linear-gradient(100deg, rgba(255,255,255,.10) 0 3px, transparent 3px 22px);
+    mix-blend-mode:overlay; pointer-events:none;
+  }
+  header .ball{
+    margin-left:auto; flex-shrink:0; font-size:44px; line-height:1;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.35)); position:relative;
+  }
+  header h1{
+    font-family:var(--font-display); font-size:32px; letter-spacing:.04em; margin:0; color:#100603;
+    text-shadow:1px 1px 0 rgba(255,255,255,.2); position:relative;
+  }
+  header h1 .crow{font-size:1em; margin:0 10px; text-shadow:none; vertical-align:middle; display:inline-block;}
+  header p{margin:4px 0 0; color:#2a0f00; font-weight:700; font-size:13px; position:relative;}
+  nav{display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap;}
+  nav button{
+    font-family:var(--font-display); letter-spacing:.05em; font-size:15px;
+    background:var(--card); color:var(--text-dim); border:2px solid var(--border); padding:10px 22px 10px 18px;
+    cursor:pointer; clip-path:polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    transition:transform .12s ease;
+  }
+  nav button:hover{ transform:translateY(-1px); }
+  nav button.active{
+    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border-color:var(--orange);
+    box-shadow:0 4px 14px rgba(255,90,0,.35);
+  }
+  section{display:none;}
+  section.active{display:block;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-left:4px solid var(--orange);
+    border-radius:8px; padding:18px 20px; margin-bottom:16px; position:relative; overflow:hidden;
+  }
+  .card::after{
+    content:''; position:absolute; top:-22px; right:-22px; width:100px; height:100px; pointer-events:none;
+    background-image:radial-gradient(rgba(255,106,0,.14) 2px, transparent 2px); background-size:11px 11px;
+  }
+  .card h2{margin:0 0 4px; font-size:21px; font-family:var(--font-display); letter-spacing:.03em; font-weight:400;}
+  .card .sub{color:var(--text-dim); font-size:12.5px; margin-bottom:14px;}
+  label{display:block; font-size:12px; color:var(--text-dim); margin-bottom:4px; font-weight:700; letter-spacing:.02em; text-transform:uppercase;}
+  input[type=text], input[type=date], input[type=number], select, textarea{
+    width:100%; background:var(--card2); border:1px solid var(--border); color:var(--text);
+    padding:9px 10px; border-radius:6px; font-size:14.5px; font-family:var(--font-body); font-weight:600;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--orange); }
+  textarea{resize:vertical; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; font-weight:400;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+  .row > div{flex:1; min-width:130px;}
+  button.primary{
+    font-family:var(--font-display); letter-spacing:.04em; font-size:15px;
+    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border:none;
+    padding:10px 24px 10px 20px; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+    box-shadow:0 4px 14px rgba(255,90,0,.3);
+  }
+  button.secondary{
+    font-family:var(--font-display); letter-spacing:.04em; font-size:14px;
+    background:transparent; color:var(--text); border:2px solid var(--border);
+    padding:9px 20px 9px 16px; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+  }
+  button.danger{ color:var(--bad); border-color:rgba(255,71,87,.4); }
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;}
+  th,td{text-align:left; padding:7px 8px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  th{color:var(--orange2); font-family:var(--font-display); font-weight:400; font-size:13px; letter-spacing:.05em; text-transform:uppercase;}
+  tr:hover td{background:rgba(255,106,0,.04);}
+  .quality-3{color:var(--good); font-weight:700;}
+  .quality-2{color:var(--mid); font-weight:700;}
+  .quality-1{color:#ffa155; font-weight:700;}
+  .quality-0{color:var(--bad); font-weight:700;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; background:var(--card2); border:1px solid var(--border);}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;}
+  .stat-box{background:var(--card2); border:1px solid var(--border); border-top:3px solid var(--orange); border-radius:6px; padding:14px;}
+  .stat-box .val{
+    font-family:var(--font-display); font-size:32px; letter-spacing:.02em; line-height:1.1;
+    background:linear-gradient(100deg, var(--orange), var(--crimson));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .stat-box .lbl{font-size:11.5px; color:var(--text-dim); margin-top:3px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+  .chart-box{position:relative; height:280px; margin-top:8px;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.two-col{grid-template-columns:1fr;}}
+  .del-btn{color:var(--bad); background:none; border:none; cursor:pointer; font-size:15px;}
+  .empty{color:var(--text-dim); font-size:13px; padding:20px 0; text-align:center;}
+  .traj-svg{width:100%; height:auto; max-width:680px; display:block; margin:0 auto;}
+  .traj-label{fill:var(--text-dim); font-family:var(--font-body); font-size:11.5px; font-weight:600;}
+  .traj-zone-label{fill:var(--text-dim); font-family:var(--font-display); font-size:13px; letter-spacing:.08em;}
+  .format-box{background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; font-size:12px; color:var(--text-dim); margin-bottom:12px; line-height:1.6;}
+  .format-box code{color:var(--orange2);}
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:linear-gradient(100deg,var(--good),#1fae6c); color:#04331d;
+    padding:10px 22px; font-family:var(--font-display); letter-spacing:.03em; font-size:14px; display:none; z-index:99;
+    clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);
+  }
+  .filter-bar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .filter-bar > div{min-width:150px;}
+  .top-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:8px;}
+  .badge-group{font-size:10.5px; padding:1px 6px; border-radius:5px; margin-left:6px; font-weight:700;}
+  .g-Quick{background:#1a3a5c; color:#7ec4ff;}
+  .g-Fast{background:#4a1f10; color:#ff9d6b;}
+  .g-Slow{background:#153a2a; color:#6bdba3;}
+  .g-Other{background:#333; color:#bbb;}
+  .edit-btn{color:#7ec4ff; background:none; border:none; cursor:pointer; font-size:14px; margin-right:8px;}
+  .backup-banner{
+    display:none; background:#3a1108; border:1px solid var(--crimson); color:#ffb98a; border-radius:8px;
+    padding:10px 16px; margin-bottom:16px; font-size:13px; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .backup-banner.show{display:flex;}
+  .backup-banner button{white-space:nowrap;}
+  .clear-confirm{
+    margin-top:16px; padding:14px 16px; background:#3a1108; border:1px solid var(--crimson); border-radius:8px;
+  }
+  .slide-confirm{
+    position:relative; width:100%; max-width:420px; height:52px; background:var(--card2); border:1px solid var(--border);
+    border-radius:26px; overflow:hidden; user-select:none; touch-action:none;
+  }
+  .slide-confirm-fill{
+    position:absolute; top:0; left:0; height:100%; width:0; background:linear-gradient(100deg, var(--crimson), var(--bad)); pointer-events:none;
+  }
+  .slide-confirm-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
+    letter-spacing:.04em; font-size:14px; color:var(--text-dim); pointer-events:none;
+  }
+  .slide-confirm-handle{
+    position:absolute; top:3px; left:3px; width:46px; height:46px; border-radius:50%; background:linear-gradient(100deg, var(--orange), var(--crimson));
+    display:flex; align-items:center; justify-content:center; font-size:22px; cursor:grab; box-shadow:0 2px 8px rgba(0,0,0,.4); touch-action:none;
+  }
+  .slide-confirm-handle:active{cursor:grabbing;}
+  .slide-confirm.armed .slide-confirm-label{color:#100603; opacity:0;}
+  .editing-banner{
+    display:none; background:#1a3a5c; border:1px solid #2e5c8f; color:#9fd0ff; border-radius:8px;
+    padding:9px 16px; margin-bottom:12px; font-size:13px; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .editing-banner.show{display:flex;}
+  .opt-group{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;}
+  .opt-btn{
+    font-family:var(--font-body); font-weight:700; font-size:13.5px; letter-spacing:.01em;
+    background:var(--card2); color:var(--text-dim); border:2px solid var(--border); border-radius:6px;
+    padding:9px 14px; cursor:pointer; text-align:center; line-height:1.25;
+  }
+  .opt-btn .opt-sub{display:block; font-size:10px; font-weight:600; opacity:.8; text-transform:uppercase; letter-spacing:.03em;}
+  .opt-btn:hover{ border-color:var(--orange2); color:var(--text); }
+  .opt-btn.selected{
+    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border-color:var(--orange);
+    box-shadow:0 3px 10px rgba(255,90,0,.3);
+  }
+  .opt-btn.q0.selected{ background:linear-gradient(100deg,#ff4757,#c81e2e); color:#fff; }
+  .opt-btn.q1.selected{ background:linear-gradient(100deg,#ff9a3d,#e8283f); color:#100603; }
+  .opt-btn.q2.selected{ background:linear-gradient(100deg,#ffcc33,#ff9a3d); color:#100603; }
+  .opt-btn.q3.selected{ background:linear-gradient(100deg,#35d488,#1fae6c); color:#04331d; }
+  .opt-btn.oc-kill.selected{ background:linear-gradient(100deg,#35d488,#1fae6c); color:#04331d; }
+  .opt-btn.oc-error.selected{ background:linear-gradient(100deg,#ff4757,#c81e2e); color:#fff; }
+  .opt-btn.oc-inplay.selected{ background:linear-gradient(100deg,#7ec4ff,#3b8fd6); color:#04182b; }
+  .opt-btn.oc-noattack.selected{ background:linear-gradient(100deg,#8a8a95,#5c5c66); color:#fff; }
+  .opt-btn.pl1.selected{ background:linear-gradient(100deg,#ff4757,#c81e2e); color:#fff; }
+  .opt-btn.pl2.selected{ background:linear-gradient(100deg,#ffcc33,#ff9a3d); color:#100603; }
+  .opt-btn.pl3.selected{ background:linear-gradient(100deg,#35d488,#1fae6c); color:#04331d; }
+  .pass-1{ color:var(--bad); font-weight:700; }
+  .pass-2{ color:var(--mid); font-weight:700; }
+  .pass-3{ color:var(--good); font-weight:700; }
+  .shortcut-hint{ font-size:11.5px; color:var(--text-dim); margin-top:12px; }
+  .shortcut-hint kbd{ background:var(--card2); border:1px solid var(--border); border-radius:4px; padding:1px 6px; font-family:ui-monospace,monospace; font-size:11px; color:var(--orange2); }
+  .batch-mode-note{ font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:none; }
+  .settype-caption{
+    font-family:var(--font-display); letter-spacing:.04em; font-size:13px; color:var(--orange2);
+    margin:10px 0 5px; text-transform:uppercase;
+  }
+  .settype-caption:first-child{ margin-top:0; }
+  .video-link{
+    display:flex; align-items:center; gap:8px; color:var(--text); text-decoration:none; font-weight:600;
+    font-size:13px; background:var(--card2); border:1px solid var(--border); border-radius:6px;
+    padding:8px 12px; margin-bottom:6px;
+  }
+  .video-link:hover{ border-color:var(--orange); color:var(--orange2); }
+  .video-link .play{ color:var(--orange); font-size:12px; }
+  .tip-block{ margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .tip-block:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  .tip-issue{ font-weight:700; margin-bottom:8px; font-size:14px; }
+  .lib-category{ margin-bottom:16px; }
+  .lib-category h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.02em; font-size:16px; margin:0 0 4px; color:var(--orange2); }
+  .diagnose-court{ width:100%; max-width:680px; margin:0 auto; }
+  .diagnose-court-3d{ width:100%; max-width:680px; margin:0 auto; }
+  #diagnose-3d-canvas-wrap{ width:100%; aspect-ratio:680/420; background:#0d1520; border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; }
+  #diagnose-3d-canvas-wrap canvas{ display:block; width:100%; height:100%; }
+  .diag-3d-hint{ font-size:12px; color:var(--text-dim); margin-top:8px; text-align:center; }
+  #diag-setter, #diag-ball{ cursor:grab; touch-action:none; }
+  #diag-setter:active, #diag-ball:active{ cursor:grabbing; }
+  .diag-stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-bottom:14px; }
+  .diag-stat-box{ background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-align:center; }
+  .diag-stat-box .val{ font-family:var(--font-display); font-size:22px; color:var(--orange2); }
+  .diag-stat-box .lbl{ font-size:11px; color:var(--text-dim); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="crow">🐦‍⬛</span>KING OF THE COURT<span class="crow">🐦‍⬛</span></h1>
+      <p>Track every toss. Break down every tempo. Own the court.</p>
+    </div>
+    <div class="ball">🏐</div>
+  </header>
+
+
+  <nav>
+    <button class="active" data-tab="entry">+ Log Sets</button>
+    <button data-tab="import">Bulk Import</button>
+    <button data-tab="data">All Sets</button>
+    <button data-tab="dashboard">Dashboard</button>
+    <button data-tab="diagnose">Diagnose</button>
+    <button data-tab="settings">Export / Backup</button>
+  </nav>
+
+
+  <div class="backup-banner" id="backup-banner">
+    <span id="backup-banner-text"></span>
+    <button class="secondary" id="backup-banner-btn">Export backup now</button>
+  </div>
+
+
+  <!-- ENTRY -->
+  <section id="entry" class="active">
+    <div class="editing-banner" id="editing-banner">
+      <span>Editing an existing set — changes will overwrite it.</span>
+      <button class="secondary" id="cancel-edit-btn">Cancel edit</button>
+    </div>
+    <div class="card" id="voice-card">
+      <h2>Speak a set</h2>
+      <div class="sub">Say it in this order: <b>set type, pass [level], quality [level], outcome</b>. Say "pass" for the pass grade and either "quality" or "the set" for the set grade — the value word can come before or after ("pass perfect" or "perfect pass" both work).</div>
+      <div class="format-box">
+        Example: <i>"Four ball, pass perfect, quality perfect, kill"</i> — or just <i>"Four ball, pass was better, set was clean, kill"</i><br>
+        <b>Pass/Quality words:</b> <code>bad</code>/<code>poor</code>/<code>rough</code>/<code>one</code> = 1, <code>playable</code>/<code>ok</code>/<code>decent</code>/<code>two</code> = 2, <code>perfect</code>/<code>good</code>/<code>better</code>/<code>solid</code>/<code>clean</code>/<code>three</code> = 3 (quality also takes <code>zero</code>/<code>unplayable</code>) — say "not" before any of these to flip it<br>
+        <b>Outcome words:</b> <code>kill</code>, <code>error</code>, <code>in play</code>, <code>no attack</code>
+      </div>
+      <div class="top-actions" style="justify-content:flex-start; align-items:center;">
+        <button class="primary" id="voice-btn">🎤 Speak a set</button>
+      </div>
+      <div class="sub" style="margin-top:6px;">Mic stays on and keeps logging sets — one set is auto-added the moment all 4 fields are heard, then it listens for the next one. Click the button again to stop.</div>
+      <div id="voice-status" class="sub" style="margin-top:10px;">Mic idle. Click "Speak a set" and talk after it says Listening.</div>
+    </div>
+
+
+    <div class="card">
+      <h2 id="entry-title">Log a set</h2>
+      <div class="sub">Add one set at a time. Fields save as you build your history.</div>
+      <div class="row">
+        <div>
+          <label>Date</label>
+          <input type="date" id="f-date">
+        </div>
+        <div>
+          <label>Game / Opponent</label>
+          <input type="text" id="f-opponent" placeholder="e.g. vs Eastside">
+        </div>
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <label>Set type</label>
+        <div id="settype-group"></div>
+      </div>
+
+
+      <div id="f-custom-wrap" style="display:none; margin-top:10px;">
+        <label>Custom set name</label>
+        <input type="text" id="f-custom" placeholder="e.g. Slide">
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <label>Pass level</label>
+        <div class="opt-group" id="passlevel-group">
+          <button type="button" class="opt-btn pl1" data-value="1">1 <span class="opt-sub">Not good</span></button>
+          <button type="button" class="opt-btn pl2" data-value="2">2 <span class="opt-sub">Playable</span></button>
+          <button type="button" class="opt-btn pl3" data-value="3">3 <span class="opt-sub">Perfect</span></button>
+        </div>
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <label>Set quality</label>
+        <div class="opt-group" id="quality-group">
+          <button type="button" class="opt-btn q3" data-value="3">3 <span class="opt-sub">Perfect</span></button>
+          <button type="button" class="opt-btn q2" data-value="2">2 <span class="opt-sub">Hittable</span></button>
+          <button type="button" class="opt-btn q1" data-value="1">1 <span class="opt-sub">Poor</span></button>
+          <button type="button" class="opt-btn q0" data-value="0">0 <span class="opt-sub">Unplayable</span></button>
+        </div>
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <label>Outcome</label>
+        <div class="opt-group" id="outcome-group">
+          <button type="button" class="opt-btn oc-kill" data-value="kill">Kill</button>
+          <button type="button" class="opt-btn oc-error" data-value="error">Error</button>
+          <button type="button" class="opt-btn oc-inplay" data-value="inplay">In play</button>
+          <button type="button" class="opt-btn oc-noattack" data-value="noattack">No attack</button>
+        </div>
+      </div>
+
+
+      <div style="margin-top:14px;">
+        <label>Notes (optional)</label>
+        <input type="text" id="f-notes" placeholder="e.g. tight to net, hitter had to reach">
+      </div>
+      <div class="top-actions">
+        <button class="secondary" id="undo-last-btn" style="display:none;">Undo last set</button>
+        <button class="secondary" id="duplicate-btn">Duplicate last set</button>
+        <button class="primary" id="add-set-btn">Add set</button>
+      </div>
+      <div class="shortcut-hint">
+        Shortcuts (when not typing in a field): <kbd>0</kbd>-<kbd>3</kbd> quality &middot; <kbd>K</kbd>/<kbd>E</kbd>/<kbd>I</kbd>/<kbd>N</kbd> outcome &middot; <kbd>Enter</kbd> to add. Set type stays selected between adds so quick back-to-back sets are faster. Pass level isn't on a shortcut (to avoid clashing with the quality keys) — tap it each time.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Recently added</h2>
+      <div id="recent-table"><div class="empty">No sets logged yet.</div></div>
+    </div>
+  </section>
+
+
+  <!-- IMPORT -->
+  <section id="import">
+    <div class="card">
+      <h2>Bulk import</h2>
+      <div class="sub">Paste stats you already have written down (e.g. from reviewing Balltime clips). One set per line.</div>
+
+
+      <div style="margin-bottom:8px;">
+        <label style="display:inline-flex; align-items:center; gap:6px; font-weight:500; text-transform:none;">
+          <input type="checkbox" id="lines-have-date-opponent" style="width:auto;"> Each line already includes its own Date &amp; Opponent columns
+        </label>
+      </div>
+
+
+      <div class="row" id="batch-defaults-row" style="margin-bottom:12px;">
+        <div>
+          <label>Batch date <span class="batch-mode-note">(applied to every line below)</span></label>
+          <input type="date" id="batch-date">
+        </div>
+        <div>
+          <label>Batch opponent <span class="batch-mode-note">(applied to every line below)</span></label>
+          <input type="text" id="batch-opponent" placeholder="e.g. vs Eastside">
+        </div>
+      </div>
+
+
+      <div class="format-box" id="format-box-short">
+        Simplified format — one line per set, comma or tab separated (no Zone column — it's figured out from the set type):<br>
+        <code>SetType, PassLevel, Quality, Outcome, Notes</code><br><br>
+        <b>SetType:</b> Middle: <code>1</code>, <code>2</code>, <code>back1</code>, <code>push1</code>, <code>31</code>, <code>bic</code> &middot; Left: <code>shoot</code>, <code>4</code>, <code>32</code> &middot; Right: <code>3</code>, <code>5</code>, <code>c</code> — anything else is filed as "Other"<br>
+        <b>PassLevel:</b> <code>1</code>/<code>bad</code>, <code>2</code>/<code>playable</code>, <code>3</code>/<code>perfect</code> — how good the pass you set off of was<br>
+        <b>Quality:</b> <code>0-3</code> — how good your set was<br>
+        <b>Outcome:</b> <code>kill</code>/<code>k</code>, <code>error</code>/<code>e</code>, <code>inplay</code>/<code>ip</code>, <code>noattack</code>/<code>na</code><br><br>
+        Example:<br>
+        <code>4, 3, 3, kill, clean swing</code><br>
+        <code>back1, 1, 2, inplay, bad pass, still ran it</code>
+      </div>
+      <div class="format-box" id="format-box-full" style="display:none;">
+        Full format — one line per set, comma or tab separated (no Zone column — it's figured out from the set type):<br>
+        <code>Date, Opponent, SetType, PassLevel, Quality, Outcome, Notes</code><br><br>
+        Example:<br>
+        <code>2026-08-10, Eastside, 4, 3, 3, kill, clean swing</code><br>
+        <code>2026-08-10, Eastside, back1, 1, 2, inplay, bad pass, still ran it</code>
+      </div>
+
+
+      <textarea id="bulk-text" rows="10" placeholder="Paste your rows here..."></textarea>
+      <div style="margin-top:8px;">
+        <label style="display:inline-flex; align-items:center; gap:6px; font-weight:500; text-transform:none;">
+          <input type="checkbox" id="skip-header" style="width:auto;"> First line is a header row (skip it)
+        </label>
+      </div>
+      <div class="top-actions">
+        <button class="secondary" id="preview-btn">Preview</button>
+        <button class="primary" id="import-btn">Import</button>
+      </div>
+      <div id="import-preview" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+
+  <!-- DATA -->
+  <section id="data">
+    <div class="card">
+      <h2>All logged sets</h2>
+      <div class="filter-bar">
+        <div>
+          <label>Filter by game</label>
+          <select id="filter-game"><option value="">All games</option></select>
+        </div>
+        <div>
+          <label>Filter by zone</label>
+          <select id="filter-zone"><option value="">All zones</option><option value="Left">Left</option><option value="Middle">Middle</option><option value="Right">Right</option></select>
+        </div>
+        <div>
+          <label>Filter by set type</label>
+          <select id="filter-settype"><option value="">All types</option></select>
+        </div>
+        <div>
+          <label>Filter by pass level</label>
+          <select id="filter-passlevel"><option value="">All pass levels</option><option value="1">1 — Not good</option><option value="2">2 — Playable</option><option value="3">3 — Perfect</option></select>
+        </div>
+      </div>
+      <div id="full-table"><div class="empty">No sets logged yet.</div></div>
+    </div>
+  </section>
+
+
+  <!-- DASHBOARD -->
+  <section id="dashboard">
+    <div class="card">
+      <h2>Overview</h2>
+      <div class="stat-grid" id="overview-stats"></div>
+    </div>
+    <div class="card">
+      <h2>Set trajectory map</h2>
+      <div class="sub">Stylized view of every call you run, setting from the right side like you actually do. Arc height = tempo (higher = slower, higher ball — 4/5 ball peak highest, quicks stay flat and close to the setter). Line thickness = how often you run it. Color = average set quality (red → yellow → green). "Other" custom sets aren't shown since their court position isn't tracked.</div>
+      <div id="trajectory-chart"></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h2>Sets by zone</h2>
+        <div class="sub">How your set distribution splits across left / middle / right.</div>
+        <div class="chart-box"><canvas id="chart-zone"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Avg quality by zone</h2>
+        <div class="sub">Which side you're setting most accurately.</div>
+        <div class="chart-box"><canvas id="chart-zone-quality"></canvas></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h2>Sets by tempo</h2>
+        <div class="sub">Volume of each set type you're running.</div>
+        <div class="chart-box"><canvas id="chart-tempo"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Avg quality by tempo</h2>
+        <div class="sub">Consistency within each tempo — tight bars in the same tempo group mean consistent timing/height.</div>
+        <div class="chart-box"><canvas id="chart-tempo-quality"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Zone × Tempo breakdown</h2>
+      <div class="sub">Count of sets, average quality, and hitting % for each zone/tempo combo.</div>
+      <div id="matrix-table"><div class="empty">No sets logged yet.</div></div>
+    </div>
+    <div class="card">
+      <h2>Speed-group consistency</h2>
+      <div class="sub">Sets are grouped by tempo speed (Quick / Fast / Slow). If sets in the same speed group have very different quality scores, that's a sign of inconsistent timing or height within that tempo.</div>
+      <div id="speed-table"><div class="empty">No sets logged yet.</div></div>
+    </div>
+    <div class="card">
+      <h2>In system vs. out of system</h2>
+      <div class="sub">How your set quality and hitting % hold up depending on how good the pass was. A setter who's just as good off a bad pass as a perfect one is the real test.</div>
+      <div id="passlevel-table"><div class="empty">No sets logged yet.</div></div>
+    </div>
+    <div class="card">
+      <h2>Coaching tips</h2>
+      <div class="sub">Rule-based suggestions from your own numbers, matched to a hand-picked set of coach/pro setting videos — not a live search, so treat it as a starting point rather than a personalized breakdown.</div>
+      <div id="coaching-tips"></div>
+    </div>
+    <div class="card">
+      <h2>Browse by topic</h2>
+      <div class="sub">Same video library, organized by topic in case you want to browse instead of waiting for a suggestion.</div>
+      <div id="coaching-library"></div>
+    </div>
+  </section>
+
+
+  <!-- DIAGNOSE -->
+  <section id="diagnose">
+    <div class="card">
+      <h2>Diagnose your sets</h2>
+      <div class="sub">Drag the setter along the net (2D), or walk them around the court yourself (3D — arrow keys / WASD once you click the court). Tap a set type below to send them there and see the target. The arc is colored by that type's real average quality — gray/dashed means you haven't logged any yet. The panel underneath breaks down what's actually happening with your numbers.</div>
+      <div class="top-actions" style="justify-content:flex-start; margin-bottom:12px;">
+        <button class="primary" id="diag-view-2d-btn">2D</button>
+        <button class="secondary" id="diag-view-3d-btn">3D — walk the court</button>
+      </div>
+      <div class="diagnose-court" id="diagnose-court">
+        <svg viewBox="0 0 680 405" id="diagnose-svg" class="traj-svg"></svg>
+      </div>
+      <div class="diagnose-court-3d" id="diagnose-court-3d" style="display:none;">
+        <div id="diagnose-3d-canvas-wrap"></div>
+        <div class="diag-3d-hint">Click the court, then use arrow keys or WASD: left/right moves along the net, up/down steps toward or away from it. The orange line on the floor is the 10-foot attack line — bic and C ball are back-row attacks, so a legal hit on either has to take off from behind it.</div>
+      </div>
+      <div class="opt-group" id="diagnose-type-group" style="margin-top:14px;"></div>
+      <div id="diagnose-panel" style="margin-top:16px;"></div>
+    </div>
+  </section>
+
+
+  <!-- SETTINGS -->
+  <section id="settings">
+    <div class="card">
+      <h2>Backup your data</h2>
+      <div class="sub">All data lives in this browser only. Export a backup regularly, especially before clearing browser data.</div>
+      <div class="top-actions" style="justify-content:flex-start;">
+        <button class="secondary" id="export-json-btn">Export JSON backup</button>
+        <button class="secondary" id="export-csv-btn">Export CSV</button>
+        <label class="secondary" style="cursor:pointer;">
+          Import JSON backup
+          <input type="file" id="import-json-file" accept=".json" style="display:none;">
+        </label>
+        <button class="secondary danger" id="clear-all-btn">Clear all data</button>
+      </div>
+      <div id="clear-all-confirm" class="clear-confirm" style="display:none;">
+        <div class="sub" style="margin-bottom:10px;">This permanently deletes all <b id="clear-all-count">0</b> logged sets — it can't be undone. Export a backup first if you're not sure. Slide all the way to the end to confirm.</div>
+        <div class="slide-confirm" id="slide-confirm">
+          <div class="slide-confirm-fill" id="slide-confirm-fill"></div>
+          <div class="slide-confirm-label" id="slide-confirm-label">Slide to delete everything →</div>
+          <div class="slide-confirm-handle" id="slide-confirm-handle">🏐</div>
+        </div>
+        <button class="secondary" id="clear-all-cancel-btn" style="margin-top:10px;">Cancel</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+
+<script>
+// ---------- Data model ----------
+// zones: which court zone(s) each set type is actually run to. 'other' is always available as a catch-all.
+const SET_TYPES = [
+  // Middle
+  { key:'1', label:'1 Ball', group:'Quick', zones:['Middle'] },
+  { key:'back1', label:'Back 1', group:'Quick', zones:['Middle'] },
+  { key:'push1', label:'Push 1', group:'Quick', zones:['Middle'] },
+  { key:'2', label:'2 Ball', group:'Quick', zones:['Middle'] },
+  { key:'31', label:'31', group:'Fast', zones:['Middle'] },
+  { key:'bic', label:'Bic', group:'Quick', zones:['Middle'] },
+  // Left
+  { key:'shoot', label:'Shoot', group:'Fast', zones:['Left'] },
+  { key:'4', label:'4 Ball', group:'Slow', zones:['Left'] },
+  { key:'32', label:'32', group:'Fast', zones:['Left'] },
+  // Right
+  { key:'3', label:'3 Ball', group:'Fast', zones:['Right'] },
+  { key:'5', label:'5 Ball', group:'Slow', zones:['Right'] },
+  { key:'c', label:'C Ball', group:'Quick', zones:['Right'] },
+  // Any zone
+  { key:'other', label:'Other / custom', group:'Other', zones:['Left','Middle','Right'] }
+];
+const SET_TYPE_MAP = Object.fromEntries(SET_TYPES.map(s=>[s.key,s]));
+const ZONES = ['Left','Middle','Right'];
+const STORAGE_KEY = 'setterStats_v1';
+
+
+let sets = loadData();
+
+
+function loadData(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
+}
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(sets)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+
+// ---------- Tabs ----------
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='dashboard') renderDashboard();
+    if(btn.dataset.tab==='diagnose') renderDiagnose();
+    if(btn.dataset.tab==='data') renderFullTable();
+  });
+});
+
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._h);
+  t._h=setTimeout(()=>t.style.display='none', 2200);
+}
+
+
+// ---------- Entry form (tap-button option groups) ----------
+document.getElementById('f-date').valueAsDate = new Date();
+
+
+// Zone isn't asked for directly anymore — it's derived from whichever set type is picked,
+// since each type (other than "Other") already belongs to exactly one zone.
+function deriveZoneForType(key){
+  const s = SET_TYPE_MAP[key];
+  if(!s) return null;
+  return s.zones.length===1 ? s.zones[0] : null; // 'other' has 3 zones -> unknown/null
+}
+
+
+let curSetType=null, curQuality=null, curOutcome=null, curPassLevel=null;
+
+
+function selectInGroup(groupId, value){
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.opt-btn').forEach(b=>{
+    b.classList.toggle('selected', value!==null && b.dataset.value===String(value));
+  });
+}
+function setupOptionGroup(groupId, onSelect){
+  document.getElementById(groupId).addEventListener('click', (e)=>{
+    const btn = e.target.closest('.opt-btn');
+    if(!btn) return;
+    selectInGroup(groupId, btn.dataset.value);
+    onSelect(btn.dataset.value);
+  });
+}
+
+
+// All set types shown at once, grouped under small captions purely for scannability —
+// picking one is a single tap, there's no separate zone step first.
+function renderAllSetTypeButtons(){
+  const container = document.getElementById('settype-group');
+  container.innerHTML = '';
+  const groupsInOrder = [
+    { label:'Middle', match:s => s.zones.length===1 && s.zones[0]==='Middle' },
+    { label:'Left', match:s => s.zones.length===1 && s.zones[0]==='Left' },
+    { label:'Right', match:s => s.zones.length===1 && s.zones[0]==='Right' },
+    { label:'Other', match:s => s.zones.length>1 }
+  ];
+  groupsInOrder.forEach(g=>{
+    const types = SET_TYPES.filter(g.match);
+    if(!types.length) return;
+    const cap = document.createElement('div');
+    cap.className = 'settype-caption';
+    cap.textContent = g.label;
+    container.appendChild(cap);
+    const grp = document.createElement('div');
+    grp.className = 'opt-group';
+    types.forEach(s=>{
+      const b=document.createElement('button');
+      b.type='button'; b.className='opt-btn'; b.dataset.value=s.key; b.textContent=s.label;
+      grp.appendChild(b);
+    });
+    container.appendChild(grp);
+  });
+}
+
+
+setupOptionGroup('settype-group', v=>{
+  curSetType=v;
+  document.getElementById('f-custom-wrap').style.display = v==='other' ? 'block' : 'none';
+});
+setupOptionGroup('quality-group', v=>{ curQuality=parseInt(v,10); });
+setupOptionGroup('outcome-group', v=>{ curOutcome=v; });
+setupOptionGroup('passlevel-group', v=>{ curPassLevel=parseInt(v,10); });
+
+
+renderAllSetTypeButtons();
+
+
+let editingId = null;
+
+
+function prefillForm(rec){
+  document.getElementById('f-date').value = rec.date;
+  document.getElementById('f-opponent').value = rec.opponent==='Unlabeled' ? '' : rec.opponent;
+  curSetType = rec.setTypeKey; selectInGroup('settype-group', rec.setTypeKey);
+  document.getElementById('f-custom-wrap').style.display = rec.setTypeKey==='other' ? 'block' : 'none';
+  document.getElementById('f-custom').value = rec.customLabel || '';
+  curQuality = rec.quality; selectInGroup('quality-group', String(rec.quality));
+  curOutcome = rec.outcome; selectInGroup('outcome-group', rec.outcome);
+  curPassLevel = rec.passLevel ?? null; selectInGroup('passlevel-group', rec.passLevel!=null ? String(rec.passLevel) : null);
+  document.getElementById('f-notes').value = rec.notes || '';
+}
+
+
+function enterEditMode(rec){
+  editingId = rec.id;
+  prefillForm(rec);
+  document.getElementById('entry-title').textContent = 'Edit set';
+  document.getElementById('add-set-btn').textContent = 'Save changes';
+  document.getElementById('editing-banner').classList.add('show');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.querySelector('nav button[data-tab="entry"]').classList.add('active');
+  document.getElementById('entry').classList.add('active');
+}
+
+
+function exitEditMode(){
+  editingId = null;
+  document.getElementById('entry-title').textContent = 'Log a set';
+  document.getElementById('add-set-btn').textContent = 'Add set';
+  document.getElementById('editing-banner').classList.remove('show');
+}
+
+
+document.getElementById('cancel-edit-btn').addEventListener('click', exitEditMode);
+
+
+document.getElementById('duplicate-btn').addEventListener('click', ()=>{
+  if(!sets.length){ toast('No sets yet to duplicate'); return; }
+  prefillForm(sets[sets.length-1]);
+  toast('Loaded last set — tweak and hit Add');
+});
+
+
+document.getElementById('add-set-btn').addEventListener('click', ()=>{
+  if(curSetType===null || curQuality===null || curOutcome===null || curPassLevel===null){
+    toast('Pick a set type, pass level, quality, and outcome first');
+    return;
+  }
+  const customLabel = document.getElementById('f-custom').value.trim();
+  const fields = {
+    date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
+    opponent: document.getElementById('f-opponent').value.trim() || 'Unlabeled',
+    zone: deriveZoneForType(curSetType), setTypeKey: curSetType,
+    customLabel: curSetType==='other' ? (customLabel||'Other') : '',
+    passLevel: curPassLevel,
+    quality: curQuality,
+    outcome: curOutcome,
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  if(editingId){
+    const idx = sets.findIndex(s=>s.id===editingId);
+    if(idx>-1) sets[idx] = { ...sets[idx], ...fields };
+    saveData();
+    exitEditMode();
+    renderRecent(); renderFullTable(); toast('Set updated');
+  } else {
+    const rec = { id: uid(), ...fields };
+    sets.push(rec); saveData();
+    lastAddedId = rec.id;
+    updateUndoButton();
+    // sticky: date/opponent/set type stay as-is; pass level/quality/outcome/notes reset for the next rep
+    curQuality=null; curOutcome=null; curPassLevel=null;
+    selectInGroup('quality-group', null); selectInGroup('outcome-group', null); selectInGroup('passlevel-group', null);
+    document.getElementById('f-notes').value='';
+    renderRecent(); toast('Set added');
+  }
+  updateBackupBanner();
+});
+
+
+// Undo the most recently added set — a quick fix for a misclick or misheard
+// voice entry, without having to go find and delete it in the Data tab.
+let lastAddedId = null;
+function updateUndoButton(){
+  const btn = document.getElementById('undo-last-btn');
+  btn.style.display = (lastAddedId && sets.some(s=>s.id===lastAddedId)) ? 'inline-block' : 'none';
+}
+document.getElementById('undo-last-btn').addEventListener('click', ()=>{
+  if(!lastAddedId) return;
+  const idx = sets.findIndex(s=>s.id===lastAddedId);
+  if(idx===-1){ updateUndoButton(); return; }
+  const removed = sets[idx];
+  sets.splice(idx,1); saveData();
+  lastAddedId = null;
+  updateUndoButton();
+  renderRecent();
+  updateBackupBanner();
+  toast(`Undid: ${tempoLabel(removed)}, ${removed.outcome}`);
+});
+
+
+// Keyboard shortcuts: 0-3 quality, K/E/I/N outcome, Enter to submit.
+// Disabled while typing in a text/date field or textarea so normal typing isn't hijacked.
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('entry').classList.contains('active')) return;
+  const active = document.activeElement;
+  const isTyping = active && (active.tagName==='TEXTAREA' || (active.tagName==='INPUT' && ['text','date'].includes(active.type)));
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    document.getElementById('add-set-btn').click();
+    return;
+  }
+  if(isTyping) return;
+  const k = e.key.toLowerCase();
+  if(['0','1','2','3'].includes(k)){ curQuality=parseInt(k,10); selectInGroup('quality-group', k); }
+  else if(k==='k'){ curOutcome='kill'; selectInGroup('outcome-group','kill'); }
+  else if(k==='e'){ curOutcome='error'; selectInGroup('outcome-group','error'); }
+  else if(k==='i'){ curOutcome='inplay'; selectInGroup('outcome-group','inplay'); }
+  else if(k==='n'){ curOutcome='noattack'; selectInGroup('outcome-group','noattack'); }
+});
+
+
+// ---------- Voice entry ----------
+// Parses a spoken phrase like "four ball, pass perfect, quality perfect, kill"
+// into {setTypeKey, passLevel, quality, outcome}. Zone isn't parsed separately —
+// it's derived from the set type afterwards. Any field it can't confidently
+// match is left null so it doesn't overwrite what's already selected.
+function parseVoiceTranscript(rawTranscript){
+  const lower = (rawTranscript||'').toLowerCase();
+  // Commas are kept (for now) as clause boundaries — dictation naturally inserts
+  // them at pauses, and it's the format our own examples use — so "pass bad,
+  // quality perfect" can't leak "bad" into the quality match. Other punctuation
+  // is just noise and gets stripped along with everything else.
+  const withoutSentencePunct = lower.replace(/[.!?;:]/g, ' ').replace(/\s+/g, ' ').trim();
+  const t = withoutSentencePunct.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+  const clauses = withoutSentencePunct.split(',').map(c=>c.trim()).filter(Boolean);
+  if(!clauses.length) clauses.push(t);
+
+
+  function findTempo(){
+    // longest/most specific phrases first so "four ball" wins over a bare "four"
+    const phrases = [
+      ['back one','back1'],['back 1','back1'],
+      ['push one','push1'],['push 1','push1'],
+      ['four ball','4'],['4 ball','4'],
+      ['five ball','5'],['5 ball','5'],
+      ['two ball','2'],['2 ball','2'],
+      ['one ball','1'],['1 ball','1'],
+      ['three ball','3'],['3 ball','3'],
+      ['thirty one','31'],['31','31'],
+      ['thirty two','32'],['32','32'],
+      ['c ball','c'],['see ball','c'],
+      ['bic','bic'],
+      ['shoot','shoot']
+    ];
+    for(const [phrase,key] of phrases){
+      if(t.includes(phrase)) return key;
+    }
+    return null;
+  }
+
+
+  // Finds the value word for a field (e.g. "pass"/"quality"). Accepts a list of
+  // trigger words (e.g. quality can be said as "quality" or just "the set") and
+  // uses whichever one actually shows up, preferring the first (most explicit)
+  // one that's present. People say "pass perfect" as often as "perfect pass" or
+  // just "3 pass", so this checks both sides of the trigger word and picks
+  // whichever match sits closest to it. It searches within whichever comma-
+  // delimited clause contains the trigger first — so another field's word can't
+  // leak in — falling back to a search across the whole transcript if that
+  // clause alone doesn't have a match (e.g. no comma was heard). Also catches
+  // simple negation ("not good", "wasn't good") and flips the value, since "the
+  // pass was not good" should score low.
+  function findValue(triggerWords, valueMap, negatedMap){
+    function searchTokens(tokens, triggerWord){
+      const triggerIdx = tokens.indexOf(triggerWord);
+      if(triggerIdx===-1) return null;
+      let best = null, bestDist = Infinity;
+      for(let i=0;i<tokens.length;i++){
+        if(i===triggerIdx) continue;
+        const tok = tokens[i];
+        if(valueMap[tok]===undefined) continue;
+        const dist = Math.abs(i-triggerIdx);
+        if(dist < bestDist){
+          const prev = tokens[i-1], prev2 = tokens[i-2];
+          const negated = prev==='not' || prev2==='not' || (prev && prev.endsWith("n't"));
+          bestDist = dist;
+          best = (negated && negatedMap[tok]!==undefined) ? negatedMap[tok] : valueMap[tok];
+        }
+      }
+      return best;
+    }
+    for(const triggerWord of triggerWords){
+      for(const clause of clauses){
+        const result = searchTokens(clause.split(/\s+/).filter(Boolean), triggerWord);
+        if(result!==null) return result;
+      }
+      const flat = searchTokens(t.split(/\s+/).filter(Boolean), triggerWord);
+      if(flat!==null) return flat;
+    }
+    return null;
+  }
+
+
+  // Value vocabulary is intentionally generous — "perfect"/"better"/"clean" etc.
+  // all count as good, so it doesn't only work with one exact phrasing.
+  const passLevel = findValue(['pass'], {
+    'bad':1,'poor':1,'rough':1,'terrible':1,'awful':1,'worse':1,'one':1,'1':1,
+    'playable':2,'ok':2,'okay':2,'medium':2,'decent':2,'two':2,'2':2,
+    'perfect':3,'good':3,'great':3,'better':3,'solid':3,'clean':3,'nice':3,'awesome':3,'three':3,'3':3
+  }, {
+    'bad':3,'poor':3,'rough':3,'terrible':3,'awful':3,'worse':3,
+    'good':1,'great':1,'perfect':1,'better':1,'solid':1,'clean':1,'nice':1,'awesome':1
+  });
+
+
+  const quality = findValue(['quality','set'], {
+    'unplayable':0,'zero':0,'0':0,
+    'bad':1,'poor':1,'rough':1,'terrible':1,'awful':1,'worse':1,'one':1,'1':1,
+    'hittable':2,'decent':2,'ok':2,'okay':2,'two':2,'2':2,
+    'perfect':3,'good':3,'great':3,'better':3,'solid':3,'clean':3,'nice':3,'awesome':3,'three':3,'3':3
+  }, {
+    'unplayable':3,'bad':3,'poor':3,'terrible':3,'awful':3,'worse':3,
+    'good':1,'great':1,'perfect':1,'better':1,'solid':1,'clean':1,'nice':1,'awesome':1
+  });
+
+
+  let outcome = null;
+  if(/\bkill\b/.test(t)) outcome='kill';
+  else if(/\berror\b/.test(t)) outcome='error';
+  else if(/\bin\s*play\b/.test(t)) outcome='inplay';
+  else if(/\bno\s*attack\b|\bfree\s*ball\b/.test(t)) outcome='noattack';
+
+
+  return { setTypeKey: findTempo(), passLevel, quality, outcome };
+}
+
+
+function tempoLabelForKey(key){
+  const s = SET_TYPE_MAP[key];
+  return s ? s.label : key;
+}
+
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let voiceRecognition = null;
+let voiceListening = false; // true while the user wants the mic on (toggled by the button, not by browser auto-end)
+
+
+function setVoiceButtonState(listening){
+  const btn = document.getElementById('voice-btn');
+  btn.textContent = listening ? '⏹ Stop listening' : '🎤 Speak a set';
+}
+
+
+if(SpeechRecognitionAPI){
+  voiceRecognition = new SpeechRecognitionAPI();
+  voiceRecognition.lang = 'en-US';
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = false;
+  voiceRecognition.maxAlternatives = 1;
+
+
+  voiceRecognition.onresult = (e)=>{
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      if(e.results[i].isFinal){
+        applyVoiceParse(e.results[i][0].transcript);
+      }
+    }
+  };
+  voiceRecognition.onerror = (e)=>{
+    document.getElementById('voice-status').textContent = `Voice error: ${e.error}. Check mic permission, or this may not work over a local file:// page in your browser — try again or ask me about alternatives.`;
+    if(e.error==='not-allowed' || e.error==='audio-capture' || e.error==='service-not-allowed'){
+      voiceListening = false;
+      setVoiceButtonState(false);
+    }
+  };
+  voiceRecognition.onend = ()=>{
+    if(voiceListening){
+      // Browsers can end a "continuous" session on their own (e.g. after a long
+      // pause) — restart automatically so it keeps going until the user stops it.
+      setTimeout(()=>{ try{ voiceRecognition.start(); }catch(err){} }, 300);
+    } else {
+      setVoiceButtonState(false);
+      document.getElementById('voice-status').textContent = 'Mic idle. Click "Speak a set" and talk after it says Listening.';
+    }
+  };
+} else {
+  document.getElementById('voice-status').textContent = 'Voice input isn\'t supported in this browser. Try Chrome, Edge, or Safari.';
+}
+
+
+function applyVoiceParse(transcript){
+  const parsed = parseVoiceTranscript(transcript);
+  const filled = [];
+
+
+  if(parsed.setTypeKey){
+    curSetType = parsed.setTypeKey;
+    selectInGroup('settype-group', parsed.setTypeKey);
+    document.getElementById('f-custom-wrap').style.display = parsed.setTypeKey==='other' ? 'block' : 'none';
+    filled.push('type: ' + tempoLabelForKey(parsed.setTypeKey));
+  }
+  if(parsed.passLevel!==null){
+    curPassLevel = parsed.passLevel;
+    selectInGroup('passlevel-group', String(parsed.passLevel));
+    filled.push('pass: ' + parsed.passLevel);
+  }
+  if(parsed.quality!==null){
+    curQuality = parsed.quality;
+    selectInGroup('quality-group', String(parsed.quality));
+    filled.push('quality: ' + parsed.quality);
+  }
+  if(parsed.outcome){
+    curOutcome = parsed.outcome;
+    selectInGroup('outcome-group', parsed.outcome);
+    filled.push('outcome: ' + parsed.outcome);
+  }
+
+
+  const complete = curQuality!==null && curOutcome!==null && curPassLevel!==null && curSetType!==null;
+
+
+  document.getElementById('voice-status').textContent = filled.length
+    ? `Heard: "${transcript}" → set {complete ? ' Added — listening for the next one…' : ' Still listening for the rest…'}`
+    : `Heard: "${transcript}" → couldn't match any fields, try the example phrasing. Still listening…`;
+
+
+  if(complete){
+    document.getElementById('add-set-btn').click();
+  }
+}
+
+
+document.getElementById('voice-btn').addEventListener('click', ()=>{
+  if(!voiceRecognition){
+    toast('Voice input isn\'t supported in this browser');
+    return;
+  }
+  if(voiceListening){
+    voiceListening = false;
+    try{ voiceRecognition.stop(); }catch(err){}
+    return;
+  }
+  voiceListening = true;
+  setVoiceButtonState(true);
+  document.getElementById('voice-status').textContent = 'Listening… (click "Stop listening" when done)';
+  try{ voiceRecognition.start(); }catch(err){ /* already running */ }
+});
+
+
+function tempoLabel(rec){
+  if(rec.setTypeKey==='other') return rec.customLabel || 'Other';
+  return SET_TYPE_MAP[rec.setTypeKey] ? SET_TYPE_MAP[rec.setTypeKey].label : rec.setTypeKey;
+}
+function tempoGroup(rec){
+  return SET_TYPE_MAP[rec.setTypeKey] ? SET_TYPE_MAP[rec.setTypeKey].group : 'Other';
+}
+function outcomeLabel(o){
+  return {kill:'Kill', error:'Error', inplay:'In play', noattack:'No attack'}[o] || o;
+}
+function passLevelLabel(n){
+  return {1:'1 · Not good', 2:'2 · Playable', 3:'3 · Perfect'}[n] || '—';
+}
+function passLevelSystem(n){
+  return {1:'Out of system', 2:'Borderline', 3:'In system'}[n] || '';
+}
+
+
+function rowHtml(rec, withActions){
+  const pl = rec.passLevel;
+  return `<tr>
+    <td>${rec.date}</td>
+    <td>${escapeHtml(rec.opponent)}</td>
+    <td class="pass-{passLevelLabel(pl)}</td>
+    <td>${rec.zone}</td>
+    <td>{tempoGroup(rec)}">${tempoGroup(rec)}</span></td>
+    <td class="quality-{rec.quality}</td>
+    <td>${outcomeLabel(rec.outcome)}</td>
+    <td>${escapeHtml(rec.notes||'')}</td>
+    ${withActions ? `<td><button class="edit-btn" data-id="${rec.id}" title="Edit">✎</button><button class="del-btn" data-id="${rec.id}" title="Delete">✕</button></td>` : ''}
+  </tr>`;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+
+function renderRecent(){
+  const el = document.getElementById('recent-table');
+  const recent = [...sets].slice(-8).reverse();
+  if(!recent.length){ el.innerHTML='<div class="empty">No sets logged yet.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Date</th><th>Game</th><th>Pass</th><th>Zone</th><th>Type</th><th>Q</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${recent.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
+}
+
+
+// ---------- Full data table + filters ----------
+function populateFilters(){
+  const gameSel = document.getElementById('filter-game');
+  const typeSel = document.getElementById('filter-settype');
+  const games = [...new Set(sets.map(s=>s.opponent))];
+  gameSel.innerHTML = '<option value="">All games</option>' + games.map(g=>`<option value="{escapeHtml(g)}</option>`).join('');
+  typeSel.innerHTML = '<option value="">All types</option>' + SET_TYPES.map(s=>`<option value="{s.label}</option>`).join('');
+}
+['filter-game','filter-zone','filter-settype','filter-passlevel'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', renderFullTable);
+});
+
+
+function getFilteredSets(){
+  const game = document.getElementById('filter-game').value;
+  const zone = document.getElementById('filter-zone').value;
+  const type = document.getElementById('filter-settype').value;
+  const passLevel = document.getElementById('filter-passlevel').value;
+  return sets.filter(s=>
+    (!game || s.opponent===game) &&
+    (!zone || s.zone===zone) &&
+    (!type || s.setTypeKey===type) &&
+    (!passLevel || String(s.passLevel)===passLevel)
+  );
+}
+
+
+function renderFullTable(){
+  populateFilters();
+  const el = document.getElementById('full-table');
+  const filtered = [...getFilteredSets()].reverse();
+  if(!filtered.length){ el.innerHTML='<div class="empty">No sets match.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Date</th><th>Game</th><th>Pass</th><th>Zone</th><th>Type</th><th>Q</th><th>Outcome</th><th>Notes</th><th></th></tr></thead><tbody>${filtered.map(r=>rowHtml(r,true)).join('')}</tbody></table>`;
+  el.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      sets = sets.filter(s=>s.id!==btn.dataset.id);
+      saveData(); renderFullTable(); renderRecent(); updateBackupBanner();
+      toast('Deleted');
+    });
+  });
+  el.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const rec = sets.find(s=>s.id===btn.dataset.id);
+      if(rec) enterEditMode(rec);
+    });
+  });
+}
+
+
+// ---------- Bulk import ----------
+function parsePassLevel(raw){
+  const r = (raw||'').toString().trim().toLowerCase().replace(/\s+/g,'');
+  if(r==='') return null;
+  if(['1','bad','notgood','poor','no'].includes(r)) return 1;
+  if(['2','playable','ok','okay','medium'].includes(r)) return 2;
+  if(['3','perfect','good','great'].includes(r)) return 3;
+  const n = parseInt(r,10);
+  if(!isNaN(n)) return Math.max(1, Math.min(3, n));
+  return null;
+}
+
+
+function buildRecord({dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes}){
+  const tl = (typeRaw||'').toLowerCase().replace(/[\s_-]/g,'');
+  let setTypeKey='other', customLabel=typeRaw;
+  const typeAliases = {
+    '1':'1','one':'1','1ball':'1',
+    '2':'2','two':'2','2ball':'2','twoball':'2',
+    'back1':'back1','b1':'back1','backone':'back1',
+    'push1':'push1','p1':'push1','pushone':'push1',
+    '31':'31','thirtyone':'31',
+    '32':'32','thirtytwo':'32',
+    'bic':'bic',
+    '3':'3','three':'3','3ball':'3',
+    'shoot':'shoot','sh':'shoot',
+    '4':'4','four':'4','4ball':'4','fourball':'4',
+    '5':'5','five':'5','5ball':'5','fiveball':'5',
+    'c':'c','cball':'c'
+  };
+  if(typeAliases[tl]){ setTypeKey = typeAliases[tl]; customLabel=''; }
+
+
+  let quality = parseInt(qualityRaw,10);
+  if(isNaN(quality)) quality=2;
+  quality = Math.max(0, Math.min(3, quality));
+
+
+  const ol=(outcomeRaw||'').toLowerCase();
+  let outcome='inplay';
+  if(ol.startsWith('k')) outcome='kill';
+  else if(ol.startsWith('e')) outcome='error';
+  else if(ol.startsWith('ip')||ol.startsWith('in')) outcome='inplay';
+  else if(ol.startsWith('na')||ol.startsWith('no')) outcome='noattack';
+
+
+  let date = dateRaw;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+    const d = new Date(dateRaw);
+    date = isNaN(d) ? new Date().toISOString().slice(0,10) : d.toISOString().slice(0,10);
+  }
+
+
+  const passLevel = parsePassLevel(passLevelRaw);
+  const zone = deriveZoneForType(setTypeKey); // zone isn't a column anymore — derived from the set type
+
+
+  return {
+    id: uid(), date,
+    opponent: opponentRaw || 'Unlabeled',
+    zone, setTypeKey, customLabel,
+    passLevel,
+    quality, outcome,
+    notes: (notes||'').trim()
+  };
+}
+
+
+function parseLineFull(line){
+  if(!line.trim()) return null;
+  const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+  const [dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, ...rest] = parts.map(p=>(p||'').trim());
+  if(!typeRaw) return null;
+  return buildRecord({ dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes: rest.join(', ') });
+}
+
+
+function parseLineShort(line, batchDate, batchOpponent){
+  if(!line.trim()) return null;
+  const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+  const [typeRaw, passLevelRaw, qualityRaw, outcomeRaw, ...rest] = parts.map(p=>(p||'').trim());
+  if(!typeRaw) return null;
+  return buildRecord({ dateRaw: batchDate, opponentRaw: batchOpponent, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes: rest.join(', ') });
+}
+
+
+function parseBulk(){
+  let lines = document.getElementById('bulk-text').value.split('\n');
+  if(document.getElementById('skip-header').checked) lines = lines.slice(1);
+  if(document.getElementById('lines-have-date-opponent').checked){
+    return lines.map(parseLineFull).filter(Boolean);
+  }
+  const batchDate = document.getElementById('batch-date').value || new Date().toISOString().slice(0,10);
+  const batchOpponent = document.getElementById('batch-opponent').value.trim() || 'Unlabeled';
+  return lines.map(l=>parseLineShort(l, batchDate, batchOpponent)).filter(Boolean);
+}
+
+
+document.getElementById('lines-have-date-opponent').addEventListener('change', (e)=>{
+  const full = e.target.checked;
+  document.getElementById('batch-defaults-row').style.display = full ? 'none' : 'flex';
+  document.getElementById('format-box-full').style.display = full ? 'block' : 'none';
+  document.getElementById('format-box-short').style.display = full ? 'none' : 'block';
+});
+document.getElementById('batch-date').valueAsDate = new Date();
+
+
+document.getElementById('preview-btn').addEventListener('click', ()=>{
+  const parsed = parseBulk();
+  const el = document.getElementById('import-preview');
+  if(!parsed.length){ el.innerHTML='<div class="empty">Nothing parsed yet — check your format.</div>'; return; }
+  el.innerHTML = `<div class="sub">{parsed.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
+});
+
+
+document.getElementById('import-btn').addEventListener('click', ()=>{
+  const parsed = parseBulk();
+  if(!parsed.length){ toast('Nothing to import'); return; }
+  sets = sets.concat(parsed);
+  saveData();
+  document.getElementById('bulk-text').value='';
+  document.getElementById('import-preview').innerHTML='';
+  renderRecent();
+  updateBackupBanner();
+  toast(`Imported ${parsed.length} sets`);
+});
+
+
+// ---------- Dashboard / analytics ----------
+function computeAgg(list){
+  const total = list.length;
+  const kills = list.filter(s=>s.outcome==='kill').length;
+  const errors = list.filter(s=>s.outcome==='error').length;
+  const inplay = list.filter(s=>s.outcome==='inplay').length;
+  const attempts = kills+errors+inplay;
+  const avgQ = total ? (list.reduce((a,s)=>a+s.quality,0)/total) : 0;
+  const hittingPct = attempts ? ((kills-errors)/attempts) : 0;
+  const assistRate = total ? (kills/total) : 0;
+  return {total,kills,errors,inplay,attempts,avgQ,hittingPct,assistRate};
+}
+
+
+function renderDashboard(){
+  const agg = computeAgg(sets);
+  const ov = document.getElementById('overview-stats');
+  if(!sets.length){
+    ov.innerHTML = '<div class="empty">Log or import sets to see your dashboard.</div>';
+    ['chart-zone','chart-zone-quality','chart-tempo','chart-tempo-quality'].forEach(id=>{
+      const c=document.getElementById(id); const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+    });
+    document.getElementById('matrix-table').innerHTML='<div class="empty">No sets logged yet.</div>';
+    document.getElementById('speed-table').innerHTML='<div class="empty">No sets logged yet.</div>';
+    document.getElementById('passlevel-table').innerHTML='<div class="empty">No sets logged yet.</div>';
+    renderTrajectoryChart();
+    renderCoachingTips();
+    return;
+  }
+  ov.innerHTML = `
+    <div class="stat-box"><div class="val">${agg.total}</div><div class="lbl">Total sets</div></div>
+    <div class="stat-box"><div class="val">${agg.avgQ.toFixed(2)}</div><div class="lbl">Avg quality (0-3)</div></div>
+    <div class="stat-box"><div class="val">${(agg.hittingPct*100).toFixed(1)}%</div><div class="lbl">Hitting % off your sets</div></div>
+    <div class="stat-box"><div class="val">${(agg.assistRate*100).toFixed(1)}%</div><div class="lbl">Assist rate (kills / total sets)</div></div>
+    <div class="stat-box"><div class="val">${agg.kills}</div><div class="lbl">Kills</div></div>
+    <div class="stat-box"><div class="val">${agg.errors}</div><div class="lbl">Hitting errors</div></div>
+  `;
+
+
+  drawBar('chart-zone', ZONES, ZONES.map(z=>sets.filter(s=>s.zone===z).length), '#ff7a1a', 'Sets');
+  drawBar('chart-zone-quality', ZONES, ZONES.map(z=>{
+    const l=sets.filter(s=>s.zone===z); return l.length? (l.reduce((a,s)=>a+s.quality,0)/l.length) : 0;
+  }), '#3ecf8e', 'Avg quality', 3);
+
+
+  const usedTypes = SET_TYPES.filter(t=>sets.some(s=>s.setTypeKey===t.key));
+  drawBar('chart-tempo', usedTypes.map(t=>t.label), usedTypes.map(t=>sets.filter(s=>s.setTypeKey===t.key).length), '#7ec4ff', 'Sets');
+  drawBar('chart-tempo-quality', usedTypes.map(t=>t.label), usedTypes.map(t=>{
+    const l=sets.filter(s=>s.setTypeKey===t.key); return l.length? (l.reduce((a,s)=>a+s.quality,0)/l.length) : 0;
+  }), '#ffcd4d', 'Avg quality', 3);
+
+
+  // Zone x Tempo matrix
+  let matrixRows='';
+  ZONES.forEach(z=>{
+    usedTypes.forEach(t=>{
+      const l = sets.filter(s=>s.zone===z && s.setTypeKey===t.key);
+      if(!l.length) return;
+      const a = computeAgg(l);
+      matrixRows += `<tr><td>{t.label}</td><td>{Math.round(a.avgQ)}">{(a.hittingPct*100).toFixed(1)}%</td></tr>`;
+    });
+  });
+  document.getElementById('matrix-table').innerHTML = matrixRows
+    ? `<table><thead><tr><th>Zone</th><th>Tempo</th><th>Count</th><th>Avg Quality</th><th>Hitting %</th></tr></thead><tbody>${matrixRows}</tbody></table>`
+    : '<div class="empty">No sets logged yet.</div>';
+
+
+  // Speed-group consistency
+  const groups = ['Quick','Fast','Slow','Other'];
+  let speedRows='';
+  groups.forEach(g=>{
+    const l = sets.filter(s=>tempoGroup(s)===g);
+    if(!l.length) return;
+    const a = computeAgg(l);
+    const qualities = l.map(s=>s.quality);
+    const variance = qualities.length>1 ? (qualities.reduce((acc,q)=>acc+Math.pow(q-a.avgQ,2),0)/qualities.length) : 0;
+    const stdev = Math.sqrt(variance);
+    speedRows += `<tr><td><span class="badge-group g-{g}</span></td><td>{Math.round(a.avgQ)}">{stdev.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
+  });
+  document.getElementById('speed-table').innerHTML = speedRows
+    ? `<table><thead><tr><th>Speed group</th><th>Count</th><th>Avg Quality</th><th>Std Dev (lower = more consistent)</th><th>Hitting %</th></tr></thead><tbody>${speedRows}</tbody></table>`
+    : '<div class="empty">No sets logged yet.</div>';
+
+
+  // Pass level breakdown (in system vs. out of system)
+  let passRows='';
+  [1,2,3].forEach(pl=>{
+    const l = sets.filter(s=>s.passLevel===pl);
+    if(!l.length) return;
+    const a = computeAgg(l);
+    passRows += `<tr><td class="pass-{passLevelLabel(pl)}</td><td>{l.length}</td><td class="quality-{a.avgQ.toFixed(2)}</td><td>{(a.assistRate*100).toFixed(1)}%</td></tr>`;
+  });
+  const untagged = sets.filter(s=>s.passLevel==null).length;
+  document.getElementById('passlevel-table').innerHTML = passRows
+    ? `<table><thead><tr><th>Pass level</th><th>System</th><th>Count</th><th>Avg Set Quality</th><th>Hitting %</th><th>Assist Rate</th></tr></thead><tbody>${passRows}</tbody></table>` +
+      (untagged ? `<div class="sub" style="margin-top:8px;">${untagged} older set(s) have no pass level recorded and aren't included above.</div>` : '')
+    : '<div class="empty">No sets with a pass level logged yet.</div>';
+
+
+  renderTrajectoryChart();
+  renderCoachingTips();
+}
+
+
+// ---------- Set trajectory map (stylized, not physics-accurate) ----------
+// Setters set out of the right side of the court, not the middle — so the setter
+// marker sits well right of center. Right-side sets (3/5/C) are short hops since
+// the setter is already over there; left-side sets (shoot/4/32) travel the full
+// width of the court, which is the longer arcs.
+const SETTER_X_FRAC = 0.76;
+// Fractional X position (0-1, left to right across the net) for each trackable set type's landing spot.
+// '1'/push1/back1/'2' are special: they follow the setter wherever they stand
+// (see RELATIVE_TO_SETTER + trajXFrac below), so here their value is an OFFSET
+// from the setter's own fraction, not an absolute court position.
+const TRAJECTORY_X = {
+  // Shoot and 4 ball both land in the same spot — right next to the left antenna,
+  // not on it — since they're the same hitter target, only the tempo/arc differs.
+  shoot: 0.035, '4': 0.035,
+  '31': 0.20,                                   // fast set pushed toward the middle-left, close to the 4 ball
+  '32': 0.23,                                   // moved left, right next to the 31 — same landing area, taller arc
+  bic: 0.5,                                     // dead center of the court
+  '2': -0.16, push1: -0.11, '1': -0.06,         // offsets from the setter — '1' lands just in front of wherever they are
+  back1: 0.03,                                  // offset from the setter — right behind wherever they are
+  c: 0.88,                                      // moved closer to the right pin
+  // 3 ball and 5 ball both land in the same spot — right next to the right
+  // antenna, not on it — mirroring the shoot/4-ball pairing on the left.
+  '3': 0.965, '5': 0.965
+};
+const RELATIVE_TO_SETTER = ['1','push1','back1','2'];
+// Resolves a set type's X fraction given a setter position — absolute for most
+// types, but setter-relative for the four above so they move with the setter.
+function trajXFrac(key, setterFrac){
+  return RELATIVE_TO_SETTER.includes(key) ? setterFrac + TRAJECTORY_X[key] : TRAJECTORY_X[key];
+}
+// Arc peak height multiplier by tempo group — slower sets fly higher.
+// Bumped up across the board (a few more rounds of "make it higher"); Slow is
+// tallest since sets to the pins (4/5 ball) should loop the highest.
+const GROUP_PEAK = { Quick: 0.28, Fast: 0.58, Slow: 1.15, Other: 0.58 };
+// Per-type nudge on top of the group default.
+const PEAK_OVERRIDE = {
+  shoot: 0.8, // travels the farthest (leftmost target, setter on the right) so at the group default it read as an almost-flat line
+  '32': 0.85,  // higher arc than the shoot/31 baseline, landing further inside toward the 31
+  bic: 1.0,    // lands dead center, loops as high as a 4/5 ball, not a flat quick-tempo arc
+  c: 1.0,      // matches bic's height
+  '3': 0.68,   // a pin set, so a little extra arc over the plain Fast baseline like shoot/32 get
+  '31': 0.68,  // extra height on top of the general bump
+  // the "one ball" family — extra height on top of the general bump
+  '1': 0.58, push1: 0.58, back1: 0.58,
+  '2': 0.72    // extra height on top of the general bump
+};
+
+
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  return { r: parseInt(h.substring(0,2),16), g: parseInt(h.substring(2,4),16), b: parseInt(h.substring(4,6),16) };
+}
+function lerpColor(hex1, hex2, t){
+  t = Math.max(0, Math.min(1, t));
+  const c1=hexToRgb(hex1), c2=hexToRgb(hex2);
+  const r=Math.round(c1.r+(c2.r-c1.r)*t), g=Math.round(c1.g+(c2.g-c1.g)*t), b=Math.round(c1.b+(c2.b-c1.b)*t);
+  return `rgb({g},${b})`;
+}
+function qualityColor(avgQ){
+  if(avgQ<=1.5) return lerpColor('#ff4d4d','#ffcd4d', avgQ/1.5);
+  return lerpColor('#ffcd4d','#3ecf8e', (avgQ-1.5)/1.5);
+}
+
+
+// Shared net/court geometry, reused by the dashboard trajectory map and the
+// Diagnose tab so both look and behave consistently.
+// netY/H sized so the tallest arc (Slow group, maxRise) still fits inside the
+// viewBox with some headroom — see the arc-height comment on GROUP_PEAK above.
+const COURT = { W:680, H:405, netY:355, netMeshH:30, contactRise:24, maxRise:270, peakXFrac:0.72 };
+
+
+function buildNetSVG(){
+  const { W, netY, netMeshH } = COURT;
+  const netBottom = netY+netMeshH;
+  let meshLines='';
+  for(let x=14; x<=W-14; x+=15){
+    meshLines += `<line x1="{netY}" x2="{netBottom}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
+  }
+  for(let y=netY; y<=netBottom; y+=10){
+    meshLines += `<line x1="10" y1="{W-10}" y2="${y}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
+  }
+  const netTape = `<rect x="8" y="{W-16}" height="6" rx="2" fill="#eef2f8"/>`;
+  const antennae = `
+    <line x1="14" y1="{netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
+    <line x1="{netY-34}" x2="{netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
+  `;
+  return `<g>{meshLines}${antennae}</g>`;
+}
+
+
+// Builds the "d" attribute for a set's flight path: rises from the setter,
+// peaks late (near the landing/hitter point), then drops fast — see COURT.peakXFrac.
+function buildArcPath(setterX, setterY, x2, y2, peak){
+  const midX = setterX + (x2 - setterX)*COURT.peakXFrac;
+  const midY = setterY - peak*COURT.maxRise;
+  return `M ${setterX} ${setterY} Q ${midX} ${midY} ${x2} ${y2}`;
+}
+
+
+function peakForType(key){
+  const s = SET_TYPE_MAP[key];
+  if(!s) return 0.5;
+  return PEAK_OVERRIDE[key] ?? (GROUP_PEAK[s.group] ?? 0.5);
+}
+
+
+function renderTrajectoryChart(){
+  const container = document.getElementById('trajectory-chart');
+  if(!container) return;
+  const trackable = SET_TYPES.filter(t => t.key !== 'other' && TRAJECTORY_X[t.key] !== undefined);
+  const rows = trackable.map(t=>{
+    const list = sets.filter(s=>s.setTypeKey===t.key);
+    if(!list.length) return null;
+    const avgQ = list.reduce((a,s)=>a+s.quality,0)/list.length;
+    return { type:t, count:list.length, avgQ };
+  }).filter(Boolean);
+
+
+  if(!rows.length){
+    container.innerHTML = '<div class="empty">Log sets with a real set type (not "Other") to see the trajectory map.</div>';
+    return;
+  }
+
+
+  const { W, H, netY, contactRise } = COURT;
+  const setterX = W*SETTER_X_FRAC, setterY = netY-contactRise;
+  const maxCount = Math.max(...rows.map(r=>r.count));
+
+
+  // No text labels under each arc — the landing position and arc height already
+  // tell you which set is which. A hover tooltip still gives the detail on demand.
+  let arcs='';
+  rows.forEach((r)=>{
+    const x2 = W*trajXFrac(r.type.key, SETTER_X_FRAC), y2 = netY;
+    const strokeWidth = 2 + (r.count/maxCount)*7;
+    const color = qualityColor(r.avgQ);
+    const d = buildArcPath(setterX, setterY, x2, y2, peakForType(r.type.key));
+    arcs += `<path d="{color}" stroke-width="{r.type.label}: ${r.count} set(s), avg quality ${r.avgQ.toFixed(2)}</title></path>`;
+  });
+
+
+  const zoneLabels = `
+    <text x="${W*0.14}" y="20" text-anchor="middle" class="traj-zone-label">LEFT</text>
+    <text x="${W*0.5}" y="20" text-anchor="middle" class="traj-zone-label">MIDDLE</text>
+    <text x="${W*0.88}" y="20" text-anchor="middle" class="traj-zone-label">RIGHT</text>
+  `;
+  const setterMarker = `<circle cx="{setterY}" r="7" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/><text x="{setterY-14}" text-anchor="middle" class="traj-zone-label" style="opacity:.7;font-size:11px;">SETTER</text>`;
+
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} {zoneLabels}{buildNetSVG()}${setterMarker}</svg>`;
+}
+
+
+// ---------- Diagnose tab: net + a movable setter/ball, plus a target for whichever ----------
+// set type you pick. Dragging the setter re-draws the flight path live without a
+// full re-render (so the drag doesn't lose pointer capture mid-gesture); picking
+// a set type or releasing the drag is what triggers a full redraw + panel update.
+let diagSetterFrac = SETTER_X_FRAC;
+let diagSelectedType = null;
+
+
+function diagZoneForFrac(frac){
+  if(frac < 0.33) return 'Left';
+  if(frac < 0.66) return 'Middle';
+  return 'Right';
+}
+
+
+function renderDiagnose(){
+  const svg = document.getElementById('diagnose-svg');
+  if(!svg) return;
+  const { W, H, netY, contactRise } = COURT;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const setterX = W*diagSetterFrac, setterY = netY-contactRise;
+
+
+  let targetAndArc = '';
+  if(diagSelectedType){
+    const x2 = W*trajXFrac(diagSelectedType, diagSetterFrac), y2 = netY;
+    const list = sets.filter(s=>s.setTypeKey===diagSelectedType);
+    const avgQ = list.length ? list.reduce((a,s)=>a+s.quality,0)/list.length : null;
+    const color = avgQ!==null ? qualityColor(avgQ) : '#5a6478';
+    const dash = avgQ!==null ? '' : 'stroke-dasharray="6,6"';
+    const d = buildArcPath(setterX, setterY, x2, y2, peakForType(diagSelectedType));
+    targetAndArc = `<path id="diag-arc" d="{color}" stroke-width="4" stroke-linecap="round" opacity="0.9" ${dash}/>`
+      + `<circle id="diag-target" cx="{y2}" r="10" fill="none" stroke="#ff7a1a" stroke-width="3"/>`
+      + `<circle id="diag-target-dot" cx="{y2}" r="3" fill="#ff7a1a"/>`;
+  }
+
+
+  const zoneLabels = `
+    <text x="${W*0.14}" y="20" text-anchor="middle" class="traj-zone-label">LEFT</text>
+    <text x="${W*0.5}" y="20" text-anchor="middle" class="traj-zone-label">MIDDLE</text>
+    <text x="${W*0.88}" y="20" text-anchor="middle" class="traj-zone-label">RIGHT</text>
+  `;
+  const ball = `<text id="diag-ball" x="{setterY-16}" text-anchor="middle" font-size="22">🏐</text>`;
+  const setterCircle = `<circle id="diag-setter" cx="{setterY}" r="12" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/>`;
+
+
+  svg.innerHTML = `{targetAndArc}{setterCircle}${ball}`;
+
+
+  attachDiagDrag();
+  renderDiagnoseTypeButtons();
+  renderDiagnosePanel();
+}
+
+
+function attachDiagDrag(){
+  const svg = document.getElementById('diagnose-svg');
+  const setterEl = document.getElementById('diag-setter');
+  const ballEl = document.getElementById('diag-ball');
+  let dragging = false;
+
+
+  function xFromClientX(clientX){
+    const rect = svg.getBoundingClientRect();
+    const relX = (clientX - rect.left) / rect.width;
+    return Math.max(14, Math.min(COURT.W-14, relX * COURT.W));
+  }
+  function onDown(e){ dragging = true; try{ e.target.setPointerCapture(e.pointerId); }catch(err){} }
+  function onMove(e){
+    if(!dragging) return;
+    const x = xFromClientX(e.clientX);
+    diagSetterFrac = x / COURT.W;
+    const setterY = COURT.netY - COURT.contactRise;
+    setterEl.setAttribute('cx', x);
+    ballEl.setAttribute('x', x);
+    if(diagSelectedType){
+      const arcEl = document.getElementById('diag-arc');
+      const x2 = COURT.W*trajXFrac(diagSelectedType, diagSetterFrac);
+      arcEl.setAttribute('d', buildArcPath(x, setterY, x2, COURT.netY, peakForType(diagSelectedType)));
+      if(RELATIVE_TO_SETTER.includes(diagSelectedType)){
+        // target itself moves too for the setter-relative types
+        document.getElementById('diag-target').setAttribute('cx', x2);
+        document.getElementById('diag-target-dot').setAttribute('cx', x2);
+      }
+    }
+  }
+  function onUp(e){
+    if(!dragging) return;
+    dragging = false;
+    try{ e.target.releasePointerCapture(e.pointerId); }catch(err){}
+    if(!diagSelectedType) renderDiagnosePanel(); // zone-based panel depends on where the setter landed
+  }
+  [setterEl, ballEl].forEach(el=>{
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+  });
+}
+
+
+function renderDiagnoseTypeButtons(){
+  const container = document.getElementById('diagnose-type-group');
+  container.innerHTML = '';
+  SET_TYPES.filter(t=>t.key!=='other').forEach(t=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'opt-btn' + (diagSelectedType===t.key ? ' selected' : '');
+    b.dataset.value = t.key;
+    b.textContent = t.label;
+    container.appendChild(b);
+  });
+}
+document.getElementById('diagnose-type-group').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.opt-btn');
+  if(!btn) return;
+  diagSelectedType = (diagSelectedType===btn.dataset.value) ? null : btn.dataset.value; // tap again to deselect
+  renderDiagnose(); // updates the 2D view + panel
+  if(diag3D) updateDiag3DArc(); // keep the 3D view in sync even if it's not the active one right now
+});
+
+
+function diagStatBoxes(agg, count){
+  return `<div class="diag-stat-grid">
+    <div class="diag-stat-box"><div class="val">${count}</div><div class="lbl">Sets logged</div></div>
+    <div class="diag-stat-box"><div class="val">${agg.avgQ.toFixed(2)}</div><div class="lbl">Avg quality</div></div>
+    <div class="diag-stat-box"><div class="val">${(agg.hittingPct*100).toFixed(0)}%</div><div class="lbl">Hitting %</div></div>
+    <div class="diag-stat-box"><div class="val">${(agg.assistRate*100).toFixed(0)}%</div><div class="lbl">Assist rate</div></div>
+  </div>`;
+}
+function diagHeading(text){
+  return `<h3 style="margin:0 0 10px; font-family:var(--font-display); font-weight:400; letter-spacing:.02em; color:var(--orange2); font-size:18px;">${text}</h3>`;
+}
+
+
+function renderDiagnosePanel(){
+  const panel = document.getElementById('diagnose-panel');
+  if(diagSelectedType) renderDiagnosePanelForType(diagSelectedType, panel);
+  else renderDiagnosePanelForZone(diagZoneForFrac(diagSetterFrac), panel);
+}
+
+
+function renderDiagnosePanelForType(key, panel){
+  const type = SET_TYPE_MAP[key];
+  const list = sets.filter(s=>s.setTypeKey===key);
+  if(list.length < 3){
+    panel.innerHTML = diagHeading(type.label) + `<div class="empty">Log at least 3 "{list.length} so far).</div>`;
+    return;
+  }
+  const agg = computeAgg(list);
+  const qualities = list.map(s=>s.quality);
+  const stdev = Math.sqrt(qualities.reduce((a,q)=>a+Math.pow(q-agg.avgQ,2),0)/qualities.length);
+
+
+  let issue = null;
+  if(agg.avgQ < 1.8){
+    issue = { text:`Your ${type.label} sets average ${agg.avgQ.toFixed(2)}/3 quality — that's the headline issue here.`, category:'offNet' };
+  } else if(agg.attempts>=3 && agg.hittingPct < 0.2){
+    issue = { text:`Your ${type.label} sets look accurate (avg ${agg.avgQ.toFixed(2)}) but hitting % is only ${(agg.hittingPct*100).toFixed(0)}% — might be getting read early.`, category:'disguise' };
+  } else if(stdev > 0.85){
+    const cat = type.group==='Quick' ? 'quick' : type.group==='Fast' ? 'fasttempo' : 'highball';
+    issue = { text:`Your {stdev.toFixed(2)} rep to rep.`, category: cat };
+  }
+
+
+  const passGood = list.filter(s=>s.passLevel===3);
+  const passBad = list.filter(s=>s.passLevel===1);
+  if(!issue && passGood.length>=2 && passBad.length>=2){
+    const goodAvg = passGood.reduce((a,s)=>a+s.quality,0)/passGood.length;
+    const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
+    if(goodAvg-badAvg >= 1){
+      issue = { text:`{goodAvg.toFixed(2)} → ${badAvg.toFixed(2)} avg quality).`, category:'outofsystem' };
+    }
+  }
+
+
+  panel.innerHTML = diagHeading(type.label) + diagStatBoxes(agg, list.length) +
+    (issue ? `<div class="tip-block"><div class="tip-issue">{renderVideoCategory(issue.category)}</div>`
+           : `<div class="empty">No clear issue detected on this one — it's solid. Keep it up.</div>`);
+}
+
+
+function renderDiagnosePanelForZone(zone, panel){
+  const list = sets.filter(s=>s.zone===zone);
+  if(list.length < 3){
+    panel.innerHTML = diagHeading(zone+' zone') + `<div class="empty">Drag the setter over a zone, or tap a set type above for a sharper read. (${zone}: only ${list.length} set(s) logged so far.)</div>`;
+    return;
+  }
+  const agg = computeAgg(list);
+  const zoneTypes = SET_TYPES.filter(t=>t.zones.length===1 && t.zones[0]===zone);
+  const dominant = zoneTypes[0];
+  const cat = !dominant ? 'general' : dominant.group==='Quick' ? 'quick' : dominant.group==='Fast' ? 'fasttempo' : 'highball';
+  let issueText = null;
+  if(agg.avgQ < 1.8) issueText = `Your ${zone} sets overall average ${agg.avgQ.toFixed(2)}/3 quality.`;
+  else if(agg.attempts>=3 && agg.hittingPct < 0.25) issueText = `{agg.avgQ.toFixed(2)}) but only converting ${(agg.hittingPct*100).toFixed(0)}% of the time.`;
+
+
+  panel.innerHTML = diagHeading(zone+' zone (overall)') + diagStatBoxes(agg, list.length) +
+    (issueText ? `<div class="tip-block"><div class="tip-issue">{renderVideoCategory(cat)}</div>`
+               : `<div class="empty">No clear zone-wide issue — tap a specific set type above for a sharper read.</div>`);
+}
+
+
+// ---------- Diagnose tab, 3D mode: a real player you walk around the court ----------
+// Loaded lazily (only once you switch to 3D) since it needs Three.js from the CDN.
+// Shares diagSetterFrac/diagSelectedType with the 2D view so switching back and
+// forth keeps you in the same spot. Movement is keyboard-only and stays inside
+// the 3D canvas — it never touches the app's other keyboard shortcuts.
+// Real dimensions: a half-court is roughly 30x30 feet, so 1 world unit = 1 foot.
+const COURT3D_WIDTH = 30, COURT3D_DEPTH = 30, NET3D_HEIGHT = 7.8;
+const NET3D_FABRIC_H = 3.3; // real net fabric is ~3.3ft tall, hanging well clear of the floor
+const ATTACK_LINE_Z = 10; // the 10-foot line — bic/c-ball are back-row attacks, so the hitter has to take off from behind this
+// Back-row attacks: the hitter takes off from behind the 10-foot line, but
+// jumps up and forward, so contact happens a bit in front of the line, not behind it.
+const TRAJECTORY_Z3D = { bic: 9, c: 9 };
+const CONTACT_Y = 5.0;    // setter's ball-contact height
+const LANDING_Y = 6.4;    // where the target ring / arc endpoint sits near the net
+const RISE3D = 12.5;      // extra arc rise per unit of peak
+let diagDepthFrac = 0.28; // 0 = at the net, 1 = back line
+let diag3D = null;
+let diag3DActive = false;
+
+
+function fracToX3D(frac){ return (frac-0.5)*COURT3D_WIDTH; }
+function x3DToFrac(x){ return x/COURT3D_WIDTH + 0.5; }
+
+
+function initDiagnose3D(){
+  if(diag3D || typeof THREE==='undefined') return;
+  const wrap = document.getElementById('diagnose-3d-canvas-wrap');
+  const width = wrap.clientWidth || 680, height = wrap.clientHeight || Math.round(width*420/680);
+
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1520);
+  const camera = new THREE.PerspectiveCamera(50, width/height, 0.1, 150);
+  camera.position.set(0, 15, 42); // pulled back further so the whole court fits in frame
+  camera.lookAt(0, 5, 10);
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setSize(width, height);
+  wrap.innerHTML = ''; wrap.appendChild(renderer.domElement);
+
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(3,10,6);
+  scene.add(dirLight);
+
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(COURT3D_WIDTH+2, COURT3D_DEPTH+2),
+    new THREE.MeshStandardMaterial({ color:0x2b3a2e, roughness:0.9 })
+  );
+  floor.rotation.x = -Math.PI/2;
+  floor.position.set(0,0,COURT3D_DEPTH/2);
+  scene.add(floor);
+
+
+  const lineMat = new THREE.LineBasicMaterial({ color:0xffffff, opacity:0.5, transparent:true });
+  function addLine(x1,z1,x2,z2){
+    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,0.01,z1), new THREE.Vector3(x2,0.01,z2)]);
+    scene.add(new THREE.Line(geo, lineMat));
+  }
+  const hw = COURT3D_WIDTH/2;
+  addLine(-hw,0,-hw,COURT3D_DEPTH); addLine(hw,0,hw,COURT3D_DEPTH); addLine(-hw,COURT3D_DEPTH,hw,COURT3D_DEPTH);
+
+
+  // The 10-foot attack line — bic and c-ball are back-row attacks, so a legal
+  // hit on either has to take off from behind this line, not in front of it.
+  const attackLineMat = new THREE.LineBasicMaterial({ color:0xff7a1a, opacity:0.85, transparent:true });
+  const attackLineGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-hw, 0.015, ATTACK_LINE_Z), new THREE.Vector3(hw, 0.015, ATTACK_LINE_Z)
+  ]);
+  scene.add(new THREE.Line(attackLineGeo, attackLineMat));
+
+
+  // Net: a fine wireframe grid (real mesh look, not just a plane outline) plus
+  // top tape and a bottom cable. Fabric is only ~3.3ft tall in real life, so it
+  // hangs well clear of the floor rather than reaching down to it.
+  const netBottomY = NET3D_HEIGHT - NET3D_FABRIC_H;
+  const net = new THREE.Mesh(
+    new THREE.PlaneGeometry(COURT3D_WIDTH, NET3D_FABRIC_H, 32, 6),
+    new THREE.MeshStandardMaterial({ color:0xaeb9cc, transparent:true, opacity:0.6, side:THREE.DoubleSide, wireframe:true })
+  );
+  net.position.set(0, netBottomY + NET3D_FABRIC_H/2, 0);
+  scene.add(net);
+  const tape = new THREE.Mesh(new THREE.BoxGeometry(COURT3D_WIDTH, 0.25, 0.15), new THREE.MeshStandardMaterial({ color:0xeef2f8 }));
+  tape.position.set(0, NET3D_HEIGHT, 0);
+  scene.add(tape);
+  const bottomCable = new THREE.Mesh(new THREE.BoxGeometry(COURT3D_WIDTH, 0.1, 0.1), new THREE.MeshStandardMaterial({ color:0xd8dee8 }));
+  bottomCable.position.set(0, netBottomY, 0);
+  scene.add(bottomCable);
+
+
+  // Support poles — a big pole from the floor partway up, then a thinner pole
+  // out of the top of that to actually reach the net/antenna, like a real
+  // telescoping net post — so the net looks held up rather than floating.
+  const poleMat = new THREE.MeshStandardMaterial({ color:0x555f6e });
+  const bigPoleH = NET3D_HEIGHT*0.62;
+  const thinPoleH = NET3D_HEIGHT - bigPoleH;
+  [-hw, hw].forEach(x=>{
+    const bigPole = new THREE.Mesh(new THREE.CylinderGeometry(1,1,bigPoleH,16), poleMat);
+    bigPole.position.set(x, bigPoleH/2, 0);
+    scene.add(bigPole);
+    const thinPole = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,thinPoleH,12), poleMat);
+    thinPole.position.set(x, bigPoleH + thinPoleH/2, 0);
+    scene.add(thinPole);
+  });
+
+
+  // Antennas: real ones alternate red/white stripes along their length.
+  function buildStripedAntenna(height, segments){
+    const group = new THREE.Group();
+    const segH = height/segments;
+    for(let i=0;i<segments;i++){
+      const color = i%2===0 ? 0xe8283f : 0xffffff;
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,segH,10), new THREE.MeshStandardMaterial({ color }));
+      seg.position.y = -height/2 + segH*(i+0.5);
+      group.add(seg);
+    }
+    return group;
+  }
+  [-hw, hw].forEach(x=>{
+    const ant = buildStripedAntenna(2.5, 8);
+    ant.position.set(x, NET3D_HEIGHT+1.25, 0);
+    scene.add(ant);
+  });
+
+
+  const playerMat = new THREE.MeshStandardMaterial({ color:0xffffff });
+  const player = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.62,5.0,12), playerMat);
+  body.position.y = 2.5;
+  player.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.65,12,12), playerMat);
+  head.position.y = 5.25;
+  player.add(head);
+  scene.add(player);
+
+
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.35,16,16), new THREE.MeshStandardMaterial({ color:0xffffff }));
+  scene.add(ball);
+
+
+  const targetMesh = new THREE.Mesh(new THREE.TorusGeometry(1.2,0.15,8,24), new THREE.MeshStandardMaterial({ color:0xff7a1a }));
+  targetMesh.visible = false;
+  targetMesh.rotation.x = Math.PI/2;
+  scene.add(targetMesh);
+
+
+  // Landing zones: a lighter patch on the floor under every set type's target,
+  // always visible, so you can see roughly where every call should land at once.
+  // Skips the setter-relative types (1/push1/back1/2) since they don't have a
+  // single fixed spot — their live target ring is the marker for those instead.
+  const landingMat = new THREE.MeshStandardMaterial({ color:0x5c8a63, transparent:true, opacity:0.65 });
+  Object.keys(TRAJECTORY_X).filter(key=>!RELATIVE_TO_SETTER.includes(key)).forEach(key=>{
+    const patch = new THREE.Mesh(new THREE.CircleGeometry(1.4, 20), landingMat);
+    patch.rotation.x = -Math.PI/2;
+    patch.position.set(fracToX3D(TRAJECTORY_X[key]), 0.02, TRAJECTORY_Z3D[key] ?? 0);
+    scene.add(patch);
+  });
+
+
+  diag3D = { scene, camera, renderer, player, ball, targetMesh, arcMesh:null, wrap, keys:{}, animId:null };
+  positionDiag3DPlayer();
+  attachDiag3DControls();
+  window.addEventListener('resize', resizeDiag3D);
+  startDiag3DLoop();
+}
+
+
+function positionDiag3DPlayer(){
+  const x = fracToX3D(diagSetterFrac), z = diagDepthFrac*COURT3D_DEPTH;
+  diag3D.player.position.set(x, 0, z);
+  diag3D.ball.position.set(x, CONTACT_Y, z);
+  updateDiag3DArc();
+}
+
+
+function updateDiag3DArc(){
+  if(!diag3D) return;
+  if(diag3D.arcMesh){ diag3D.scene.remove(diag3D.arcMesh); diag3D.arcMesh.geometry.dispose(); diag3D.arcMesh.material.dispose(); diag3D.arcMesh=null; }
+  if(!diagSelectedType){ diag3D.targetMesh.visible=false; return; }
+  const x2 = fracToX3D(trajXFrac(diagSelectedType, diagSetterFrac));
+  const z2 = TRAJECTORY_Z3D[diagSelectedType] ?? 0; // back-row attacks land further from the net
+  const list = sets.filter(s=>s.setTypeKey===diagSelectedType);
+  const avgQ = list.length ? list.reduce((a,s)=>a+s.quality,0)/list.length : null;
+  const colorStr = avgQ!==null ? qualityColor(avgQ) : 'rgb(90,100,120)';
+
+
+  diag3D.targetMesh.visible = true;
+  diag3D.targetMesh.position.set(x2, LANDING_Y, z2);
+  diag3D.targetMesh.material.color.set(colorStr);
+
+
+  const startX = diag3D.player.position.x, startZ = diag3D.player.position.z;
+  const peak = peakForType(diagSelectedType);
+  const peakY = CONTACT_Y + peak*RISE3D;
+  const midX = startX + (x2-startX)*COURT.peakXFrac;
+  const midZ = startZ + (z2-startZ)*COURT.peakXFrac;
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(startX, CONTACT_Y, startZ),
+    new THREE.Vector3(midX, peakY, midZ),
+    new THREE.Vector3(x2, LANDING_Y, z2)
+  );
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.15, 8, false), new THREE.MeshStandardMaterial({ color: colorStr }));
+  diag3D.scene.add(mesh);
+  diag3D.arcMesh = mesh;
+}
+
+
+function attachDiag3DControls(){
+  const wrap = diag3D.wrap;
+  wrap.tabIndex = 0;
+  wrap.addEventListener('click', ()=>wrap.focus());
+  wrap.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    diag3D.keys[k] = true;
+    if(['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  });
+  wrap.addEventListener('keyup', (e)=>{ diag3D.keys[e.key.toLowerCase()] = false; });
+}
+
+
+function resizeDiag3D(){
+  if(!diag3D) return;
+  const wrap = diag3D.wrap;
+  const width = wrap.clientWidth, height = wrap.clientHeight;
+  if(!width || !height) return;
+  diag3D.camera.aspect = width/height;
+  diag3D.camera.updateProjectionMatrix();
+  diag3D.renderer.setSize(width, height);
+}
+
+
+let diag3DPanelThrottle = 0;
+function startDiag3DLoop(){
+  let last = performance.now();
+  function tick(now){
+    if(!diag3D) return;
+    diag3D.animId = requestAnimationFrame(tick);
+    const dt = Math.min(0.05, (now-last)/1000); last = now;
+    if(!diag3DActive) return;
+    const speed = 14; // feet/sec
+    let dx=0, dz=0;
+    const k = diag3D.keys;
+    if(k['arrowleft']||k['a']) dx -= 1;
+    if(k['arrowright']||k['d']) dx += 1;
+    if(k['arrowup']||k['w']) dz -= 1;
+    if(k['arrowdown']||k['s']) dz += 1;
+    if(dx!==0 || dz!==0){
+      const hw = COURT3D_WIDTH/2 - 1;
+      const x = Math.max(-hw, Math.min(hw, diag3D.player.position.x + dx*speed*dt));
+      const z = Math.max(1.2, Math.min(COURT3D_DEPTH-1.2, diag3D.player.position.z + dz*speed*dt));
+      diag3D.player.position.set(x,0,z);
+      diag3D.ball.position.set(x,CONTACT_Y,z);
+      diagSetterFrac = x3DToFrac(x);
+      diagDepthFrac = z/COURT3D_DEPTH;
+      updateDiag3DArc();
+      diag3DPanelThrottle += dt;
+      if(diag3DPanelThrottle > 0.25){
+        diag3DPanelThrottle = 0;
+        if(!diagSelectedType) renderDiagnosePanel();
+      }
+    }
+    diag3D.renderer.render(diag3D.scene, diag3D.camera);
+  }
+  diag3D.animId = requestAnimationFrame(tick);
+}
+
+
+document.getElementById('diag-view-2d-btn').addEventListener('click', ()=>{
+  diag3DActive = false;
+  document.getElementById('diag-view-2d-btn').className = 'primary';
+  document.getElementById('diag-view-3d-btn').className = 'secondary';
+  document.getElementById('diagnose-court').style.display = 'block';
+  document.getElementById('diagnose-court-3d').style.display = 'none';
+  renderDiagnose();
+});
+document.getElementById('diag-view-3d-btn').addEventListener('click', ()=>{
+  if(typeof THREE==='undefined'){ toast('3D view needs an internet connection to load (couldn\'t reach the 3D library)'); return; }
+  diag3DActive = true;
+  document.getElementById('diag-view-3d-btn').className = 'primary';
+  document.getElementById('diag-view-2d-btn').className = 'secondary';
+  document.getElementById('diagnose-court').style.display = 'none';
+  document.getElementById('diagnose-court-3d').style.display = 'block';
+  initDiagnose3D();
+  positionDiag3DPlayer();
+  resizeDiag3D();
+  renderDiagnosePanel();
+});
+
+
+// ---------- Coaching tips (curated videos, matched by rule-based detection) ----------
+const COACHING_LIBRARY = {
+  offNet: {
+    title: 'Off-net accuracy',
+    desc: 'Sets landing too tight to the net or too far off it.',
+    videos: [
+      { title: 'Setting Passes Off the Net — Tutorial', url: 'https://www.youtube.com/watch?v=JZWpogcCAbU' },
+      { title: 'Setting Fundamentals 2.0 — Hand Position, Stance, Footwork', url: 'https://www.youtube.com/watch?v=lEkr3qgIDlI' }
+    ]
+  },
+  disguise: {
+    title: 'Disguising your sets',
+    desc: 'Good-quality sets that still get read or blocked early.',
+    videos: [
+      { title: 'Disguising the Back Set — The Art of Coaching Volleyball', url: 'https://www.theartofcoachingvolleyball.com/setter-training-for-volleyball-disguising-the-back-set/' },
+      { title: '4 Hacks for Back Setting', url: 'https://www.youtube.com/shorts/g_ka6jXpAj4' },
+      { title: 'Setting Form and Technique — Coach Chloe', url: 'https://www.youtube.com/watch?v=dMpI4iz3kCc' }
+    ]
+  },
+  quick: {
+    title: 'Quick tempo (1 / 2 / Back 1 / Push 1 / Bic, middle · C Ball, right)',
+    desc: 'Inconsistent quicks or timing on your fastest, tightest calls.',
+    videos: [
+      { title: 'Setting Quick Sets — Tutorial', url: 'https://www.youtube.com/watch?v=mLQcnr-Xt64' },
+      { title: 'Quick Setting Technique with Pro Setter Joe Worsley', url: 'https://www.youtube.com/watch?v=2f3pIfUTAH4' }
+    ]
+  },
+  fasttempo: {
+    title: 'Fast tempo (3, right / 31 middle / 32, left / Shoot, left)',
+    desc: 'Timing and directional consistency on faster sets.',
+    videos: [
+      { title: 'Back Set — How to Set a Volleyball Tutorial', url: 'https://www.youtube.com/watch?v=W6RTLYsAV1k' },
+      { title: 'Setting Quick Sets — Tutorial', url: 'https://www.youtube.com/watch?v=mLQcnr-Xt64' }
+    ]
+  },
+  highball: {
+    title: 'High ball (4, left / 5, right)',
+    desc: 'Consistency on slower, higher sets to the outside or opposite pin.',
+    videos: [
+      { title: 'Pro Setter Working on High-Ball Setting', url: 'https://www.youtube.com/watch?v=0h-jZLSs-4I' },
+      { title: '4 Steps to Clean, Consistent Hand Sets', url: 'https://www.youtube.com/watch?v=4W56sp-HS30' }
+    ]
+  },
+  general: {
+    title: 'General setting fundamentals',
+    desc: 'Overall footwork, hand shape, and consistency.',
+    videos: [
+      { title: 'How to Set the Volleyball Better as a Setter', url: 'https://www.youtube.com/watch?v=3EopFzvNh9Y' },
+      { title: 'Setting Fundamentals 2.0 — Hand Position, Stance, Footwork', url: 'https://www.youtube.com/watch?v=lEkr3qgIDlI' }
+    ]
+  },
+  outofsystem: {
+    title: 'Setting off a bad pass (out of system)',
+    desc: 'Your set quality drops a lot on bad passes — working on adapting off the net and finding a playable set when the pass isn\'t there.',
+    videos: [
+      { title: 'Setting Passes Off the Net — Tutorial', url: 'https://www.youtube.com/watch?v=JZWpogcCAbU' },
+      { title: 'Spin Set Technique — Volleyball Tutorial', url: 'https://www.youtube.com/live/04CgNspFFxQ' },
+      { title: 'Teaching a Setter to Deal with Out-of-System Offense — The Art of Coaching Volleyball', url: 'https://www.theartofcoachingvolleyball.com/teaching-a-setter/' }
+    ]
+  }
+};
+
+
+function renderVideoCategory(key){
+  const cat = COACHING_LIBRARY[key];
+  if(!cat) return '';
+  return `<div class="sub" style="margin-bottom:6px;">${escapeHtml(cat.desc)}</div>` +
+    cat.videos.map(v=>`<a href="${v.url}" target="_blank" rel="noopener noreferrer" class="video-link"><span class="play">▶</span> ${escapeHtml(v.title)}</a>`).join('');
+}
+
+
+function renderCoachingLibrary(){
+  const el = document.getElementById('coaching-library');
+  el.innerHTML = Object.values(COACHING_LIBRARY).map(cat => `
+    <div class="lib-category">
+      <h3>${escapeHtml(cat.title)}</h3>
+      ${renderVideoCategory(Object.keys(COACHING_LIBRARY).find(k=>COACHING_LIBRARY[k]===cat))}
+    </div>
+  `).join('');
+}
+
+
+function renderCoachingTips(){
+  const el = document.getElementById('coaching-tips');
+  if(sets.length < 5){
+    el.innerHTML = '<div class="empty">Log at least 5 sets to get suggestions tailored to your weak spots.</div>';
+    return;
+  }
+  const suggestions = [];
+
+
+  // Weakest zone by average quality (needs a decent sample)
+  const zoneStats = ZONES.map(z=>{
+    const l = sets.filter(s=>s.zone===z);
+    return { zone: z, count: l.length, avgQ: computeAgg(l).avgQ };
+  }).filter(z=>z.count>=3);
+  if(zoneStats.length){
+    const worstZone = zoneStats.reduce((a,b)=> a.avgQ<=b.avgQ ? a : b);
+    if(worstZone.avgQ < 2){
+      suggestions.push({
+        text: `Your ${worstZone.zone} sets average {worstZone.count} sets logged).`,
+        category: 'offNet'
+      });
+    }
+  }
+
+
+  // Most inconsistent tempo speed-group (highest spread in quality)
+  const groupStats = ['Quick','Fast','Slow'].map(g=>{
+    const l = sets.filter(s=>tempoGroup(s)===g);
+    if(l.length<3) return null;
+    const avgQ = l.reduce((a,s)=>a+s.quality,0)/l.length;
+    const variance = l.reduce((a,s)=>a+Math.pow(s.quality-avgQ,2),0)/l.length;
+    return { group: g, count: l.length, avgQ, stdev: Math.sqrt(variance) };
+  }).filter(Boolean);
+  if(groupStats.length){
+    const mostInconsistent = groupStats.reduce((a,b)=> a.stdev>=b.stdev ? a : b);
+    if(mostInconsistent.stdev > 0.8){
+      const cat = mostInconsistent.group==='Quick' ? 'quick' : mostInconsistent.group==='Fast' ? 'fasttempo' : 'highball';
+      suggestions.push({
+        text: `Your {mostInconsistent.stdev.toFixed(2)} within the same speed group (${mostInconsistent.count} sets).`,
+        category: cat
+      });
+    }
+  }
+
+
+  // Zone/tempo combos that look accurate but aren't converting — possible blocking/read issue
+  const comboStats = [];
+  ZONES.forEach(z=>{
+    SET_TYPES.forEach(t=>{
+      const l = sets.filter(s=>s.zone===z && s.setTypeKey===t.key);
+      if(l.length<3) return;
+      const a = computeAgg(l);
+      comboStats.push({ zone: z, tempo: t.label, count: l.length, avgQ: a.avgQ, hittingPct: a.hittingPct, attempts: a.attempts });
+    });
+  });
+  const blockedCandidate = comboStats.find(c=>c.avgQ>=2.2 && c.attempts>=3 && c.hittingPct<0.15);
+  if(blockedCandidate){
+    suggestions.push({
+      text: `${blockedCandidate.tempo} sets to ${blockedCandidate.zone} look accurate (avg ${blockedCandidate.avgQ.toFixed(2)}) but hitting % is only ${(blockedCandidate.hittingPct*100).toFixed(0)}% — might be getting read early by blockers.`,
+      category: 'disguise'
+    });
+  }
+
+
+  // Big drop-off in set quality on bad passes vs. perfect passes
+  const passGood = sets.filter(s=>s.passLevel===3);
+  const passBad = sets.filter(s=>s.passLevel===1);
+  if(passGood.length>=3 && passBad.length>=3){
+    const goodAvg = passGood.reduce((a,s)=>a+s.quality,0)/passGood.length;
+    const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
+    if(goodAvg - badAvg >= 1){
+      suggestions.push({
+        text: `Your set quality drops from ${goodAvg.toFixed(2)}/3 on perfect passes to {passBad.length} out-of-system reps logged) — a bigger gap than most of your other splits.`,
+        category: 'outofsystem'
+      });
+    }
+  }
+
+
+  if(!suggestions.length){
+    el.innerHTML = '<div class="empty">No clear weak spot detected yet — keep logging across zones and tempos. Here are general fundamentals in the meantime:</div>' + renderVideoCategory('general');
+    return;
+  }
+
+
+  el.innerHTML = suggestions.slice(0,3).map(s => `
+    <div class="tip-block">
+      <div class="tip-issue">${escapeHtml(s.text)}</div>
+      ${renderVideoCategory(s.category)}
+    </div>
+  `).join('');
+}
+
+
+let chartRefs = {};
+function drawBar(canvasId, labels, data, color, label, maxY){
+  if(chartRefs[canvasId]) chartRefs[canvasId].destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  chartRefs[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label, data, backgroundColor:color, borderRadius:6 }] },
+    options:{
+      maintainAspectRatio:false,
+      scales:{
+        y:{ beginAtZero:true, max:maxY, grid:{color:'#2a3f5f'}, ticks:{color:'#a9b7cc'} },
+        x:{ grid:{display:false}, ticks:{color:'#a9b7cc'} }
+      },
+      plugins:{ legend:{display:false} }
+    }
+  });
+}
+
+
+// ---------- Backup reminder ----------
+const LAST_EXPORT_KEY = 'setterStats_lastExportCount';
+function markBackedUp(){
+  localStorage.setItem(LAST_EXPORT_KEY, String(sets.length));
+  updateBackupBanner();
+}
+function updateBackupBanner(){
+  const banner = document.getElementById('backup-banner');
+  const lastExportCount = parseInt(localStorage.getItem(LAST_EXPORT_KEY) || '0', 10);
+  const unbacked = sets.length - lastExportCount;
+  if(unbacked >= 8){
+    document.getElementById('backup-banner-text').textContent =
+      `You have ${unbacked} sets logged since your last backup. Data only lives in this browser — export it so you don't lose it.`;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+document.getElementById('backup-banner-btn').addEventListener('click', ()=>{
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.querySelector('nav button[data-tab="settings"]').classList.add('active');
+  document.getElementById('settings').classList.add('active');
+});
+
+
+// ---------- Export / Import / Clear ----------
+document.getElementById('export-json-btn').addEventListener('click', ()=>{
+  downloadFile('setter-stats-backup.json', JSON.stringify(sets, null, 2), 'application/json');
+  markBackedUp();
+  toast('Backup exported');
+});
+document.getElementById('export-csv-btn').addEventListener('click', ()=>{
+  const header = 'Date,Opponent,PassLevel,Zone,SetType,Quality,Outcome,Notes\n';
+  const rows = sets.map(s=>[s.date, s.opponent, s.passLevel ?? '', s.zone, tempoLabel(s), s.quality, s.outcome, (s.notes||'').replace(/,/g,';')].join(',')).join('\n');
+  downloadFile('setter-stats.csv', header+rows, 'text/csv');
+});
+function downloadFile(filename, content, type){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+document.getElementById('import-json-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(Array.isArray(data)){
+        sets = sets.concat(data.map(d=>({...d, id: d.id||uid()})));
+        saveData(); renderRecent(); updateBackupBanner(); toast(`Imported ${data.length} sets from backup`);
+      }
+    }catch(err){ toast('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+});
+// Clearing everything needs a deliberate action, not just a click — a simple
+// confirm() dialog is too easy to blow through on autopilot. The handle has to
+// be dragged all the way to the end of the track to actually delete.
+document.getElementById('clear-all-btn').addEventListener('click', ()=>{
+  document.getElementById('clear-all-count').textContent = sets.length;
+  document.getElementById('clear-all-confirm').style.display = 'block';
+  resetSlideConfirm();
+});
+document.getElementById('clear-all-cancel-btn').addEventListener('click', ()=>{
+  document.getElementById('clear-all-confirm').style.display = 'none';
+  resetSlideConfirm();
+});
+
+
+const slideTrack = document.getElementById('slide-confirm');
+const slideHandle = document.getElementById('slide-confirm-handle');
+const slideFill = document.getElementById('slide-confirm-fill');
+const slideLabel = document.getElementById('slide-confirm-label');
+let slideDragging = false, slideArmed = false;
+
+
+function resetSlideConfirm(){
+  slideArmed = false;
+  slideTrack.classList.remove('armed');
+  slideHandle.style.left = '3px';
+  slideFill.style.width = '0px';
+  slideLabel.textContent = 'Slide to delete everything →';
+}
+
+
+function slideMaxX(){ return slideTrack.clientWidth - slideHandle.clientWidth - 3; }
+
+
+function slideTo(clientX){
+  const trackRect = slideTrack.getBoundingClientRect();
+  const raw = clientX - trackRect.left - slideHandle.clientWidth/2;
+  const x = Math.max(3, Math.min(slideMaxX(), raw));
+  slideHandle.style.left = x + 'px';
+  slideFill.style.width = (x + slideHandle.clientWidth) + 'px';
+  const pct = x / slideMaxX();
+  if(pct > 0.92){
+    if(!slideArmed){ slideArmed = true; slideTrack.classList.add('armed'); slideLabel.textContent = 'Release to delete!'; }
+  } else if(slideArmed){
+    slideArmed = false; slideTrack.classList.remove('armed'); slideLabel.textContent = 'Slide to delete everything →';
+  }
+}
+
+
+slideHandle.addEventListener('pointerdown', (e)=>{
+  slideDragging = true;
+  slideHandle.setPointerCapture(e.pointerId);
+});
+slideHandle.addEventListener('pointermove', (e)=>{
+  if(!slideDragging) return;
+  slideTo(e.clientX);
+});
+slideHandle.addEventListener('pointerup', (e)=>{
+  if(!slideDragging) return;
+  slideDragging = false;
+  if(slideArmed){
+    sets = []; saveData(); renderRecent(); renderFullTable();
+    localStorage.removeItem(LAST_EXPORT_KEY);
+    updateBackupBanner();
+    document.getElementById('clear-all-confirm').style.display = 'none';
+    resetSlideConfirm();
+    toast('All data cleared');
+  } else {
+    resetSlideConfirm();
+  }
+});
+slideHandle.addEventListener('pointercancel', ()=>{ slideDragging=false; resetSlideConfirm(); });
+
+
+// ---------- Init ----------
+renderRecent();
+populateFilters();
+updateBackupBanner();
+renderCoachingLibrary();
+</script>
+</body>
+</html>
