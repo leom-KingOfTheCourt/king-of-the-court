@@ -252,6 +252,14 @@
   .legend-row{ display:flex; flex-wrap:wrap; gap:10px; font-size:12.5px; color:var(--text-dim); margin:6px 0 12px; }
   .legend-row span{ display:inline-flex; align-items:center; gap:5px; }
   .legend-dot{ width:11px; height:11px; border-radius:50%; display:inline-block; border:1px solid #0a0a0e; }
+  #court3d-wrap{ position:relative; width:100%; aspect-ratio:16/10; min-height:320px; max-height:640px; background:#0a0a0e; border:1px solid var(--border); border-radius:10px; overflow:hidden; touch-action:none; cursor:grab; outline:none; }
+  #court3d-wrap:focus{ border-color:var(--orange); }
+  #court3d-wrap.dragging-setter{ cursor:move; }
+  #court3d-wrap canvas{ display:block; width:100%; height:100%; }
+  .c3d-hud{ position:absolute; left:10px; top:8px; font-size:12px; color:var(--text-dim); pointer-events:none; font-weight:600; text-shadow:0 1px 2px #000; }
+  .c3d-hud b{ color:var(--orange2); }
+  .c3d-fallback{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--text-dim); }
+  #c3d-types .opt-btn .legend-dot{ margin-right:5px; vertical-align:-1px; }
 </style>
 </head>
 <body>
@@ -274,6 +282,7 @@
     <button data-tab="balltime">🎥 Balltime</button>
     <button data-tab="stats">Match Stats</button>
     <button data-tab="court2d">Court Map</button>
+    <button data-tab="court3d">3D Court</button>
     <button data-tab="settings">Export / Backup</button>
   </nav>
 
@@ -731,6 +740,28 @@
           <div id="c2d-summary"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+
+  <!-- COURT 3D -->
+  <section id="court3d">
+    <div class="card">
+      <h2>3D court — set trajectories</h2>
+      <div class="sub">Drag the orange setter around your side of the court (or click the court and use the arrow keys). Drag anywhere else to orbit, scroll or pinch to zoom. Turn set types on and off below. Each one draws an arc from the setter's hands to where the hitter meets it: quicks stay low, shoot and C ball are medium-fast, and 4 and 5 ball go highest. The 1 ball, 2 ball, push 1, and back 1 move with the setter. Court is 18 × 9 m with a 2.43 m net.</div>
+      <label>Set types <span class="batch-mode-note">(tap to toggle — pick as many as you like)</span></label>
+      <div class="opt-group" id="c3d-types"></div>
+      <div class="top-actions" style="justify-content:flex-start; margin:10px 0 12px;">
+        <button class="secondary" id="c3d-all">All</button>
+        <button class="secondary" id="c3d-none">None</button>
+        <button class="secondary" id="c3d-reset-setter">Reset setter</button>
+        <button class="secondary" id="c3d-reset-view">Reset view</button>
+      </div>
+      <div id="court3d-wrap" tabindex="0" aria-label="3D volleyball court. Arrow keys move the setter.">
+        <div class="c3d-hud" id="c3d-hud"></div>
+      </div>
+      <div class="diag-3d-hint">Mouse: drag the setter to move them · drag elsewhere to rotate · scroll to zoom. Touch: drag the setter · one finger elsewhere rotates · pinch zooms. Keyboard: arrow keys move the setter (Shift for bigger steps).</div>
+      <div id="c3d-table" style="margin-top:12px;"></div>
     </div>
   </section>
 
@@ -3333,6 +3364,294 @@ function renderCourt2D(){
       byType.map(({t,a})=>`<tr><td><span class="legend-dot" style="background:${SET_TARGETS_M[t.key].color}; margin-right:6px;"></span>${t.label}</td><td>${a.total}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.assistRate*100).toFixed(0)}%</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`).join('') +
       '</tbody></table>' : '<div class="empty">No sets match these filters.</div>') +
     `<div class="sub" style="margin-top:12px;">Targets: ${C2D_TYPES.filter(t=>c2dSelected.has(t.key)).map(t=>`<b>${t.label}</b> — ${SET_TARGETS_M[t.key].note}`).join(' · ')}</div>`;
+}
+
+
+// ---------- 3D court (three.js r128): draggable setter + live set trajectories ----------
+// World units are meters. x runs across the net (-4.5 = your left sideline,
+// +4.5 = your right), y is up, z is distance from the net (your side is z > 0).
+// Landing points come from SET_TARGETS_M, the same table the 2D court map uses.
+const C3D_TYPE_ORDER = ['1','2','push1','back1','4','shoot','3','5','c'];
+const C3D = { NET_H:2.43, RELEASE_Y:2.4, G:9.81 };
+let c3dSelected = new Set(C3D_TYPE_ORDER);
+let c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d };
+let c3d = null;
+TAB_HOOKS.court3d = ()=>{ renderC3DTypeButtons(); initCourt3D(); if(c3d){ resizeCourt3D(); updateC3DTrajectories(); startC3DLoop(); } };
+
+function renderC3DTypeButtons(){
+  document.getElementById('c3d-types').innerHTML = C3D_TYPE_ORDER.map(k=>{
+    const t = SET_TYPE_MAP[k];
+    return `<button type="button" class="opt-btn${c3dSelected.has(k) ? ' selected' : ''}" data-value="${k}" aria-pressed="${c3dSelected.has(k)}"><span class="legend-dot" style="background:${SET_TARGETS_M[k].color}"></span>${t.label}</button>`;
+  }).join('');
+}
+document.getElementById('c3d-types').addEventListener('click', e=>{
+  const b = e.target.closest('.opt-btn'); if(!b) return;
+  const k = b.dataset.value;
+  c3dSelected.has(k) ? c3dSelected.delete(k) : c3dSelected.add(k);
+  renderC3DTypeButtons(); updateC3DTrajectories();
+});
+document.getElementById('c3d-all').addEventListener('click', ()=>{ c3dSelected = new Set(C3D_TYPE_ORDER); renderC3DTypeButtons(); updateC3DTrajectories(); });
+document.getElementById('c3d-none').addEventListener('click', ()=>{ c3dSelected = new Set(); renderC3DTypeButtons(); updateC3DTrajectories(); });
+document.getElementById('c3d-reset-setter').addEventListener('click', ()=>{ c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d }; placeC3DSetter(); });
+document.getElementById('c3d-reset-view').addEventListener('click', ()=>{ if(c3d){ Object.assign(c3d.orbit, C3D_DEFAULT_ORBIT); applyC3DCamera(); } });
+
+const C3D_DEFAULT_ORBIT = { theta: 0.38, phi: 1.08, radius: 13 };
+
+// Parabola through (0,y0) and (1,y1) peaking at `peak` (peak > max(y0,y1)).
+function c3dParabola(y0, y1, peak){
+  const h = peak - y0, dy = y1 - y0;
+  const b = 2*h + 2*Math.sqrt(Math.max(0, h*h - h*dy));
+  const a = dy - b;
+  return t => y0 + b*t + a*t*t;
+}
+// Everything about one set type's flight given the current setter spot.
+function c3dFlight(key){
+  const T = SET_TARGETS_M[key];
+  const setterM = { x: c3dSetter.x + COURT_M.W/2, d: c3dSetter.z };
+  const tgt = setTargetM(key, setterM);
+  const x1 = tgt.x - COURT_M.W/2, z1 = tgt.d;
+  const y0 = C3D.RELEASE_Y, y1 = T.contact;
+  const peak = Math.max(y0 + T.apex, y1 + 0.15);
+  const f = c3dParabola(y0, y1, peak);
+  const dist = Math.hypot(x1 - c3dSetter.x, z1 - c3dSetter.z);
+  const time = Math.sqrt(2*(peak-y0)/C3D.G) + Math.sqrt(2*(peak-y1)/C3D.G);
+  return { key, T, x0:c3dSetter.x, z0:c3dSetter.z, y0, x1, z1, y1, peak, f, dist, time, tgtM:tgt };
+}
+
+function c3dLabelSprite(text, color){
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = 'rgba(10,10,14,0.82)';
+  const r = 14; ctx.beginPath(); ctx.moveTo(r,4); ctx.arcTo(252,4,252,60,r); ctx.arcTo(252,60,4,60,r); ctx.arcTo(4,60,4,4,r); ctx.arcTo(4,4,252,4,r); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = color; ctx.font = '600 34px Rajdhani, "Bebas Neue", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 34);
+  const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter;
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest:false, transparent:true }));
+  spr.scale.set(1.5, 0.375, 1); spr.renderOrder = 10;
+  return spr;
+}
+
+function initCourt3D(){
+  if(c3d) return;
+  const wrap = document.getElementById('court3d-wrap');
+  if(typeof THREE==='undefined'){ wrap.insertAdjacentHTML('beforeend', '<div class="c3d-fallback">The 3D view needs the three.js library from the CDN — check your connection and reload.</div>'); return; }
+  let renderer;
+  try{ renderer = new THREE.WebGLRenderer({ antialias:true }); }
+  catch(err){ wrap.insertAdjacentHTML('beforeend', '<div class="c3d-fallback">This browser couldn\'t start WebGL, so the 3D court can\'t be drawn here.</div>'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  wrap.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0e);
+  scene.fog = new THREE.Fog(0x0a0a0e, 30, 60);
+  const camera = new THREE.PerspectiveCamera(45, 16/10, 0.1, 200);
+
+  scene.add(new THREE.HemisphereLight(0xfff1e6, 0x1c1a22, 0.75));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.65); sun.position.set(-6, 14, 10); scene.add(sun);
+
+  const add = (geo, color, pos, opts={})=>{ const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness:0.85, ...opts })); if(pos) m.position.set(...pos); scene.add(m); return m; };
+  // floor: free zone, court, tinted front zones
+  const flat = (w,d,color,y,x=0,z=0,opts)=>{ const m = add(new THREE.PlaneGeometry(w,d), color, [x,y,z], opts); m.rotation.x = -Math.PI/2; return m; };
+  flat(26, 34, 0x151319, 0);
+  flat(9, 18, 0x2a1d17, 0.002);
+  flat(9, 3, 0x3a2414, 0.004, 0, 1.5);
+  flat(9, 3, 0x33211a, 0.004, 0, -1.5);
+  // lines (5 cm wide, like the real thing)
+  const lineBox = (w,d,x,z,color=0xf4f2f0)=>add(new THREE.BoxGeometry(w,0.01,d), color, [x,0.008,z], { roughness:0.5 });
+  lineBox(0.05,18,-4.5,0); lineBox(0.05,18,4.5,0); lineBox(9.05,0.05,0,-9); lineBox(9.05,0.05,0,9);
+  lineBox(9.05,0.05,0,0);
+  lineBox(9.05,0.05,0,3,0xff6a00); lineBox(9.05,0.05,0,-3,0xff6a00);
+  // net: 1 m deep mesh hanging from 2.43 m, 9.5 m wide, tape on top, posts outside the court
+  const net = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 1.0, 95, 10), new THREE.MeshBasicMaterial({ color:0xaeb9cc, wireframe:true, transparent:true, opacity:0.45 }));
+  net.position.set(0, C3D.NET_H-0.5, 0); scene.add(net);
+  add(new THREE.BoxGeometry(9.5, 0.07, 0.03), 0xf4f2f0, [0, C3D.NET_H-0.035, 0]);
+  add(new THREE.BoxGeometry(9.5, 0.05, 0.02), 0xf4f2f0, [0, C3D.NET_H-1.0, 0]);
+  [-5.5, 5.5].forEach(x=>add(new THREE.CylinderGeometry(0.06,0.06,2.55,16), 0x555f6e, [x,1.275,0]));
+  [-4.5, 4.5].forEach(x=>{ // antennas: 1.8 m, red/white 10 cm stripes, 0.8 m above the tape
+    for(let i=0;i<18;i++) add(new THREE.CylinderGeometry(0.01,0.01,0.1,8), i%2 ? 0xffffff : 0xe8283f, [x, C3D.NET_H-1.0+0.05+i*0.1, 0], { roughness:0.4 });
+  });
+  // side bands over the sidelines
+  [-4.5, 4.5].forEach(x=>add(new THREE.BoxGeometry(0.05, 1.0, 0.02), 0xf4f2f0, [x, C3D.NET_H-0.5, 0]));
+
+  // setter marker: body + head + floor ring + ball at the release point, plus a fat invisible hit target for dragging
+  const setter = new THREE.Group();
+  const orange = 0xff6a00;
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,1.45,20), new THREE.MeshStandardMaterial({ color:orange, roughness:0.5, emissive:0x331400 }));
+  body.position.y = 0.725; setter.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15,20,16), new THREE.MeshStandardMaterial({ color:orange, roughness:0.5, emissive:0x331400 }));
+  head.position.y = 1.62; setter.add(head);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.38,0.48,40), new THREE.MeshBasicMaterial({ color:orange, side:THREE.DoubleSide, transparent:true, opacity:0.85 }));
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.012; setter.add(ring);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.105,20,16), new THREE.MeshStandardMaterial({ color:0xf4f2f0, roughness:0.6 }));
+  ball.position.y = C3D.RELEASE_Y; setter.add(ball);
+  const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,2.6,12), new THREE.MeshBasicMaterial({ visible:false }));
+  hit.position.y = 1.3; setter.add(hit);
+  const sLabel = c3dLabelSprite('SETTER', '#ff6a00'); sLabel.position.y = 2.05; sLabel.scale.set(1.1,0.275,1); setter.add(sLabel);
+  scene.add(setter);
+
+  const trajGroup = new THREE.Group(); scene.add(trajGroup);
+  const orbit = { ...C3D_DEFAULT_ORBIT, target: new THREE.Vector3(0, 1.4, 1.6) };
+  c3d = { wrap, renderer, scene, camera, setter, setterHit: hit, trajGroup, orbit, flights:[], movers:[], raf:null, t0:performance.now() };
+  c3d.floorPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+  c3d.raycaster = new THREE.Raycaster();
+  applyC3DCamera();
+  attachC3DControls();
+  if(window.ResizeObserver) new ResizeObserver(()=>resizeCourt3D()).observe(wrap);
+  else window.addEventListener('resize', resizeCourt3D);
+  resizeCourt3D();
+  placeC3DSetter();
+}
+
+function applyC3DCamera(){
+  const o = c3d.orbit;
+  o.phi = Math.max(0.12, Math.min(1.5, o.phi));
+  o.radius = Math.max(4, Math.min(40, o.radius));
+  const t = o.target;
+  c3d.camera.position.set(t.x + o.radius*Math.sin(o.phi)*Math.sin(o.theta), t.y + o.radius*Math.cos(o.phi), t.z + o.radius*Math.sin(o.phi)*Math.cos(o.theta));
+  c3d.camera.lookAt(t);
+  c3d.needsRender = true;
+}
+function resizeCourt3D(){
+  if(!c3d) return;
+  const w = c3d.wrap.clientWidth, h = c3d.wrap.clientHeight;
+  if(!w || !h) return;
+  c3d.renderer.setSize(w, h, false);
+  c3d.camera.aspect = w/h; c3d.camera.updateProjectionMatrix();
+  c3d.needsRender = true;
+}
+function placeC3DSetter(){
+  c3dSetter.x = Math.max(-COURT_M.W/2+0.2, Math.min(COURT_M.W/2-0.2, c3dSetter.x));
+  c3dSetter.z = Math.max(0.25, Math.min(COURT_M.L/2-0.2, c3dSetter.z));
+  if(!c3d) return;
+  c3d.setter.position.set(c3dSetter.x, 0, c3dSetter.z);
+  updateC3DTrajectories();
+}
+
+function disposeC3DGroup(g){
+  while(g.children.length){
+    const o = g.children.pop();
+    o.traverse(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material){ if(n.material.map) n.material.map.dispose(); n.material.dispose(); } });
+  }
+}
+function updateC3DTrajectories(){
+  if(!c3d){ renderC3DTable([]); return; }
+  disposeC3DGroup(c3d.trajGroup);
+  c3d.movers = [];
+  const flights = C3D_TYPE_ORDER.filter(k=>c3dSelected.has(k)).map(c3dFlight);
+  c3d.flights = flights;
+  // stagger label heights among targets that sit close together
+  const placed = [];
+  flights.forEach(fl=>{
+    const color = new THREE.Color(fl.T.color);
+    const pts = [];
+    for(let i=0;i<=48;i++){ const t=i/48; pts.push(new THREE.Vector3(fl.x0+(fl.x1-fl.x0)*t, fl.f(t), fl.z0+(fl.z1-fl.z0)*t)); }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, 0.035, 8, false), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:0.35, roughness:0.4 }));
+    c3d.trajGroup.add(tube);
+    // contact point: ball-sized sphere, drop line, and a floor ring under it
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.11,16,12), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:0.5 }));
+    tip.position.set(fl.x1, fl.y1, fl.z1); c3d.trajGroup.add(tip);
+    const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fl.x1,0.02,fl.z1), new THREE.Vector3(fl.x1,fl.y1,fl.z1)]),
+      new THREE.LineDashedMaterial({ color, dashSize:0.12, gapSize:0.08, transparent:true, opacity:0.7 }));
+    drop.computeLineDistances(); c3d.trajGroup.add(drop);
+    const fring = new THREE.Mesh(new THREE.RingGeometry(0.22,0.3,32), new THREE.MeshBasicMaterial({ color, side:THREE.DoubleSide, transparent:true, opacity:0.8 }));
+    fring.rotation.x = -Math.PI/2; fring.position.set(fl.x1, 0.015, fl.z1); c3d.trajGroup.add(fring);
+    let lift = 0;
+    while(placed.some(p=>Math.abs(p.x-fl.x1)<1.3 && Math.abs(p.z-fl.z1)<1.3 && Math.abs(p.lift-lift)<0.3)) lift += 0.38;
+    placed.push({ x:fl.x1, z:fl.z1, lift });
+    const label = c3dLabelSprite(SET_TYPE_MAP[fl.key].label, fl.T.color);
+    label.position.set(fl.x1, fl.y1 + 0.42 + lift, fl.z1); c3d.trajGroup.add(label);
+    // a small ball that flies the arc on a loop at (slowed-down) real-time speed
+    const mover = new THREE.Mesh(new THREE.SphereGeometry(0.09,14,10), new THREE.MeshStandardMaterial({ color:0xf4f2f0, emissive:color, emissiveIntensity:0.25 }));
+    c3d.trajGroup.add(mover);
+    c3d.movers.push({ mesh:mover, curve, time: fl.time });
+  });
+  c3d.needsRender = true;
+  renderC3DTable(flights);
+  const hud = document.getElementById('c3d-hud');
+  hud.innerHTML = `Setter: <b>${(c3dSetter.x+COURT_M.W/2).toFixed(1)} m</b> from left sideline · <b>${c3dSetter.z.toFixed(1)} m</b> off the net · ${flights.length} set type(s)`;
+}
+function renderC3DTable(flights){
+  const el = document.getElementById('c3d-table');
+  if(!flights.length){ el.innerHTML = '<div class="empty">Pick one or more set types above.</div>'; return; }
+  el.innerHTML = `<div class="table-scroll"><table><thead><tr><th>Set</th><th>Contact point</th><th>Distance</th><th>Peak height</th><th>Contact height</th><th>Flight time*</th><th>Target</th></tr></thead><tbody>` +
+    flights.map(fl=>`<tr><td><span class="legend-dot" style="background:${fl.T.color}; margin-right:6px;"></span>${SET_TYPE_MAP[fl.key].label}</td>
+      <td>${fl.tgtM.x.toFixed(1)} m from left · ${fl.tgtM.d.toFixed(1)} m off net</td><td>${fl.dist.toFixed(1)} m</td><td>${fl.peak.toFixed(1)} m</td><td>${fl.y1.toFixed(1)} m</td><td>${fl.time.toFixed(2)} s</td>
+      <td style="white-space:normal; color:var(--text-dim);">${fl.T.note}${fl.T.rel ? ' (moves with the setter)' : ''}</td></tr>`).join('') +
+    `</tbody></table></div><div class="sub" style="margin-top:6px;">* Straight-up gravity estimate from the arc height (no spin or air drag). Sets are released at ${C3D.RELEASE_Y} m.</div>`;
+}
+
+function c3dPointerNDC(e){
+  const r = c3d.renderer.domElement.getBoundingClientRect();
+  return new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+}
+function attachC3DControls(){
+  const el = c3d.renderer.domElement, wrap = c3d.wrap;
+  const pointers = new Map();
+  let mode = null, last = null, pinchDist = 0;
+  el.addEventListener('pointerdown', e=>{
+    wrap.focus({ preventScroll:true });
+    el.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(pointers.size===2){
+      const [a,b] = [...pointers.values()]; pinchDist = Math.hypot(a.x-b.x, a.y-b.y); mode = 'pinch'; return;
+    }
+    c3d.raycaster.setFromCamera(c3dPointerNDC(e), c3d.camera);
+    mode = c3d.raycaster.intersectObject(c3d.setterHit, false).length ? 'setter' : 'orbit';
+    wrap.classList.toggle('dragging-setter', mode==='setter');
+    last = { x:e.clientX, y:e.clientY };
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(mode==='pinch' && pointers.size>=2){
+      const [a,b] = [...pointers.values()]; const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(pinchDist>0){ c3d.orbit.radius *= pinchDist/d; applyC3DCamera(); }
+      pinchDist = d; return;
+    }
+    if(mode==='setter'){
+      c3d.raycaster.setFromCamera(c3dPointerNDC(e), c3d.camera);
+      const p = new THREE.Vector3();
+      if(c3d.raycaster.ray.intersectPlane(c3d.floorPlane, p)){ c3dSetter.x = p.x; c3dSetter.z = p.z; placeC3DSetter(); }
+    } else if(mode==='orbit' && last){
+      const dx = e.clientX-last.x, dy = e.clientY-last.y;
+      c3d.orbit.theta -= dx*0.008; c3d.orbit.phi -= dy*0.006;
+      applyC3DCamera();
+    }
+    last = { x:e.clientX, y:e.clientY };
+  });
+  const end = e=>{
+    pointers.delete(e.pointerId);
+    try{ el.releasePointerCapture(e.pointerId); }catch(err){}
+    if(pointers.size===1 && mode==='pinch'){ mode = 'orbit'; const p=[...pointers.values()][0]; last = { x:p.x, y:p.y }; }
+    else if(!pointers.size){ mode = null; last = null; wrap.classList.remove('dragging-setter'); }
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', e=>{ e.preventDefault(); c3d.orbit.radius *= Math.exp(e.deltaY*0.001); applyC3DCamera(); }, { passive:false });
+  wrap.addEventListener('keydown', e=>{
+    const step = e.shiftKey ? 0.75 : 0.25;
+    const moves = { ArrowLeft:[-step,0], ArrowRight:[step,0], ArrowUp:[0,-step], ArrowDown:[0,step] };
+    if(!moves[e.key]) return;
+    e.preventDefault();
+    c3dSetter.x += moves[e.key][0]; c3dSetter.z += moves[e.key][1];
+    placeC3DSetter();
+  });
+}
+function startC3DLoop(){
+  if(!c3d || c3d.raf) return;
+  const tick = now=>{
+    if(!document.getElementById('court3d').classList.contains('active')){ c3d.raf = null; return; }
+    c3d.raf = requestAnimationFrame(tick);
+    // loop each ball along its arc at half real-time speed, with a short pause at contact
+    c3d.movers.forEach(m=>{
+      const period = m.time*2 + 0.6;
+      const t = Math.max(0, Math.min(1, ((Math.max(0, now - c3d.t0)/1000) % period) / (m.time*2)));
+      m.mesh.position.copy(m.curve.getPointAt(t));
+    });
+    c3d.renderer.render(c3d.scene, c3d.camera);
+  };
+  c3d.raf = requestAnimationFrame(tick);
 }
 
 
