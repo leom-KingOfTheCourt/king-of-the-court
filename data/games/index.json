@@ -1,0 +1,24 @@
+{
+ "type": "kotc-games-index",
+ "version": 1,
+ "games": [
+  {
+   "id": "fefca71f-5e3d-41dc-9a89-7264476cd85d",
+   "name": "VID_20260708_111046_497-1",
+   "date": "2026-07-08",
+   "opponent": null,
+   "result": "L 0–1 (11–18)",
+   "file": "2026-07-08-fefca71f.json",
+   "leoSets": 15
+  },
+  {
+   "id": "c4cc4a68-0e18-4b22-a1e7-6f64fd4e22e5",
+   "name": "VID_20260710_104227_373",
+   "date": "2026-07-10",
+   "opponent": null,
+   "result": "W 2–0 (27–24, 25–18)",
+   "file": "2026-07-10-c4cc4a68.json",
+   "leoSets": 41
+  }
+ ]
+}

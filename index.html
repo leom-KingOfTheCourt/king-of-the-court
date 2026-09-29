@@ -272,6 +272,35 @@
   .pass-read li{ margin:4px 0; line-height:1.4; }
   .pass-tbl-wrap{ overflow-x:auto; }
   .pass-chart-box{ position:relative; height:220px; margin-top:6px; }
+  .pg-games{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:12px; }
+  .pg-game{ background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; cursor:pointer; display:block; }
+  .pg-game.off{ opacity:.55; border-left-color:var(--border); }
+  .pg-game input{ width:auto; margin:0 8px 0 0; vertical-align:-2px; accent-color:var(--orange); }
+  .pg-game .pg-name{ font-family:var(--font-display); font-size:18px; letter-spacing:.04em; color:var(--text); }
+  .pg-game .pg-meta{ font-size:12.5px; color:var(--text-dim); margin-top:4px; line-height:1.45; }
+  .pg-game .pg-res-W{ color:var(--good); font-weight:700; } .pg-game .pg-res-L{ color:var(--bad); font-weight:700; }
+  .pg-badge{ display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:1px 6px; border-radius:3px; margin:4px 4px 0 0; background:#24212b; color:var(--text-dim); }
+  .pg-badge.ok{ color:var(--good); } .pg-badge.no{ color:var(--bad); }
+  .pg-note{ font-size:12.5px; color:var(--text-dim); margin-top:10px; line-height:1.45; }
+  .pg-note code, .sub code{ color:var(--orange2); }
+  .pg-charts{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px; margin-top:10px; }
+  .pg-chart{ background:var(--card2); border:1px solid var(--border); border-radius:6px; padding:10px 12px; }
+  .pg-chart h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 4px; font-size:17px; }
+  .pg-chart .pg-box{ position:relative; height:190px; }
+  .pg-def{ font-size:11.5px; color:var(--text-dim); margin-top:6px; line-height:1.4; }
+  .pg-def b{ color:var(--text); font-weight:700; }
+  .pg-up{ color:var(--good); font-weight:700; } .pg-down{ color:var(--bad); font-weight:700; } .pg-flat{ color:var(--text-dim); font-weight:700; }
+  #pg-table td.na, #pg-detail td.na{ color:var(--text-dim); }
+  #pg-table tr.pg-grp td{ color:var(--orange2); font-family:var(--font-display); letter-spacing:.05em; font-size:14px; padding-top:12px; }
+  #pg-table td:first-child{ white-space:normal; min-width:220px; }
+  .pg-single{ margin-top:12px; padding:10px 12px; border:1px dashed var(--orange2); border-radius:6px; color:var(--orange2); font-weight:700; }
+  .pg-dec{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; margin-top:10px; }
+  .pg-dec .pg-chart .pg-score{ font-family:var(--font-display); font-size:34px; color:var(--orange); line-height:1; }
+  .pg-dec li{ margin:5px 0; font-size:13px; line-height:1.35; } .pg-dec ul{ padding-left:16px; margin:6px 0 0; }
+  #pg-summary ul{ margin:6px 0 0; padding-left:18px; } #pg-summary li{ margin:5px 0; line-height:1.45; }
+  #pg-summary h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:10px 0 0; font-size:17px; }
+  .bt-game-msg{ font-size:12.5px; font-weight:700; margin-top:4px; }
+  .bt-game-msg a{ color:var(--orange2); cursor:pointer; text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -288,6 +317,7 @@
   <nav>
     <button class="active" data-tab="balltime">Balltime</button>
     <button data-tab="stats">Match Stats</button>
+    <button data-tab="progress">Progress</button>
     <button data-tab="court2d">Court Map</button>
     <button data-tab="court3d">3D Court</button>
     <button data-tab="data">All Sets</button>
@@ -553,6 +583,43 @@
     <div class="card">
       <h2>Set type breakdown</h2>
       <div id="stats-type-table"><div class="empty">No sets for this match yet.</div></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="progress">
+    <div class="card">
+      <h2>Progress across games</h2>
+      <div class="sub">Every game here was added from its Balltime link by the ingest script and lives in the site's repo (<code>data/games/</code>), so it's the same on every device. All numbers are Leo's (#5) sets only, counted from Balltime's AI-tagged share-page data. Tick the games to compare.</div>
+      <div class="pg-games" id="pg-games"><div class="sub">Loading games…</div></div>
+      <div class="pg-note" id="pg-howto">To add a game, send its Balltime link to your Grok bot — it runs <code>tools/ingest_balltime.py</code> and the game shows up here.</div>
+    </div>
+    <div class="card" id="pg-summary-card">
+      <h2>What worked / where you're improving</h2>
+      <div id="pg-summary"></div>
+    </div>
+    <div class="card">
+      <h2>Trends</h2>
+      <div class="sub" id="pg-trend-sub">One point per game, by date. A gap means that game's data can't support the number (see the notes under each chart).</div>
+      <div class="pg-charts" id="pg-charts"></div>
+    </div>
+    <div class="card">
+      <h2>Game vs game</h2>
+      <div class="sub">Change = newest selected game minus the oldest. <span style="color:var(--good)">▲ green</span> = better, <span style="color:var(--bad)">▼ red</span> = worse, gray = no better/worse direction (it mostly depends on the pass, not the setter). n/a = not in that game's data.</div>
+      <div class="pass-tbl-wrap" id="pg-table"></div>
+    </div>
+    <div class="card">
+      <h2>Decision-making score (heuristic)</h2>
+      <div class="sub">Not an official rating. Each part is a simple, visible rule scored 0–100; the score is the average of the parts that game's data can support. "Comparable" uses only the parts every selected game has, so games are judged on the same parts.</div>
+      <div id="pg-decision"></div>
+    </div>
+    <div class="card">
+      <h2>Per-set detail: blocker setup &amp; bad-pass sets</h2>
+      <div class="row" style="max-width:520px"><div><label>Game</label><select id="pg-detail-game"></select></div>
+        <div><label>Show</label><select id="pg-detail-filter"><option value="all">All of Leo's sets</option><option value="bad">Bad-pass sets (pass 0–1)</option><option value="scr">Dig / scramble / overpass sets</option><option value="sep">Attack faced 0–1 blockers</option></select></div></div>
+      <div class="pg-note" id="pg-detail-note"></div>
+      <div id="pg-detail-bucket"></div>
+      <div class="pass-tbl-wrap" id="pg-detail"></div>
     </div>
   </section>
 
@@ -3231,6 +3298,283 @@ function renderPassReading(all){
   lines.push(`<b>Caveat:</b> ${all.length} receptions from one AI-tagged match; confirm the trend over a few more matches.`);
   document.getElementById('pass-read').innerHTML = `<h3>What the passes are telling you</h3><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`;
 }
+
+// ---------- Progress tab: multi-game trends from data/games/ (added by tools/ingest_balltime.py) ----------
+const GAMES_INDEX_FILE = 'data/games/index.json';
+let gamesIndexPromise = null, gamesCache = {}, pgSelected = null;
+function loadGamesIndex(){
+  if(!gamesIndexPromise){
+    gamesIndexPromise = fetch(GAMES_INDEX_FILE, { cache:'no-cache' })
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(d=>(d && Array.isArray(d.games)) ? d.games : [])
+      .catch(err=>{ gamesIndexPromise = null; throw err; });
+  }
+  return gamesIndexPromise;
+}
+function loadGame(entry){
+  if(!gamesCache[entry.id]){
+    gamesCache[entry.id] = fetch('data/games/' + entry.file, { cache:'no-cache' })
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .catch(err=>{ delete gamesCache[entry.id]; throw err; });
+  }
+  return gamesCache[entry.id];
+}
+async function loadAllGames(){
+  const idx = await loadGamesIndex();
+  const games = await Promise.all(idx.map(loadGame));
+  return games.sort((a,b)=>(a.date||'').localeCompare(b.date||'') || (a.name||'').localeCompare(b.name||''));
+}
+
+// Balltime tab: tell Leo whether a pasted link is already a Progress game
+async function updateBtGameMsg(videoId){
+  let el = document.getElementById('bt-game-msg');
+  if(!el){ el = document.createElement('div'); el.id = 'bt-game-msg'; el.className = 'bt-game-msg'; document.getElementById('bt-link-msg').after(el); }
+  if(!videoId){ el.innerHTML = ''; return; }
+  el.innerHTML = '<span style="color:var(--text-dim)">Checking the Progress games…</span>';
+  try{
+    const idx = await loadGamesIndex();
+    const cur = parseBalltimeLink(btLinkInput.value);
+    if(!cur || cur.videoId !== videoId) return;
+    const g = idx.find(x=>x.id===videoId);
+    el.innerHTML = g
+      ? `<span style="color:var(--good)">✓ Loaded — ${escapeHtml(g.name||'')} (${escapeHtml(g.date||'')}). <a data-go="progress">See Progress →</a></span>`
+      : `<span style="color:var(--mid)">Not in Progress yet — send this link to your Grok bot to add it. (This site can't pull from Balltime itself.)</span>`;
+  }catch(e){ el.innerHTML = '<span style="color:var(--text-dim)">Couldn\'t check the Progress games list.</span>'; }
+}
+document.getElementById('bt-link-msg').parentElement.addEventListener('click', (e)=>{
+  const a = e.target.closest('[data-go]'); if(a){ e.preventDefault(); showTab(a.dataset.go); }
+});
+btLinkInput.addEventListener('input', ()=>{ const r = parseBalltimeLink(btLinkInput.value); updateBtGameMsg(r && !r.error ? r.videoId : null); });
+
+// ---- metric catalogue: one place for the label, definition, value, format and "better" direction ----
+const PG_FMT = {
+  pct: v=>v==null ? 'n/a' : Math.round(v*100) + '%',
+  eff: v=>v==null ? 'n/a' : (v<0?'-':'') + Math.abs(v).toFixed(3).replace(/^0/,''),
+  score: v=>v==null ? 'n/a' : String(Math.round(v))
+};
+const pgM = (g, path)=>path.split('.').reduce((o,k)=>o==null?null:o[k], g.metrics);
+const PG_METRICS = [
+  { grp:'Set quality', key:'assistPct', label:'Assist %', fmt:'pct', better:1, get:g=>pgM(g,'quality.assistPct'), n:g=>pgM(g,'quality.n'), def:'sets Balltime marked "assist" (led straight to a kill) ÷ all Leo sets' },
+  { grp:'Set quality', key:'killPct', label:'Kill % off Leo\'s sets', fmt:'pct', better:1, get:g=>pgM(g,'quality.killPct'), n:g=>pgM(g,'quality.swings'), def:'kills ÷ attacks that came off Leo\'s sets' },
+  { grp:'Set quality', key:'eff', label:'Hitting eff off Leo\'s sets', fmt:'eff', better:1, get:g=>pgM(g,'quality.eff'), n:g=>pgM(g,'quality.swings'), def:'(kills − errors) ÷ attacks off Leo\'s sets' },
+  { grp:'Set quality', key:'attackedPct', label:'% of sets attacked', fmt:'pct', better:1, get:g=>pgM(g,'quality.attackedPct'), n:g=>pgM(g,'quality.n'), def:'sets followed by a Team A attack ÷ all sets (the rest were free-balled over or never attacked)' },
+  { grp:'In vs out of system', key:'oosShare', label:'Out-of-system share', fmt:'pct', better:0, get:g=>pgM(g,'system.oosShare'), n:g=>pgM(g,'quality.n'), def:'sets off a pass rated 0–1 or off a dig / free ball / overpass / scramble ÷ all sets. Unrated passes count as neither, so with unrated passes this is a minimum' },
+  { grp:'In vs out of system', key:'effIn', label:'Eff in system (pass 2–3)', fmt:'eff', better:1, get:g=>pgM(g,'system.effIn'), n:g=>pgM(g,'system.in'), def:'hitting eff on sets off a serve-receive pass rated 2–3' },
+  { grp:'In vs out of system', key:'effOos', label:'Eff out of system', fmt:'eff', better:1, get:g=>pgM(g,'system.effOos'), n:g=>pgM(g,'system.oos'), def:'hitting eff on out-of-system sets' },
+  { grp:'Back setting', key:'backShare', label:'Behind-the-setter share', fmt:'pct', better:0, get:g=>pgM(g,'back.share'), n:g=>pgM(g,'back.known'), def:'front-row sets hit more than 1 m to Leo\'s right of where he set (he faces the left pin) ÷ sets with a known destination' },
+  { grp:'Back setting', key:'backEff', label:'Eff on back sets', fmt:'eff', better:1, get:g=>pgM(g,'back.eff'), n:g=>pgM(g,'back.behind'), def:'hitting eff on behind-the-setter sets' },
+  { grp:'Quick / middle', key:'midShare', label:'Middle / quick share', fmt:'pct', better:1, get:g=>pgM(g,'quick.share'), n:g=>pgM(g,'quick.known'), def:'sets hit in the middle 3 m of the net, or any front-row set with Balltime air time ≤ 0.9 s (quick tempo) ÷ sets with a known destination' },
+  { grp:'Quick / middle', key:'midInSys', label:'Middle / quick share, in system', fmt:'pct', better:1, get:g=>pgM(g,'quick.inSysShare'), n:g=>pgM(g,'quick.inSysKnown'), def:'same, only sets off a pass rated 2–3' },
+  { grp:'Quick / middle', key:'midEff', label:'Eff on middle / quick sets', fmt:'eff', better:1, get:g=>pgM(g,'quick.eff'), n:g=>pgM(g,'quick.middle'), def:'hitting eff on middle / quick sets' },
+  { grp:'Blocker setup', key:'sepSets', label:'Sets giving a 0–1 blocker attack', fmt:'pct', better:1, get:g=>pgM(g,'blockers.separatedOfSets'), n:g=>pgM(g,'quality.n'), def:'sets whose attack faced 0 or 1 blockers (Balltime num_of_blockers) ÷ all sets. "Separated the block" is inferred from that count only — there are no blocker positions' },
+  { grp:'Blocker setup', key:'effSep', label:'Eff vs 0–1 blockers', fmt:'eff', better:1, get:g=>pgM(g,'blockers.effSeparated'), n:g=>pgM(g,'blockers.separated'), def:'hitting eff on attacks that faced 0–1 blockers' },
+  { grp:'Blocker setup', key:'effTwo', label:'Eff vs 2–3 blockers', fmt:'eff', better:1, get:g=>pgM(g,'blockers.effTwoPlus'), n:g=>{ const d=pgM(g,'blockers.dist'); return d ? d['2']+d['3'] : 0; }, def:'hitting eff on attacks that faced a double or triple block' },
+  { grp:'Bad-pass sets', key:'badAtt', label:'Bad pass (0–1): % attacked', fmt:'pct', better:1, get:g=>pgM(g,'badPass.badPass.attackedPct'), n:g=>pgM(g,'badPass.badPass.n'), def:'sets off a serve-receive pass rated 0–1 that were attacked ÷ those sets' },
+  { grp:'Bad-pass sets', key:'badEff', label:'Bad pass (0–1): eff', fmt:'eff', better:1, get:g=>pgM(g,'badPass.badPass.eff'), n:g=>pgM(g,'badPass.badPass.swings'), def:'hitting eff off those sets' },
+  { grp:'Bad-pass sets', key:'badBeat', label:'Bad pass (0–1): beat the middle', fmt:'pct', better:1, get:g=>pgM(g,'badPass.badPass.beatMiddlePct'), n:g=>pgM(g,'badPass.badPass.n'), def:'bad-pass sets whose attack faced 0–1 blockers ÷ bad-pass sets (inferred from the blocker count)' },
+  { grp:'Bad-pass sets', key:'scrAtt', label:'Dig / scramble: % attacked', fmt:'pct', better:1, get:g=>pgM(g,'badPass.digScramble.attackedPct'), n:g=>pgM(g,'badPass.digScramble.n'), def:'sets off a dig, scramble or overpass that were attacked ÷ those sets' },
+  { grp:'Bad-pass sets', key:'scrEff', label:'Dig / scramble: eff', fmt:'eff', better:1, get:g=>pgM(g,'badPass.digScramble.eff'), n:g=>pgM(g,'badPass.digScramble.swings'), def:'hitting eff off those sets' },
+  { grp:'Bad-pass sets', key:'scrBeat', label:'Dig / scramble: beat the middle', fmt:'pct', better:1, get:g=>pgM(g,'badPass.digScramble.beatMiddlePct'), n:g=>pgM(g,'badPass.digScramble.n'), def:'dig/scramble sets whose attack faced 0–1 blockers ÷ those sets (inferred)' },
+  { grp:'Decision score', key:'decision', label:'Decision score (own parts)', fmt:'score', better:0, get:g=>pgM(g,'decision.score'), n:g=>pgM(g,'decision.used'), def:'heuristic 0–100: average of the parts this game supports (games with different parts aren\'t directly comparable, so no better/worse arrow)' },
+  { grp:'Decision score', key:'decisionCmp', label:'Decision score (comparable)', fmt:'score', better:1, get:g=>g._cmpScore, n:g=>g._cmpUsed, def:'heuristic 0–100: average of only the parts every selected game has' }
+];
+const PG_METRIC = Object.fromEntries(PG_METRICS.map(m=>[m.key,m]));
+// out-of-system share is only a minimum when some passes before Leo's sets were unrated
+function pgVal(m, g){ const v = m.get(g); return (v!=null && m.key==='oosShare' && g.metrics.system.unknown>0 ? '≥' : '') + PG_FMT[m.fmt](v); }
+const PG_CHARTS = [
+  { id:'quality', title:'Set quality', keys:['assistPct','killPct','attackedPct','eff'] },
+  { id:'system', title:'In vs out of system', keys:['oosShare','effIn','effOos'] },
+  { id:'back', title:'Back setting', keys:['backShare','backEff'] },
+  { id:'quick', title:'Quick / middle usage', keys:['midShare','midInSys','midEff'] },
+  { id:'block', title:'Blocker setup', keys:['sepSets','effSep','effTwo'] },
+  { id:'bad', title:'Bad-pass sets', keys:['badAtt','badEff','badBeat','scrEff','scrBeat'] },
+  { id:'decision', title:'Decision score (heuristic)', keys:['decision','decisionCmp'] }
+];
+const PG_LINE_COLORS = ['#ff6a00','#35d488','#7ec4ff','#ffcc33','#e8283f','#b78cff'];
+const PG_BUCKET_LABELS = { 'left':'Left pin', 'right/back-set':'Right / back set', 'middle/quick':'Middle / quick', 'back-row':'Back row', 'not-attacked':'Not attacked', 'unknown':'Destination unknown' };
+
+TAB_HOOKS.progress = ()=>{ renderProgress(); };
+async function renderProgress(){
+  const box = document.getElementById('pg-games');
+  let games;
+  try{ games = await loadAllGames(); }
+  catch(err){ box.innerHTML = `<div class="sub">Couldn't load data/games/ (${escapeHtml(String(err.message||err))}).</div>`; return; }
+  if(!games.length){ box.innerHTML = '<div class="sub">No games yet — send a Balltime link to your Grok bot to add one.</div>'; return; }
+  if(!pgSelected) pgSelected = new Set(games.map(g=>g.id));
+  box.innerHTML = games.map(g=>{
+    const m = g.metrics, a = g.available || {}, on = pgSelected.has(g.id);
+    const res = (g.meta && g.meta.result) || '';
+    const so = g.meta && g.meta.sideOut && g.meta.sideOut.a;
+    const badge = (ok, txt)=>`<span class="pg-badge ${ok?'ok':'no'}">${ok?'✓':'✕'} ${txt}</span>`;
+    return `<label class="pg-game${on?'':' off'}"><div class="pg-name"><input type="checkbox" data-game="${g.id}"${on?' checked':''}>${escapeHtml(g.name||g.id)}</div>
+      <div class="pg-meta">${escapeHtml(g.date||'undated')}${g.opponent?' · vs '+escapeHtml(g.opponent):''} · <span class="pg-res-${res}">${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')}</span><br>
+      Leo: ${m.quality.n} sets, ${m.quality.assists} assists · side-out ${so&&so.of?Math.round(100*so.won/so.of)+'%':'n/a'} · decision ${PG_FMT.score(m.decision.score)} (${m.decision.used}/${m.decision.of} parts)</div>
+      <div>${badge(a.passRatings,'pass ratings')}${badge(a.positional,'set destinations')}${badge(a.setCalls,'set calls')}${badge(a.blockers,'blocker counts')}</div></label>`;
+  }).join('');
+  const sel = games.filter(g=>pgSelected.has(g.id));
+  // comparable decision score: only components scored in every selected game
+  const keys = sel.length ? sel[0].metrics.decision.components.map(c=>c.key).filter(k=>sel.every(g=>{ const c = g.metrics.decision.components.find(x=>x.key===k); return c && c.score!=null; })) : [];
+  games.forEach(g=>{
+    const cs = g.metrics.decision.components.filter(c=>keys.includes(c.key));
+    g._cmpScore = cs.length ? Math.round(cs.reduce((s,c)=>s+c.score,0)/cs.length) : null;
+    g._cmpUsed = cs.length; g._cmpKeys = keys;
+  });
+  renderPgSummary(sel); renderPgCharts(sel); renderPgTable(sel); renderPgDecision(sel, keys); renderPgDetailSelect(games);
+}
+document.getElementById('pg-games').addEventListener('change', (e)=>{
+  const cb = e.target.closest('input[data-game]'); if(!cb) return;
+  if(cb.checked) pgSelected.add(cb.dataset.game); else pgSelected.delete(cb.dataset.game);
+  renderProgress();
+});
+
+function pgNaReason(g, m){
+  const a = g.available || {};
+  if(['backShare','backEff','midShare','midInSys','midEff'].includes(m.key) && !a.positional) return 'no positional data (destinations unknown)';
+  if(['effIn','midInSys','badAtt','badEff','badBeat'].includes(m.key) && !a.passRatings) return 'passes not rated by Balltime';
+  if(['decision','decisionCmp'].includes(m.key)) return 'no decision parts available';
+  return 'not enough sets';
+}
+function renderPgCharts(sel){
+  const box = document.getElementById('pg-charts');
+  PG_CHARTS.forEach(c=>destroyChart('pg-chart-'+c.id));
+  if(!sel.length){ box.innerHTML = '<div class="sub">Tick at least one game above.</div>'; return; }
+  document.getElementById('pg-trend-sub').innerHTML = sel.length===1
+    ? 'Only one game selected — these are single-game values. <b style="color:var(--orange2)">Add another game to see trends.</b>'
+    : 'One point per game, by date. A gap means that game\'s data can\'t support the number (see the notes under each chart).';
+  box.innerHTML = PG_CHARTS.map(c=>{
+    const na = [];
+    c.keys.forEach(k=>{ const m = PG_METRIC[k]; sel.forEach(g=>{ if(m.get(g)==null) na.push(`${m.label} n/a for ${g.date}: ${pgNaReason(g,m)}`); }); });
+    return `<div class="pg-chart"><h3>${c.title}</h3><div class="pg-box"><canvas id="pg-chart-${c.id}"></canvas></div>
+      <div class="pg-def">${c.keys.map(k=>`<b>${PG_METRIC[k].label}</b>: ${PG_METRIC[k].def}.`).join(' ')}</div>
+      ${na.length?`<div class="pg-def" style="color:var(--mid)">${na.map(escapeHtml).join('<br>')}</div>`:''}</div>`;
+  }).join('');
+  const labels = sel.map(g=>g.date || g.name);
+  PG_CHARTS.forEach(c=>{
+    const ms = c.keys.map(k=>PG_METRIC[k]);
+    const pctKeys = ms.filter(m=>m.fmt==='pct'), effKeys = ms.filter(m=>m.fmt==='eff'), scKeys = ms.filter(m=>m.fmt==='score');
+    const ds = ms.map((m,i)=>({
+      label: m.label, data: sel.map(g=>{ const v = m.get(g); return v==null ? null : (m.fmt==='pct' ? Math.round(v*1000)/10 : m.fmt==='eff' ? Math.round(v*1000)/1000 : v); }),
+      borderColor: PG_LINE_COLORS[i % PG_LINE_COLORS.length], backgroundColor: PG_LINE_COLORS[i % PG_LINE_COLORS.length],
+      yAxisID: m.fmt==='eff' ? 'yEff' : 'y', borderDash: m.fmt==='eff' ? [5,4] : [], pointRadius: 5, tension: 0.15, spanGaps: false, _fmt: m.fmt
+    }));
+    const scales = { x:{ ticks:{ color:'#a29fae' }, grid:{ color:'#2c2933' } } };
+    if(pctKeys.length || scKeys.length) scales.y = { position:'left', min:0, max:100, ticks:{ color:'#a29fae', callback:v=>scKeys.length&&!pctKeys.length ? v : v+'%' }, grid:{ color:'#2c2933' } };
+    if(effKeys.length) scales.yEff = { position: scales.y ? 'right' : 'left', suggestedMin:-0.2, suggestedMax:0.6, ticks:{ color:'#a29fae', callback:v=>PG_FMT.eff(v) }, grid:{ drawOnChartArea: !scales.y, color:'#2c2933' } };
+    chartRefs['pg-chart-'+c.id] = new Chart(document.getElementById('pg-chart-'+c.id).getContext('2d'), {
+      type:'line', data:{ labels, datasets: ds },
+      options:{ responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{ size:10.5 } } },
+          tooltip:{ callbacks:{ label:(ctx)=>`${ctx.dataset.label}: ${ctx.raw==null?'n/a':(ctx.dataset._fmt==='pct'?ctx.raw+'%':ctx.dataset._fmt==='eff'?PG_FMT.eff(ctx.raw):ctx.raw)}` } } },
+        scales }
+    });
+  });
+}
+
+function pgDelta(m, a, b){
+  if(a==null || b==null) return { html:'<span class="pg-flat">—</span>', d:null, dir:0 };
+  const d = b - a;
+  const small = m.fmt==='eff' ? 0.005 : m.fmt==='pct' ? 0.005 : 0.5;
+  const txt = m.fmt==='pct' ? `${d>=0?'+':'−'}${Math.abs(Math.round(d*100))} pts` : m.fmt==='eff' ? `${d>=0?'+':'−'}${Math.abs(d).toFixed(3).replace(/^0/,'')}` : `${d>=0?'+':'−'}${Math.abs(Math.round(d))}`;
+  if(Math.abs(d) < small) return { html:`<span class="pg-flat">= ${txt}</span>`, d, dir:0 };
+  const good = m.better===0 ? 0 : (d>0 ? m.better : -m.better);
+  const cls = good>0 ? 'pg-up' : good<0 ? 'pg-down' : 'pg-flat';
+  return { html:`<span class="${cls}">${d>0?'▲':'▼'} ${txt}</span>`, d, dir:good };
+}
+function renderPgTable(sel){
+  const box = document.getElementById('pg-table');
+  if(!sel.length){ box.innerHTML = ''; return; }
+  const first = sel[0], last = sel[sel.length-1];
+  let grp = '', rows = '';
+  PG_METRICS.forEach(m=>{
+    if(m.grp!==grp){ grp = m.grp; rows += `<tr class="pg-grp"><td colspan="${sel.length+2}">${grp}</td></tr>`; }
+    rows += `<tr><td title="${escapeHtml(m.def)}">${m.label}</td>${sel.map(g=>{ const v = m.get(g); return v==null ? `<td class="na" title="${escapeHtml(pgNaReason(g,m))}">n/a</td>` : `<td>${pgVal(m,g)} <span style="color:var(--text-dim)">(n=${m.n(g)??'—'})</span></td>`; }).join('')}
+      <td>${sel.length>1 ? pgDelta(m, m.get(first), m.get(last)).html : '<span class="pg-flat">—</span>'}</td></tr>`;
+  });
+  box.innerHTML = `<table><thead><tr><th>Metric</th>${sel.map(g=>`<th>${escapeHtml(g.date||'')}<br><span style="font-size:11px;color:var(--text-dim)">${escapeHtml((g.meta&&g.meta.resultText)||'')}</span></th>`).join('')}<th>Change</th></tr></thead><tbody>${rows}</tbody></table>
+    ${sel.length===1?'<div class="pg-single">Add another game to see trends and changes.</div>':''}`;
+}
+
+function renderPgDecision(sel, keys){
+  const box = document.getElementById('pg-decision');
+  box.innerHTML = `<div class="pg-dec">${sel.map(g=>{ const d = g.metrics.decision; return `<div class="pg-chart">
+    <h3>${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</h3>
+    <div><span class="pg-score">${PG_FMT.score(d.score)}</span> <span style="color:var(--text-dim)">own (${d.used}/${d.of} parts)</span> &nbsp; <span class="pg-score" style="font-size:24px;color:var(--orange2)">${PG_FMT.score(g._cmpScore)}</span> <span style="color:var(--text-dim)">comparable (${g._cmpUsed} part${g._cmpUsed===1?'':'s'})</span></div>
+    <ul>${d.components.map(c=>`<li><b>${escapeHtml(c.label)}</b>: ${c.score==null?'<span style="color:var(--text-dim)">n/a — '+escapeHtml(c.rule)+'</span>':`<b style="color:var(--orange2)">${c.score}</b>/100${c.value!=null?' ('+Math.round(c.value*100)+'%'+(c.key==='noRepeat'?`, ${c.repeats} repeat${c.repeats===1?'':'s'} in ${c.n} chance${c.n===1?'':'s'}`:`, n=${c.n}`)+')':''} <span style="color:var(--text-dim)">— ${escapeHtml(c.rule)}</span>`}${keys.includes(c.key)?'':' <span class="pg-badge">not in comparable</span>'}</li>`).join('')}</ul></div>`; }).join('')}</div>`;
+}
+
+function renderPgSummary(sel){
+  const box = document.getElementById('pg-summary');
+  if(!sel.length){ box.innerHTML = '<div class="sub">Tick at least one game.</div>'; return; }
+  const last = sel[sel.length-1], first = sel[0];
+  const f = (k,g)=>PG_FMT[PG_METRIC[k].fmt](PG_METRIC[k].get(g));
+  const worked = [];
+  const lm = last.metrics;
+  worked.push(`<b>${escapeHtml(last.date)}</b> (${escapeHtml(last.meta.resultText||'')}): ${lm.quality.n} sets, ${lm.quality.assists} assists (${f('assistPct',last)}), hitting ${f('eff',last)} off your sets, ${f('attackedPct',last)} of sets attacked.`);
+  const bb = Object.entries((lm.blockers && lm.blockers.byBucket) || {}).filter(([k,v])=>k!=='unknown' && v.attacks>=3 && v.eff!=null).sort((a,b)=>b[1].eff-a[1].eff);
+  if(bb.length) worked.push(`Best destination: <b>${PG_BUCKET_LABELS[bb[0][0]]}</b> — ${PG_FMT.eff(bb[0][1].eff)} on ${bb[0][1].attacks} swings, ${Math.round(100*bb[0][1].separatedOfAttacks)}% of them against 0–1 blockers.${bb.length>1?` Weakest: ${PG_BUCKET_LABELS[bb[bb.length-1][0]]} (${PG_FMT.eff(bb[bb.length-1][1].eff)} on ${bb[bb.length-1][1].attacks}).`:''}`);
+  else worked.push('Set destinations aren\'t in this game\'s data (no positional tracking), so there\'s no per-zone breakdown.');
+  const b = lm.blockers;
+  if(b && b.known) worked.push(`Blocker setup (inferred from Balltime's blocker count): ${f('sepSets',last)} of your sets gave the hitter 0–1 blockers; eff ${f('effSep',last)} against 0–1 vs ${f('effTwo',last)} against 2–3.`);
+  const bp = lm.badPass;
+  if(bp.badPass.n) worked.push(`Bad passes (0–1): ${bp.badPass.n} sets, ${f('badAtt',last)} attacked at ${f('badEff',last)}; ${f('badBeat',last)} beat the middle (0–1 blockers, inferred). Most went to: ${Object.entries(bp.badPass.dest).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).map(([k,n])=>PG_BUCKET_LABELS[k].toLowerCase()+' '+n).join(', ')}.`);
+  if(bp.digScramble.n) worked.push(`Dig / scramble sets: ${bp.digScramble.n}, ${f('scrAtt',last)} attacked at ${f('scrEff',last)}; ${f('scrBeat',last)} beat the middle.`);
+  let trend = '';
+  if(sel.length>1){
+    const ups = [], downs = [], flat = [], na = [];
+    PG_METRICS.filter(m=>m.key!=='decision').forEach(m=>{
+      const a = m.get(first), c = m.get(last);
+      if(a==null || c==null){ na.push(m.label); return; }
+      const d = pgDelta(m, a, c);
+      const line = `${m.label} ${pgVal(m,first)} → ${pgVal(m,last)} (${d.html}; n ${m.n(first)??'—'} → ${m.n(last)??'—'})`;
+      if(d.dir>0) ups.push({ m, line, d:d.d }); else if(d.dir<0) downs.push({ m, line, d:d.d }); else if(m.better===0) flat.push(line);
+    });
+    const big = arr=>arr.sort((x,y)=>Math.abs(y.d)*(y.m.fmt==='eff'?1:1)-Math.abs(x.d)).slice(0,6).map(x=>`<li>${x.line}</li>`).join('');
+    trend = `<h3>Where you're improving (${escapeHtml(first.date)} → ${escapeHtml(last.date)})</h3><ul>${ups.length?big(ups):'<li>Nothing clearly up between these games.</li>'}</ul>
+      <h3>Where it dipped</h3><ul>${downs.length?big(downs):'<li>Nothing clearly down.</li>'}</ul>
+      ${flat.length?`<h3>Changed, no better/worse direction</h3><ul>${flat.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}
+      ${na.length?`<div class="pg-note">Can't compare yet (missing in one of the games): ${na.map(escapeHtml).join(', ')}.</div>`:''}`;
+  }
+  box.innerHTML = `<h3>What worked in your latest selected game</h3><ul>${worked.map(x=>`<li>${x}</li>`).join('')}</ul>${trend}
+    ${sel.length===1?'<div class="pg-single">Add another game to see trends and progress.</div>':''}
+    <div class="pg-note">Small samples (one game = a few dozen sets) move a lot from game to game; AI-tagged data. ${sel.map(g=>(g.notes||[]).filter(n=>/No positional|unrated|No Balltime set calls/.test(n)).map(n=>escapeHtml(g.date+': '+n)).join(' ')).filter(Boolean).join(' ')}</div>`;
+}
+
+function renderPgDetailSelect(games){
+  const sel = document.getElementById('pg-detail-game');
+  const cur = sel.value;
+  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+  renderPgDetail();
+}
+async function renderPgDetail(){
+  const id = document.getElementById('pg-detail-game').value;
+  const idx = await loadGamesIndex(); const entry = idx.find(g=>g.id===id); if(!entry) return;
+  const g = await loadGame(entry);
+  const flt = document.getElementById('pg-detail-filter').value;
+  const cs = g.chains.filter(c=> flt==='bad' ? (c.origin==='serve-receive' && c.pass!=null && c.pass<=1)
+    : flt==='scr' ? ['dig','scramble','overpass'].includes(c.origin)
+    : flt==='sep' ? (c.blockers!=null && c.blockers<=1 && ['kill','error','in_play'].includes(c.result)) : true);
+  const a = g.available || {};
+  document.getElementById('pg-detail-note').innerHTML = [
+    'Blockers = Balltime\'s num_of_blockers on the attack (0–3). "Separated the block" / "beat the middle" = 0–1 blockers — inferred from that count; Balltime gives no blocker positions, ids or block types' + (g.actions && g.actions.hidden ? ', and its only block actions are hidden unverified proposals' : '') + '.',
+    a.positional ? 'Destination = where the set was hit, relative to Leo when he set it.' : 'This game has no positional data, so destinations are unknown.',
+    a.passRatings ? '' : 'Balltime didn\'t rate the passes in this game ("unrated").'
+  ].filter(Boolean).join(' ');
+  const bb = (g.metrics.blockers && g.metrics.blockers.byBucket) || {};
+  const bl = g.metrics.blockers;
+  document.getElementById('pg-detail-bucket').innerHTML = `<table style="max-width:760px"><thead><tr><th>Destination</th><th>Attacks</th><th>0–1 blockers</th><th>Eff</th></tr></thead><tbody>
+    ${Object.entries(bb).map(([k,v])=>`<tr><td>${PG_BUCKET_LABELS[k]||k}</td><td>${v.attacks}</td><td>${v.separated} (${PG_FMT.pct(v.separatedOfAttacks)})</td><td>${PG_FMT.eff(v.eff)}</td></tr>`).join('')}
+    <tr><td><b>All</b> — blockers faced 0 / 1 / 2 / 3</td><td>${bl.known}</td><td>${bl.dist['0']} / ${bl.dist['1']} / ${bl.dist['2']} / ${bl.dist['3']}</td><td>eff by blockers: ${['0','1','2','3'].map(k=>PG_FMT.eff(bl.effBy[k])).join(' / ')}</td></tr></tbody></table>`;
+  const res = { kill:'<span class="pg-up">kill</span>', error:'<span class="pg-down">error</span>', in_play:'in play', free:'free ball over', none:'not attacked', 'attack-unknown':'attack (result unknown)' };
+  const originTxt = c => c.origin==='serve-receive' ? `pass ${c.pass==null?'unrated':c.pass}` : c.origin;
+  document.getElementById('pg-detail').innerHTML = cs.length ? `<table><thead><tr><th>Rally</th><th>Set</th><th>Off</th><th>System</th><th>Destination</th><th>Call</th><th>Blockers</th><th>Hitter</th><th>Result</th><th>Rally</th></tr></thead><tbody>
+    ${cs.map(c=>`<tr><td>${c.rally}</td><td>${c.set}</td><td>${escapeHtml(originTxt(c))}</td><td>${c.system==='in'?'in':c.system==='oos'?'<span style="color:var(--mid)">OOS</span>':'<span style="color:var(--text-dim)">?</span>'}</td>
+      <td>${c.zone ? escapeHtml(c.zone)+(c.quick?' · quick':'') : '<span style="color:var(--text-dim)">n/a</span>'}</td><td>${c.call?escapeHtml(c.call):'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td>${c.blockers==null?'<span style="color:var(--text-dim)">—</span>':c.blockers+(c.blockers<=1?' <span class="pg-up">✓</span>':'')}</td><td>${c.attacker?'#'+escapeHtml(c.attacker):'—'}</td><td>${res[c.result]||escapeHtml(c.result)}</td><td>${c.won?'<span class="pg-up">won</span>':'<span class="pg-down">lost</span>'}</td></tr>`).join('')}</tbody></table>
+    <div class="pg-note">${cs.length} set${cs.length===1?'':'s'} shown. ✓ = attack faced 0–1 blockers.</div>` : '<div class="pg-note">No sets match this filter in this game' + (flt==='bad' && !a.passRatings ? ' (passes weren\'t rated by Balltime)' : '') + '.</div>';
+}
+document.getElementById('pg-detail-game').addEventListener('change', renderPgDetail);
+document.getElementById('pg-detail-filter').addEventListener('change', renderPgDetail);
 
 populateFilters();
 updateBackupBanner();
