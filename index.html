@@ -621,6 +621,9 @@
     <div class="card">
       <h2>Saved matches</h2>
       <div class="sub">Tag sets with a match from the Log Sets form, Bulk Import, or the All Sets tab.</div>
+      <div class="top-actions" style="justify-content:flex-start; margin-bottom:8px;">
+        <button class="secondary" id="bt-load-july10">Load July 10 match (real Balltime data)</button>
+      </div>
       <div id="bt-match-list" class="table-scroll"><div class="empty">No matches saved yet.</div></div>
     </div>
 
@@ -2770,6 +2773,38 @@ document.getElementById('bt-match-list').addEventListener('click', (e)=>{
   }
 });
 
+// ---- July 10 match: real stats counted from the Balltime share page (data/match-2026-07-10.json) ----
+const JULY10_FILE = 'data/match-2026-07-10.json';
+document.getElementById('bt-load-july10').addEventListener('click', async ()=>{
+  let data;
+  try{
+    const res = await fetch(JULY10_FILE, { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    data = await res.json();
+  }catch(err){ toast("Couldn't load the July 10 data file"); return; }
+  if(!data || !data.match || !data.stats || !Array.isArray(data.stats.rows)){ toast('July 10 data file looks wrong'); return; }
+  const info = data.match;
+  // idempotent: one match per Balltime video id — reuse it if it's already saved
+  let m = matches.find(x=>x.videoId===info.videoId);
+  if(m && m.stats && m.stats.source==='balltime-share'){
+    toast('July 10 match is already loaded'); openMatchStats(m.id); return;
+  }
+  if(m && m.stats && m.stats.rows && !confirm(`"${m.name}" already has other stats attached. Replace them with the real Balltime data?`)) return;
+  if(!m){
+    m = { id:'m_'+uid(), link: info.link, videoId: info.videoId, date: info.date, opponent: info.opponent||'', name: info.name, notes: info.notes||'', createdAt: Date.now(), stats:null };
+    matches.push(m);
+  } else {
+    if(!m.name) m.name = info.name;
+    if(!m.date) m.date = info.date;
+    if(!m.link) m.link = info.link;
+    if(info.notes && !(m.notes||'').includes(info.notes)) m.notes = m.notes ? m.notes + ' · ' + info.notes : info.notes;
+  }
+  m.stats = { ...data.stats, importedAt: new Date().toISOString() };
+  saveMatches(); refreshMatchUi();
+  toast('Loaded July 10 match — real Balltime data');
+  openMatchStats(m.id);
+});
+
 // ---- Balltime CSV parsing ----
 // Header text is normalized (lowercase, only a-z 0-9 % #) and looked up in this
 // alias table. A group row above the header (e.g. "Attack" over "Errors") is
@@ -2940,6 +2975,7 @@ function btFmt(v, col){
   if(v==null || v==='') return '<span style="color:var(--text-dim);">—</span>';
   if(col.type==='text') return escapeHtml(String(v));
   if(col.type==='pct') return (v<0?'-':'') + Math.abs(v).toFixed(3).replace(/^0/,'');
+  if(col.key==='passRating') return v.toFixed(3);
   return Number.isInteger(v) ? String(v) : v.toFixed(2);
 }
 function renderBtPreview(){
@@ -3114,8 +3150,9 @@ function renderMatchBalltime(m){
   const T = {};
   ['kills','attackAttempts','attackErrors','assists','setAttempts','setErrors','serves','aces','serveErrors','receptions','receptionErrors','digs','blocks'].forEach(k=>{ T[k] = btHas(players,k) ? btSum(players,k) : null; });
   const teamHit = T.attackAttempts ? ((T.kills||0)-(T.attackErrors||0))/T.attackAttempts : null;
-  const passers = players.filter(p=>typeof p.passRating==='number' && (p.receptions||0)>0);
-  const passRating = passers.length ? passers.reduce((a,p)=>a+p.passRating*p.receptions,0)/passers.reduce((a,p)=>a+p.receptions,0)
+  const passW = p=> typeof p.ratedReceptions==='number' ? p.ratedReceptions : (p.receptions||0); // weight by rated passes when the data says how many
+  const passers = players.filter(p=>typeof p.passRating==='number' && passW(p)>0);
+  const passRating = passers.length ? passers.reduce((a,p)=>a+p.passRating*passW(p),0)/passers.reduce((a,p)=>a+passW(p),0)
                    : (totalRow && typeof totalRow.passRating==='number' ? totalRow.passRating : null);
   const setterAssistShare = setter && T.kills ? (setter.assists||0)/T.kills : null;
   const setterAssistRate = setter && setter.setAttempts ? (setter.assists||0)/setter.setAttempts : null;
@@ -3129,7 +3166,7 @@ function renderMatchBalltime(m){
     T.assists!=null && box(T.assists,'Assists'),
     T.aces!=null && box(T.aces,'Aces'),
     T.serveErrors!=null && box(T.serveErrors,'Serve errors'),
-    passRating!=null && box(passRating.toFixed(2),'Avg pass rating'),
+    passRating!=null && box(passRating.toFixed(3),'Avg pass rating'),
     T.digs!=null && box(T.digs,'Digs'),
     T.blocks!=null && box(Number.isInteger(T.blocks)?T.blocks:T.blocks.toFixed(1),'Blocks')
   ].filter(Boolean).join('');
@@ -3146,7 +3183,7 @@ function renderMatchBalltime(m){
     players.map((p,i)=>`<tr${i===setterIdx ? ' style="background:rgba(255,106,0,.08);"' : ''}><td>${escapeHtml(p.player||'')}${i===setterIdx ? ' <span class="pill">Setter</span>' : ''}</td>${cols.map(c=>`<td>${btFmt(p[c.key], c)}</td>`).join('')}<td>${T.attackAttempts && p.attackAttempts ? pct1(p.attackAttempts/T.attackAttempts) : '—'}</td>${extra.map(h=>`<td>${escapeHtml(p.raw && p.raw[h] || '')}</td>`).join('')}</tr>`).join('') +
     `<tr style="border-top:2px solid var(--border);"><td><b>Team (sum)</b></td>${cols.map(c=>{
         if(c.key==='hittingPct') return `<td><b>${hitFmt(teamHit)}</b></td>`;
-        if(c.key==='passRating') return `<td><b>${passRating!=null ? passRating.toFixed(2) : '—'}</b></td>`;
+        if(c.key==='passRating') return `<td><b>${passRating!=null ? passRating.toFixed(3) : '—'}</b></td>`;
         if(c.key==='jersey') return '<td></td>';
         const v = btHas(players,c.key) ? btSum(players,c.key) : null;
         return `<td><b>${v==null ? '—' : (Number.isInteger(v) ? v : v.toFixed(1))}</b></td>`;
@@ -3156,8 +3193,11 @@ function renderMatchBalltime(m){
   const hasAttack = btHas(players,'attackAttempts') || btHas(players,'kills');
   el.innerHTML =
     (m.stats.isExample ? '<div class="example-banner">⚠ EXAMPLE DATA — the Balltime numbers below are made up (loaded with "Load example data"). They are not from a real match.</div>' : '') +
+    matchResultHtml(m.stats) +
     `<div class="card"><h2>Team totals ${m.stats.isExample ? '<span class="example-badge">Example</span>' : ''}</h2>
-      <div class="sub">Summed from the player rows of the Balltime CSV${m.stats.fileName ? ' ('+escapeHtml(m.stats.fileName)+')' : ''}, imported ${escapeHtml((m.stats.importedAt||'').slice(0,10))}.</div>
+      <div class="sub">${m.stats.source==='balltime-share'
+        ? `${escapeHtml(m.stats.teamLabels ? m.stats.teamLabels.a : 'Your team')} — summed from the player rows (${escapeHtml(m.stats.sourceNote||'')}).`
+        : `Summed from the player rows of the Balltime CSV${m.stats.fileName ? ' ('+escapeHtml(m.stats.fileName)+')' : ''}, imported ${escapeHtml((m.stats.importedAt||'').slice(0,10))}.`}</div>
       <div class="stat-grid">${totalsHtml || '<div class="empty">No numeric team columns found.</div>'}</div>
       <h2 style="margin-top:16px;">Setter</h2>
       <div class="stat-grid">${setterHtml}</div>
@@ -3190,6 +3230,45 @@ function renderMatchBalltime(m){
         plugins:{ legend:{ labels:{ color:'#a29fae' } } } }
     });
   }
+}
+
+// Set scores, side-out % and a side-by-side team comparison, when the stored stats carry them
+// (the July 10 Balltime share-page file does; a plain CSV export doesn't).
+function matchResultHtml(st){
+  if(!st || !st.score || !st.score.sets) return '';
+  const L = st.teamLabels || { a:'Team A', b:'Team B' };
+  const frac = o => o && o.of ? `${o.won}/${o.of} <span style="color:var(--text-dim);">(${(o.won/o.of*100).toFixed(1)}%)</span>` : '—';
+  const box = (val,lbl)=>`<div class="stat-box"><div class="val">${val}</div><div class="lbl">${lbl}</div></div>`;
+  const sw = st.score.setsWon || {};
+  const boxes = [
+    box(`${sw.a ?? '—'}–${sw.b ?? '—'}`, 'Sets won (A–B)'),
+    box(st.score.sets.map(s=>`${s.a}–${s.b}`).join(', '), 'Set scores'),
+    st.sideOut && st.sideOut.a && st.sideOut.a.of ? box((st.sideOut.a.won/st.sideOut.a.of*100).toFixed(1)+'%', `Side-out % — ${escapeHtml(L.a)} (${st.sideOut.a.won}/${st.sideOut.a.of})`) : '',
+    st.sideOut && st.sideOut.b && st.sideOut.b.of ? box((st.sideOut.b.won/st.sideOut.b.of*100).toFixed(1)+'%', `Side-out % — ${escapeHtml(L.b)} (${st.sideOut.b.won}/${st.sideOut.b.of})`) : '',
+    st.pointsWon ? box(`${st.pointsWon.a}–${st.pointsWon.b}`, `Points won (${st.rallies||st.pointsWon.a+st.pointsWon.b} rallies)`) : ''
+  ].join('');
+  const setRows = st.score.sets.map(s=>`<tr><td>Set ${s.set}</td><td><b>${s.a}</b></td><td><b>${s.b}</b></td><td>${frac(s.sideOut && s.sideOut.a)}</td><td>${frac(s.sideOut && s.sideOut.b)}</td><td>${frac(s.pointScoring && s.pointScoring.a)}</td><td>${frac(s.pointScoring && s.pointScoring.b)}</td></tr>`).join('') +
+    `<tr style="border-top:2px solid var(--border);"><td><b>Match</b></td><td><b>${st.pointsWon ? st.pointsWon.a : ''}</b></td><td><b>${st.pointsWon ? st.pointsWon.b : ''}</b></td><td>${frac(st.sideOut && st.sideOut.a)}</td><td>${frac(st.sideOut && st.sideOut.b)}</td><td>${frac(st.pointScoring && st.pointScoring.a)}</td><td>${frac(st.pointScoring && st.pointScoring.b)}</td></tr>`;
+  let cmp = '';
+  const TT = st.teamTotals;
+  if(TT && TT.a && TT.b){
+    const n = v => v==null ? '—' : v;
+    const lines = [
+      ['Kills', n(TT.a.kills), n(TT.b.kills)], ['Attack errors', n(TT.a.attackErrors), n(TT.b.attackErrors)], ['Attack attempts', n(TT.a.attackAttempts), n(TT.b.attackAttempts)],
+      ['Hitting %', hitFmt(TT.a.hittingPct), hitFmt(TT.b.hittingPct)], ['Assists', n(TT.a.assists), n(TT.b.assists)], ['Set attempts', n(TT.a.setAttempts), n(TT.b.setAttempts)],
+      ['Serves (in / err / ace)', `${TT.a.serves} (${TT.a.servesInPlay} / ${TT.a.serveErrors} / ${TT.a.aces})`, `${TT.b.serves} (${TT.b.servesInPlay} / ${TT.b.serveErrors} / ${TT.b.aces})`],
+      ['Receptions (avg pass)', `${TT.a.receptions} (${TT.a.passRating!=null ? TT.a.passRating.toFixed(3) : '—'})`, `${TT.b.receptions} (${TT.b.passRating!=null ? TT.b.passRating.toFixed(3) : '—'})`],
+      ['Digs', n(TT.a.digs), n(TT.b.digs)], ['Blocks', TT.a.blocks==null ? 'n/a' : TT.a.blocks, TT.b.blocks==null ? 'n/a' : TT.b.blocks]
+    ];
+    cmp = `<h2 style="margin-top:16px;">Team comparison</h2><div class="table-scroll"><table><thead><tr><th></th><th>${escapeHtml(L.a)}</th><th>${escapeHtml(L.b)}</th></tr></thead><tbody>` +
+      lines.map(l=>`<tr><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('') + '</tbody></table></div>';
+  }
+  return `<div class="card"><h2>Match result</h2>
+    ${st.sourceNote ? `<div class="sub">${escapeHtml(st.sourceNote)}.${st.caveats ? ' '+escapeHtml(st.caveats) : ''}</div>` : ''}
+    <div class="stat-grid">${boxes}</div>
+    <div class="table-scroll"><table><thead><tr><th>Set</th><th>${escapeHtml(L.a)}</th><th>${escapeHtml(L.b)}</th><th>Side-out A</th><th>Side-out B</th><th>Point scoring A</th><th>Point scoring B</th></tr></thead><tbody>${setRows}</tbody></table></div>
+    ${cmp}
+  </div>`;
 }
 
 function renderMatchSetLog(matchVal){

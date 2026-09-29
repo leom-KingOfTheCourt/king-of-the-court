@@ -1,0 +1,501 @@
+{
+ "type": "kotc-balltime-match",
+ "version": 1,
+ "match": {
+  "name": "VID_20260710_104227_373",
+  "date": "2026-07-10",
+  "opponent": "",
+  "link": "https://app.balltime.com/video/c4cc4a68-0e18-4b22-a1e7-6f64fd4e22e5",
+  "videoId": "c4cc4a68-0e18-4b22-a1e7-6f64fd4e22e5",
+  "notes": "Balltime share-page data, AI-tagged; blocks not available"
+ },
+ "stats": {
+  "importedAt": "2026-09-28",
+  "source": "balltime-share",
+  "fileName": "data/match-2026-07-10.json",
+  "isExample": false,
+  "sourceNote": "Balltime share-page data, AI-tagged; blocks not available",
+  "caveats": "Counted from the public share-page action list (446 visible actions; 15 hidden unverified block proposals excluded). Team A/B split is AI-made (teams_not_identified). No set-error, reception-error or block data. Rows are Team A (Leo's team) only; Team A actions with no jersey form one row so the sums equal the team totals.",
+  "headers": [
+   "Player",
+   "#",
+   "Set Attempts",
+   "Assists",
+   "Kills",
+   "Attack Attempts",
+   "Attack Errors",
+   "Hitting %",
+   "Serves",
+   "Aces",
+   "Serve Errors",
+   "Receptions",
+   "Pass Rating",
+   "Digs",
+   "Actions",
+   "Srv in play",
+   "Rec 0/1/2/3/unk",
+   "Att in play",
+   "Free ball sent/rec"
+  ],
+  "mapping": {
+   "Player": "player",
+   "#": "jersey",
+   "Set Attempts": "setAttempts",
+   "Assists": "assists",
+   "Kills": "kills",
+   "Attack Attempts": "attackAttempts",
+   "Attack Errors": "attackErrors",
+   "Hitting %": "hittingPct",
+   "Serves": "serves",
+   "Aces": "aces",
+   "Serve Errors": "serveErrors",
+   "Receptions": "receptions",
+   "Pass Rating": "passRating",
+   "Digs": "digs"
+  },
+  "unknownColumns": [
+   "Actions",
+   "Srv in play",
+   "Rec 0/1/2/3/unk",
+   "Att in play",
+   "Free ball sent/rec"
+  ],
+  "rows": [
+   {
+    "player": "#1",
+    "jersey": "1",
+    "setAttempts": 0,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 3,
+    "attackAttempts": 5,
+    "attackErrors": 1,
+    "hittingPct": 0.4,
+    "serves": 0,
+    "aces": 0,
+    "serveErrors": 0,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 0,
+    "blocks": null,
+    "raw": {
+     "Actions": "5",
+     "Srv in play": "0",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "1",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "Leo",
+    "jersey": "5",
+    "setAttempts": 41,
+    "assists": 19,
+    "setErrors": null,
+    "kills": 0,
+    "attackAttempts": 1,
+    "attackErrors": 0,
+    "hittingPct": 0.0,
+    "serves": 11,
+    "aces": 3,
+    "serveErrors": 3,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 5,
+    "blocks": null,
+    "raw": {
+     "Actions": "58",
+     "Srv in play": "5",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "1",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#6",
+    "jersey": "6",
+    "setAttempts": 1,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 0,
+    "attackAttempts": 0,
+    "attackErrors": 0,
+    "hittingPct": null,
+    "serves": 9,
+    "aces": 3,
+    "serveErrors": 1,
+    "receptions": 5,
+    "receptionErrors": null,
+    "passRating": 1.6,
+    "ratedReceptions": 5,
+    "digs": 2,
+    "blocks": null,
+    "raw": {
+     "Actions": "17",
+     "Srv in play": "5",
+     "Rec 0/1/2/3/unk": "0/3/1/1/0",
+     "Att in play": "0",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#7",
+    "jersey": "7",
+    "setAttempts": 2,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 0,
+    "attackAttempts": 0,
+    "attackErrors": 0,
+    "hittingPct": null,
+    "serves": 0,
+    "aces": 0,
+    "serveErrors": 0,
+    "receptions": 16,
+    "receptionErrors": null,
+    "passRating": 2.142857,
+    "ratedReceptions": 14,
+    "digs": 5,
+    "blocks": null,
+    "raw": {
+     "Actions": "26",
+     "Srv in play": "0",
+     "Rec 0/1/2/3/unk": "0/4/4/6/2",
+     "Att in play": "0",
+     "Free ball sent/rec": "3/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#12",
+    "jersey": "12",
+    "setAttempts": 1,
+    "assists": 1,
+    "setErrors": null,
+    "kills": 8,
+    "attackAttempts": 17,
+    "attackErrors": 3,
+    "hittingPct": 0.294118,
+    "serves": 8,
+    "aces": 1,
+    "serveErrors": 3,
+    "receptions": 11,
+    "receptionErrors": null,
+    "passRating": 1.6,
+    "ratedReceptions": 10,
+    "digs": 2,
+    "blocks": null,
+    "raw": {
+     "Actions": "40",
+     "Srv in play": "4",
+     "Rec 0/1/2/3/unk": "0/6/2/2/1",
+     "Att in play": "6",
+     "Free ball sent/rec": "0/1"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#14",
+    "jersey": "14",
+    "setAttempts": 0,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 2,
+    "attackAttempts": 10,
+    "attackErrors": 0,
+    "hittingPct": 0.2,
+    "serves": 0,
+    "aces": 0,
+    "serveErrors": 0,
+    "receptions": 4,
+    "receptionErrors": null,
+    "passRating": 2.0,
+    "ratedReceptions": 4,
+    "digs": 0,
+    "blocks": null,
+    "raw": {
+     "Actions": "15",
+     "Srv in play": "0",
+     "Rec 0/1/2/3/unk": "0/2/0/2/0",
+     "Att in play": "8",
+     "Free ball sent/rec": "1/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#15",
+    "jersey": "15",
+    "setAttempts": 2,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 2,
+    "attackAttempts": 9,
+    "attackErrors": 4,
+    "hittingPct": -0.222222,
+    "serves": 12,
+    "aces": 1,
+    "serveErrors": 2,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 1,
+    "blocks": null,
+    "raw": {
+     "Actions": "26",
+     "Srv in play": "9",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "3",
+     "Free ball sent/rec": "1/1"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#17",
+    "jersey": "17",
+    "setAttempts": 0,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 0,
+    "attackAttempts": 0,
+    "attackErrors": 0,
+    "hittingPct": null,
+    "serves": 6,
+    "aces": 2,
+    "serveErrors": 1,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 5,
+    "blocks": null,
+    "raw": {
+     "Actions": "12",
+     "Srv in play": "3",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "0",
+     "Free ball sent/rec": "0/1"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#18",
+    "jersey": "18",
+    "setAttempts": 0,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 1,
+    "attackAttempts": 4,
+    "attackErrors": 1,
+    "hittingPct": 0.0,
+    "serves": 5,
+    "aces": 0,
+    "serveErrors": 2,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 2,
+    "blocks": null,
+    "raw": {
+     "Actions": "11",
+     "Srv in play": "3",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "2",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "#35",
+    "jersey": "35",
+    "setAttempts": 1,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 1,
+    "attackAttempts": 2,
+    "attackErrors": 0,
+    "hittingPct": 0.5,
+    "serves": 0,
+    "aces": 0,
+    "serveErrors": 0,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 0,
+    "blocks": null,
+    "raw": {
+     "Actions": "3",
+     "Srv in play": "0",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "1",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   },
+   {
+    "player": "Team A — no jersey",
+    "jersey": "",
+    "setAttempts": 2,
+    "assists": 0,
+    "setErrors": null,
+    "kills": 4,
+    "attackAttempts": 5,
+    "attackErrors": 0,
+    "hittingPct": 0.8,
+    "serves": 0,
+    "aces": 0,
+    "serveErrors": 0,
+    "receptions": 0,
+    "receptionErrors": null,
+    "passRating": null,
+    "ratedReceptions": 0,
+    "digs": 1,
+    "blocks": null,
+    "raw": {
+     "Actions": "8",
+     "Srv in play": "0",
+     "Rec 0/1/2/3/unk": "0/0/0/0/0",
+     "Att in play": "1",
+     "Free ball sent/rec": "0/0"
+    },
+    "isTotal": false
+   }
+  ],
+  "teamLabels": {
+   "a": "Team A (Leo's team)",
+   "b": "Team B (opponent)"
+  },
+  "teamTotals": {
+   "a": {
+    "actions": 221,
+    "serves": 51,
+    "servesInPlay": 29,
+    "serveErrors": 12,
+    "aces": 10,
+    "receptions": 36,
+    "ratedReceptions": 33,
+    "passRating": 1.878788,
+    "setAttempts": 50,
+    "assists": 20,
+    "attackAttempts": 53,
+    "kills": 21,
+    "attackErrors": 9,
+    "attacksInPlay": 23,
+    "hittingPct": 0.226415,
+    "digs": 23,
+    "blocks": null
+   },
+   "b": {
+    "actions": 217,
+    "serves": 43,
+    "servesInPlay": 36,
+    "serveErrors": 5,
+    "aces": 2,
+    "receptions": 33,
+    "ratedReceptions": 30,
+    "passRating": 1.466667,
+    "setAttempts": 50,
+    "assists": 18,
+    "attackAttempts": 54,
+    "kills": 19,
+    "attackErrors": 15,
+    "attacksInPlay": 20,
+    "hittingPct": 0.074074,
+    "digs": 30,
+    "blocks": null
+   }
+  },
+  "score": {
+   "sets": [
+    {
+     "set": 1,
+     "a": 27,
+     "b": 24,
+     "sideOut": {
+      "a": {
+       "won": 13,
+       "of": 25
+      },
+      "b": {
+       "won": 12,
+       "of": 26
+      }
+     },
+     "pointScoring": {
+      "a": {
+       "won": 14,
+       "of": 26
+      },
+      "b": {
+       "won": 12,
+       "of": 25
+      }
+     }
+    },
+    {
+     "set": 2,
+     "a": 25,
+     "b": 18,
+     "sideOut": {
+      "a": {
+       "won": 14,
+       "of": 18
+      },
+      "b": {
+       "won": 14,
+       "of": 25
+      }
+     },
+     "pointScoring": {
+      "a": {
+       "won": 11,
+       "of": 25
+      },
+      "b": {
+       "won": 4,
+       "of": 18
+      }
+     }
+    }
+   ],
+   "setsWon": {
+    "a": 2,
+    "b": 0
+   }
+  },
+  "sideOut": {
+   "a": {
+    "won": 27,
+    "of": 43
+   },
+   "b": {
+    "won": 26,
+    "of": 51
+   }
+  },
+  "pointScoring": {
+   "a": {
+    "won": 25,
+    "of": 51
+   },
+   "b": {
+    "won": 16,
+    "of": 43
+   }
+  },
+  "pointsWon": {
+   "a": 52,
+   "b": 42
+  },
+  "rallies": 94
+ }
+}
