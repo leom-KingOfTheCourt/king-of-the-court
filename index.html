@@ -244,6 +244,14 @@
   .map-chip.raw{ border-color:#5c4a1a; color:#ffd98a; }
   .table-scroll{ overflow-x:auto; }
   .example-banner{ background:#2e2500; border:1px dashed #ffcc33; color:#ffe08a; border-radius:8px; padding:8px 14px; font-size:12.5px; margin:10px 0; font-weight:700; }
+  .court2d-layout{ display:grid; grid-template-columns:minmax(0,480px) 1fr; gap:18px; align-items:start; }
+  @media(max-width:860px){ .court2d-layout{ grid-template-columns:1fr; } }
+  .court2d-svg{ width:100%; height:auto; max-height:820px; display:block; margin:0 auto; background:#0d0c11; border:1px solid var(--border); border-radius:10px; }
+  .court2d-svg .dot{ stroke:#0a0a0e; stroke-width:.04; }
+  .court2d-svg .dot:hover{ stroke:#fff; stroke-width:.08; }
+  .legend-row{ display:flex; flex-wrap:wrap; gap:10px; font-size:12.5px; color:var(--text-dim); margin:6px 0 12px; }
+  .legend-row span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend-dot{ width:11px; height:11px; border-radius:50%; display:inline-block; border:1px solid #0a0a0e; }
 </style>
 </head>
 <body>
@@ -265,6 +273,7 @@
     <button data-tab="diagnose">Diagnose</button>
     <button data-tab="balltime">🎥 Balltime</button>
     <button data-tab="stats">Match Stats</button>
+    <button data-tab="court2d">Court Map</button>
     <button data-tab="settings">Export / Backup</button>
   </nav>
 
@@ -690,6 +699,38 @@
     <div class="card">
       <h2>Set type breakdown</h2>
       <div id="stats-type-table"><div class="empty">No sets for this match yet.</div></div>
+    </div>
+  </section>
+
+
+  <!-- COURT MAP 2D -->
+  <section id="court2d">
+    <div class="card">
+      <h2>Court map — where your sets land</h2>
+      <div class="sub">Top-down view of the full 18 m × 9 m court, looking from your baseline (bottom) toward the net. Each dot is one logged set, placed at the landing/contact target for its set type (with a little spread so stacked sets stay visible) and colored by quality or outcome. Quicks (1 / 2 / push 1 / back 1) are placed relative to the setter's usual spot (orange marker, right-center). "Other" custom sets aren't placed since their spot isn't known.</div>
+      <div class="filter-bar">
+        <div>
+          <label>Match</label>
+          <select id="c2d-match" class="match-select" data-empty="All sets" data-untagged="1"><option value="">All sets</option></select>
+        </div>
+        <div>
+          <label>Color by</label>
+          <select id="c2d-color"><option value="quality">Set quality (0-3)</option><option value="outcome">Outcome</option></select>
+        </div>
+        <div>
+          <label>View</label>
+          <select id="c2d-zoom"><option value="full">Full court (18 × 9 m)</option><option value="front">Zoom: your front zone</option></select>
+        </div>
+      </div>
+      <label>Set types <span class="batch-mode-note">(tap to show/hide)</span></label>
+      <div class="opt-group" id="c2d-types"></div>
+      <div class="court2d-layout" style="margin-top:14px;">
+        <div><svg id="court2d-svg" class="court2d-svg" viewBox="0 0 12 21" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div>
+          <div class="legend-row" id="c2d-legend"></div>
+          <div id="c2d-summary"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -3147,6 +3188,151 @@ function renderMatchSetLog(matchVal){
     used.map(t=>{ const a = computeAgg(list.filter(s=>s.setTypeKey===t.key));
       return `<tr><td>${t.label}<span class="badge-group g-${t.group}">${t.group}</span></td><td>${a.total}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${a.kills}</td><td>${a.errors}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`; }).join('') +
     '</tbody></table>';
+}
+
+
+// ---------- Shared court model (meters) for the 2D court map and the 3D court ----------
+// x runs across the net, 0 = your left sideline .. 9 = your right sideline (as seen
+// from your own baseline); d = distance from the net on your side. The setter
+// faces the left antenna, so "in front of the setter" = smaller x.
+const COURT_M = { L:18, W:9, ATTACK:3 };
+const SETTER_HOME_M = { x:6.0, d:0.6 };
+// rel:true -> x is an offset from the setter's x (the quick family follows the setter).
+// apex = how far the ball rises above the setter's release point; contact = hitter's contact height.
+const SET_TARGETS_M = {
+  '1':    { rel:true,  dx:-0.5, d:0.7, apex:0.6, contact:2.9, color:'#ff6a00', note:'right in front of the setter' },
+  '2':    { rel:true,  dx:-2.5, d:0.8, apex:1.0, contact:2.9, color:'#ffab4d', note:'2-3 m in front of the setter' },
+  push1:  { rel:true,  dx:-1.5, d:0.9, apex:0.8, contact:2.9, color:'#ffcc33', note:'~1.5 m in front, pushed away' },
+  back1:  { rel:true,  dx:1.0,  d:0.7, apex:0.7, contact:2.9, color:'#ff7ab6', note:'~1 m behind the setter' },
+  '4':    { x:0.45, d:1.0, apex:3.6, contact:3.0, color:'#35d488', note:'high ball to the left antenna' },
+  shoot:  { x:0.9,  d:0.8, apex:1.1, contact:2.9, color:'#e8283f', note:'fast, flat set to the left pin' },
+  '3':    { x:2.5,  d:0.9, apex:1.7, contact:2.9, color:'#7ec4ff', note:'medium set, left side' },
+  '5':    { x:8.55, d:1.0, apex:3.2, contact:3.0, color:'#b78cff', note:'high ball to the right/back antenna' },
+  c:      { x:4.5,  d:3.5, apex:1.8, contact:3.0, color:'#4de0d0', note:'back-row pipe, center, ~3.5 m off the net' },
+  '31':   { x:3.3,  d:0.8, apex:0.9, contact:2.9, color:'#ff9d6b', note:'quick in front of zone 3' },
+  '32':   { x:2.0,  d:0.9, apex:1.4, contact:2.9, color:'#6bdba3', note:'between the 31 and the 4' },
+  bic:    { x:5.4,  d:3.2, apex:1.2, contact:3.0, color:'#c9c3d6', note:'back-row quick near the setter' }
+};
+function setTargetM(key, setter){
+  const t = SET_TARGETS_M[key]; if(!t) return null;
+  const s = setter || SETTER_HOME_M;
+  const x = t.rel ? s.x + t.dx : t.x;
+  return { x: Math.max(0.2, Math.min(COURT_M.W-0.2, x)), d: t.d };
+}
+function hashUnit(str, salt){
+  let h = 2166136261 ^ salt;
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h>>>0) % 10000) / 10000;
+}
+const QUALITY_COLORS = { 0:'#ff4757', 1:'#ff9a3d', 2:'#ffcc33', 3:'#35d488' };
+const OUTCOME_COLORS = { kill:'#35d488', error:'#ff4757', inplay:'#7ec4ff', noattack:'#8a8a95' };
+
+
+// ---------- 2D court map ----------
+TAB_HOOKS.court2d = ()=>{ populateMatchSelects(); renderCourt2D(); };
+const C2D_TYPES = SET_TYPES.filter(t=>SET_TARGETS_M[t.key]);
+let c2dSelected = new Set(C2D_TYPES.map(t=>t.key));
+function renderC2DTypeButtons(){
+  const el = document.getElementById('c2d-types');
+  el.innerHTML = `<button type="button" class="opt-btn${c2dSelected.size===C2D_TYPES.length ? ' selected' : ''}" data-value="__all">All</button>` +
+    C2D_TYPES.map(t=>`<button type="button" class="opt-btn${c2dSelected.has(t.key) ? ' selected' : ''}" data-value="${t.key}"><span class="legend-dot" style="background:${SET_TARGETS_M[t.key].color}; margin-right:5px; vertical-align:-1px;"></span>${t.label}</button>`).join('');
+}
+document.getElementById('c2d-types').addEventListener('click', e=>{
+  const b = e.target.closest('.opt-btn'); if(!b) return;
+  const v = b.dataset.value;
+  if(v==='__all') c2dSelected = c2dSelected.size===C2D_TYPES.length ? new Set() : new Set(C2D_TYPES.map(t=>t.key));
+  else c2dSelected.has(v) ? c2dSelected.delete(v) : c2dSelected.add(v);
+  renderCourt2D();
+});
+['c2d-match','c2d-color','c2d-zoom'].forEach(id=>document.getElementById(id).addEventListener('change', renderCourt2D));
+
+function renderCourt2D(){
+  renderC2DTypeButtons();
+  const svg = document.getElementById('court2d-svg');
+  const M = 1.5, W = COURT_M.W, L = COURT_M.L, netY = M + L/2;
+  const zoom = document.getElementById('c2d-zoom').value==='front';
+  svg.setAttribute('viewBox', zoom ? `0.2 ${M+L/2-2.4} ${W+2*M-0.4} ${7.6}` : `0 0 ${W+2*M} ${L+2*M}`);
+  const X = x => M + x, Y = d => netY + d; // our side is below the net
+  const matchVal = document.getElementById('c2d-match').value;
+  const colorBy = document.getElementById('c2d-color').value;
+  const pool = !matchVal ? sets : matchVal==='__none' ? sets.filter(s=>!s.matchId) : sets.filter(s=>s.matchId===matchVal);
+  const shown = pool.filter(s=>SET_TARGETS_M[s.setTypeKey] && c2dSelected.has(s.setTypeKey));
+  const unplaced = pool.filter(s=>!SET_TARGETS_M[s.setTypeKey]).length;
+
+  let g = '';
+  // free zone + court surface (front zones tinted)
+  g += `<rect x="0" y="0" width="${W+2*M}" height="${L+2*M}" fill="#0d0c11"/>`;
+  g += `<rect x="${X(0)}" y="${M}" width="${W}" height="${L}" fill="#1f1611"/>`;
+  g += `<rect x="${X(0)}" y="${netY-COURT_M.ATTACK}" width="${W}" height="${COURT_M.ATTACK*2}" fill="#2a1a10"/>`;
+  g += `<rect x="${X(0)}" y="${netY}" width="${W}" height="${COURT_M.ATTACK}" fill="rgba(255,106,0,.10)"/>`;
+  const line = (x1,y1,x2,y2,stroke='#f4f2f0',w=0.05,extra='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${w}" ${extra}/>`;
+  g += `<rect x="${X(0)}" y="${M}" width="${W}" height="${L}" fill="none" stroke="#f4f2f0" stroke-width="0.05"/>`;
+  g += line(X(0), netY-COURT_M.ATTACK, X(W), netY-COURT_M.ATTACK, '#ff6a00', 0.05);
+  g += line(X(0), netY+COURT_M.ATTACK, X(W), netY+COURT_M.ATTACK, '#ff6a00', 0.05);
+  // dashed attack-line extensions into the free zone
+  g += line(X(-1.2), netY+COURT_M.ATTACK, X(0), netY+COURT_M.ATTACK, '#ff6a00', 0.04, 'stroke-dasharray="0.15,0.15"');
+  g += line(X(W), netY+COURT_M.ATTACK, X(W+1.2), netY+COURT_M.ATTACK, '#ff6a00', 0.04, 'stroke-dasharray="0.15,0.15"');
+  g += line(X(-1.2), netY-COURT_M.ATTACK, X(0), netY-COURT_M.ATTACK, '#ff6a00', 0.04, 'stroke-dasharray="0.15,0.15"');
+  g += line(X(W), netY-COURT_M.ATTACK, X(W+1.2), netY-COURT_M.ATTACK, '#ff6a00', 0.04, 'stroke-dasharray="0.15,0.15"');
+  // net (+ posts and antennas as seen from above)
+  g += line(X(-1), netY, X(W+1), netY, '#eef2f8', 0.12);
+  g += `<circle cx="${X(-1)}" cy="${netY}" r="0.16" fill="#555f6e"/><circle cx="${X(W+1)}" cy="${netY}" r="0.16" fill="#555f6e"/>`;
+  g += `<circle cx="${X(0)}" cy="${netY}" r="0.11" fill="#e8283f" stroke="#fff" stroke-width="0.04"/><circle cx="${X(W)}" cy="${netY}" r="0.11" fill="#e8283f" stroke="#fff" stroke-width="0.04"/>`;
+  const txt = (x,y,s,size=0.42,fill='#a29fae',anchor='middle',extra='')=>`<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-family="Bebas Neue, sans-serif" letter-spacing="0.03" ${extra}>${s}</text>`;
+  g += txt(X(W/2), M+L/4, 'OPPONENT', 0.8, 'rgba(162,159,174,.35)');
+  g += txt(X(W+1.05), netY-0.28, 'NET', 0.32, '#a29fae', 'end');
+  g += txt(X(W+0.15), netY+COURT_M.ATTACK-0.12, '3 M LINE', 0.3, '#ff6a00', 'end');
+  g += txt(X(0), L+M+0.9, '◀ YOUR LEFT', 0.34, '#a29fae', 'start');
+  g += txt(X(W), L+M+0.9, 'YOUR RIGHT ▶', 0.34, '#a29fae', 'end');
+  g += txt(X(W/2), L+M-0.4, 'YOUR SIDE', 0.8, 'rgba(162,159,174,.35)');
+
+  // target markers + faint setter->target guides for the selected types
+  const sx = X(SETTER_HOME_M.x), sy = Y(SETTER_HOME_M.d);
+  C2D_TYPES.filter(t=>c2dSelected.has(t.key)).forEach(t=>{
+    const p = setTargetM(t.key); const c = SET_TARGETS_M[t.key].color;
+    g += line(sx, sy, X(p.x), Y(p.d), c, 0.035, 'opacity="0.35" stroke-dasharray="0.12,0.1"');
+    g += `<circle cx="${X(p.x)}" cy="${Y(p.d)}" r="0.55" fill="none" stroke="${c}" stroke-width="0.05" opacity="0.8"/>`;
+  });
+  // dots
+  shown.forEach(s=>{
+    const p = setTargetM(s.setTypeKey);
+    const a = hashUnit(s.id||'', 1)*Math.PI*2, r = 0.12 + Math.sqrt(hashUnit(s.id||'', 7))*0.38;
+    const cx = X(p.x) + Math.cos(a)*r, cy = Math.max(netY+0.12, Y(p.d) + Math.sin(a)*r);
+    const fill = colorBy==='outcome' ? (OUTCOME_COLORS[s.outcome]||'#8a8a95') : (QUALITY_COLORS[s.quality]||'#8a8a95');
+    const m = s.matchId ? getMatch(s.matchId) : null;
+    g += `<circle class="dot" cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="0.13" fill="${fill}"><title>${escapeHtml(tempoLabel(s))} · Q${s.quality} · ${outcomeLabel(s.outcome)}\n${escapeHtml(s.date)} ${escapeHtml(s.opponent||'')}${m ? '\n🎥 '+escapeHtml(m.name) : ''}</title></circle>`;
+  });
+  // labels: front-row targets are packed along the net, so their labels are staggered
+  // in rows just over the net with a leader line; back-row targets are labeled below.
+  const labelTypes = C2D_TYPES.filter(t=>c2dSelected.has(t.key)).map(t=>({ t, p:setTargetM(t.key) }));
+  const front = labelTypes.filter(o=>o.p.d<2).sort((a,b)=>a.p.x-b.p.x);
+  front.forEach((o,i)=>{
+    const c = SET_TARGETS_M[o.t.key].color, n = shown.filter(s=>s.setTypeKey===o.t.key).length;
+    const ly = netY - 0.45 - (i%3)*0.5;
+    g += line(X(o.p.x), ly+0.06, X(o.p.x), Y(o.p.d)-0.55, c, 0.025, 'opacity="0.6"');
+    g += txt(X(o.p.x), ly, `${o.t.label}${n ? ' ('+n+')' : ''}`, 0.3, c, 'middle', 'paint-order="stroke" stroke="#0d0c11" stroke-width="0.1"');
+  });
+  labelTypes.filter(o=>o.p.d>=2).sort((a,b)=>a.p.x-b.p.x).forEach((o,i)=>{
+    const c = SET_TARGETS_M[o.t.key].color, n = shown.filter(s=>s.setTypeKey===o.t.key).length;
+    g += txt(X(o.p.x), i%2 ? Y(o.p.d)-0.7 : Y(o.p.d)+0.95, `${o.t.label}${n ? ' ('+n+')' : ''}`, 0.3, c, 'middle', 'paint-order="stroke" stroke="#0d0c11" stroke-width="0.1"');
+  });
+  // setter
+  g += `<circle cx="${sx}" cy="${sy}" r="0.28" fill="#ff6a00" stroke="#100603" stroke-width="0.06"/>`;
+  g += txt(sx+0.4, sy+0.14, 'S', 0.4, '#ff6a00', 'start');
+  svg.innerHTML = g;
+
+  document.getElementById('c2d-legend').innerHTML = (colorBy==='outcome'
+    ? Object.entries(OUTCOME_COLORS).map(([k,c])=>`<span><i class="legend-dot" style="background:${c}"></i>${outcomeLabel(k)}</span>`)
+    : [3,2,1,0].map(q=>`<span><i class="legend-dot" style="background:${QUALITY_COLORS[q]}"></i>Q${q}</span>`)).join('') +
+    `<span><i class="legend-dot" style="background:#ff6a00"></i>Setter (usual spot)</span>`;
+
+  const byType = C2D_TYPES.filter(t=>c2dSelected.has(t.key)).map(t=>({ t, a: computeAgg(shown.filter(s=>s.setTypeKey===t.key)) })).filter(r=>r.a.total);
+  document.getElementById('c2d-summary').innerHTML =
+    `<div class="sub" style="margin-bottom:6px;">${shown.length} set(s) plotted${unplaced ? ` · ${unplaced} "Other" set(s) not placed` : ''}${matchVal && matchVal!=='__none' && getMatch(matchVal) ? ' · '+escapeHtml(getMatch(matchVal).name) : ''}</div>` +
+    (byType.length ? `<table><thead><tr><th>Type</th><th>Sets</th><th>Avg Q</th><th>Kill %</th><th>Hit %</th></tr></thead><tbody>` +
+      byType.map(({t,a})=>`<tr><td><span class="legend-dot" style="background:${SET_TARGETS_M[t.key].color}; margin-right:6px;"></span>${t.label}</td><td>${a.total}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.assistRate*100).toFixed(0)}%</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`).join('') +
+      '</tbody></table>' : '<div class="empty">No sets match these filters.</div>') +
+    `<div class="sub" style="margin-top:12px;">Targets: ${C2D_TYPES.filter(t=>c2dSelected.has(t.key)).map(t=>`<b>${t.label}</b> — ${SET_TARGETS_M[t.key].note}`).join(' · ')}</div>`;
 }
 
 
