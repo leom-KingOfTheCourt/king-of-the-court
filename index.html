@@ -1021,7 +1021,7 @@ function applyVoiceParse(transcript){
 
 
   document.getElementById('voice-status').textContent = filled.length
-    ? `Heard: "${transcript}" → set {complete ? ' Added — listening for the next one…' : ' Still listening for the rest…'}`
+    ? `Heard: "${transcript}" → set ${filled.join(', ')}.${complete ? ' Added — listening for the next one…' : ' Still listening for the rest…'}`
     : `Heard: "${transcript}" → couldn't match any fields, try the example phrasing. Still listening…`;
 
 
@@ -1071,10 +1071,10 @@ function rowHtml(rec, withActions){
   return `<tr>
     <td>${rec.date}</td>
     <td>${escapeHtml(rec.opponent)}</td>
-    <td class="pass-{passLevelLabel(pl)}</td>
+    <td class="pass-${pl}">${passLevelLabel(pl)}</td>
     <td>${rec.zone}</td>
-    <td>{tempoGroup(rec)}">${tempoGroup(rec)}</span></td>
-    <td class="quality-{rec.quality}</td>
+    <td>${escapeHtml(tempoLabel(rec))}<span class="badge-group g-${tempoGroup(rec)}">${tempoGroup(rec)}</span></td>
+    <td class="quality-${rec.quality}">${rec.quality}</td>
     <td>${outcomeLabel(rec.outcome)}</td>
     <td>${escapeHtml(rec.notes||'')}</td>
     ${withActions ? `<td><button class="edit-btn" data-id="${rec.id}" title="Edit">✎</button><button class="del-btn" data-id="${rec.id}" title="Delete">✕</button></td>` : ''}
@@ -1096,8 +1096,8 @@ function populateFilters(){
   const gameSel = document.getElementById('filter-game');
   const typeSel = document.getElementById('filter-settype');
   const games = [...new Set(sets.map(s=>s.opponent))];
-  gameSel.innerHTML = '<option value="">All games</option>' + games.map(g=>`<option value="{escapeHtml(g)}</option>`).join('');
-  typeSel.innerHTML = '<option value="">All types</option>' + SET_TYPES.map(s=>`<option value="{s.label}</option>`).join('');
+  gameSel.innerHTML = '<option value="">All games</option>' + games.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+  typeSel.innerHTML = '<option value="">All types</option>' + SET_TYPES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
 }
 ['filter-game','filter-zone','filter-settype','filter-passlevel'].forEach(id=>{
   document.getElementById(id).addEventListener('change', renderFullTable);
@@ -1251,7 +1251,7 @@ document.getElementById('preview-btn').addEventListener('click', ()=>{
   const parsed = parseBulk();
   const el = document.getElementById('import-preview');
   if(!parsed.length){ el.innerHTML='<div class="empty">Nothing parsed yet — check your format.</div>'; return; }
-  el.innerHTML = `<div class="sub">{parsed.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
+  el.innerHTML = `<div class="sub">${parsed.length} set(s) ready to import:</div><table><thead><tr><th>Date</th><th>Game</th><th>Pass</th><th>Zone</th><th>Type</th><th>Q</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${parsed.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
 });
 
 
@@ -1327,7 +1327,7 @@ function renderDashboard(){
       const l = sets.filter(s=>s.zone===z && s.setTypeKey===t.key);
       if(!l.length) return;
       const a = computeAgg(l);
-      matrixRows += `<tr><td>{t.label}</td><td>{Math.round(a.avgQ)}">{(a.hittingPct*100).toFixed(1)}%</td></tr>`;
+      matrixRows += `<tr><td>${z}</td><td>${t.label}</td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
     });
   });
   document.getElementById('matrix-table').innerHTML = matrixRows
@@ -1345,7 +1345,7 @@ function renderDashboard(){
     const qualities = l.map(s=>s.quality);
     const variance = qualities.length>1 ? (qualities.reduce((acc,q)=>acc+Math.pow(q-a.avgQ,2),0)/qualities.length) : 0;
     const stdev = Math.sqrt(variance);
-    speedRows += `<tr><td><span class="badge-group g-{g}</span></td><td>{Math.round(a.avgQ)}">{stdev.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
+    speedRows += `<tr><td><span class="badge-group g-${g}">${g}</span></td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${stdev.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
   });
   document.getElementById('speed-table').innerHTML = speedRows
     ? `<table><thead><tr><th>Speed group</th><th>Count</th><th>Avg Quality</th><th>Std Dev (lower = more consistent)</th><th>Hitting %</th></tr></thead><tbody>${speedRows}</tbody></table>`
@@ -1358,7 +1358,7 @@ function renderDashboard(){
     const l = sets.filter(s=>s.passLevel===pl);
     if(!l.length) return;
     const a = computeAgg(l);
-    passRows += `<tr><td class="pass-{passLevelLabel(pl)}</td><td>{l.length}</td><td class="quality-{a.avgQ.toFixed(2)}</td><td>{(a.assistRate*100).toFixed(1)}%</td></tr>`;
+    passRows += `<tr><td class="pass-${pl}">${passLevelLabel(pl)}</td><td>${passLevelSystem(pl)}</td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td><td>${(a.assistRate*100).toFixed(1)}%</td></tr>`;
   });
   const untagged = sets.filter(s=>s.passLevel==null).length;
   document.getElementById('passlevel-table').innerHTML = passRows
@@ -1428,7 +1428,7 @@ function lerpColor(hex1, hex2, t){
   t = Math.max(0, Math.min(1, t));
   const c1=hexToRgb(hex1), c2=hexToRgb(hex2);
   const r=Math.round(c1.r+(c2.r-c1.r)*t), g=Math.round(c1.g+(c2.g-c1.g)*t), b=Math.round(c1.b+(c2.b-c1.b)*t);
-  return `rgb({g},${b})`;
+  return `rgb(${r},${g},${b})`;
 }
 function qualityColor(avgQ){
   if(avgQ<=1.5) return lerpColor('#ff4d4d','#ffcd4d', avgQ/1.5);
@@ -1448,17 +1448,17 @@ function buildNetSVG(){
   const netBottom = netY+netMeshH;
   let meshLines='';
   for(let x=14; x<=W-14; x+=15){
-    meshLines += `<line x1="{netY}" x2="{netBottom}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
+    meshLines += `<line x1="${x}" y1="${netY}" x2="${x}" y2="${netBottom}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
   }
   for(let y=netY; y<=netBottom; y+=10){
-    meshLines += `<line x1="10" y1="{W-10}" y2="${y}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
+    meshLines += `<line x1="10" y1="${y}" x2="${W-10}" y2="${y}" stroke="#3a4a63" stroke-width="1" opacity="0.55"/>`;
   }
-  const netTape = `<rect x="8" y="{W-16}" height="6" rx="2" fill="#eef2f8"/>`;
+  const netTape = `<rect x="8" y="${netY-3}" width="${W-16}" height="6" rx="2" fill="#eef2f8"/>`;
   const antennae = `
-    <line x1="14" y1="{netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
-    <line x1="{netY-34}" x2="{netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
+    <line x1="14" y1="${netY-34}" x2="14" y2="${netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
+    <line x1="${W-14}" y1="${netY-34}" x2="${W-14}" y2="${netBottom+8}" stroke="#ff7a1a" stroke-width="3" opacity="0.8"/>
   `;
-  return `<g>{meshLines}${antennae}</g>`;
+  return `<g>${meshLines}${netTape}${antennae}</g>`;
 }
 
 
@@ -1509,7 +1509,7 @@ function renderTrajectoryChart(){
     const strokeWidth = 2 + (r.count/maxCount)*7;
     const color = qualityColor(r.avgQ);
     const d = buildArcPath(setterX, setterY, x2, y2, peakForType(r.type.key));
-    arcs += `<path d="{color}" stroke-width="{r.type.label}: ${r.count} set(s), avg quality ${r.avgQ.toFixed(2)}</title></path>`;
+    arcs += `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeWidth.toFixed(1)}" stroke-linecap="round" opacity="0.9"><title>${r.type.label}: ${r.count} set(s), avg quality ${r.avgQ.toFixed(2)}</title></path>`;
   });
 
 
@@ -1518,10 +1518,10 @@ function renderTrajectoryChart(){
     <text x="${W*0.5}" y="20" text-anchor="middle" class="traj-zone-label">MIDDLE</text>
     <text x="${W*0.88}" y="20" text-anchor="middle" class="traj-zone-label">RIGHT</text>
   `;
-  const setterMarker = `<circle cx="{setterY}" r="7" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/><text x="{setterY-14}" text-anchor="middle" class="traj-zone-label" style="opacity:.7;font-size:11px;">SETTER</text>`;
+  const setterMarker = `<circle cx="${setterX}" cy="${setterY}" r="7" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/><text x="${setterX}" y="${setterY-14}" text-anchor="middle" class="traj-zone-label" style="opacity:.7;font-size:11px;">SETTER</text>`;
 
 
-  container.innerHTML = `<svg viewBox="0 0 ${W} {zoneLabels}{buildNetSVG()}${setterMarker}</svg>`;
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="traj-svg">${zoneLabels}${buildNetSVG()}${arcs}${setterMarker}</svg>`;
 }
 
 
@@ -1556,9 +1556,9 @@ function renderDiagnose(){
     const color = avgQ!==null ? qualityColor(avgQ) : '#5a6478';
     const dash = avgQ!==null ? '' : 'stroke-dasharray="6,6"';
     const d = buildArcPath(setterX, setterY, x2, y2, peakForType(diagSelectedType));
-    targetAndArc = `<path id="diag-arc" d="{color}" stroke-width="4" stroke-linecap="round" opacity="0.9" ${dash}/>`
-      + `<circle id="diag-target" cx="{y2}" r="10" fill="none" stroke="#ff7a1a" stroke-width="3"/>`
-      + `<circle id="diag-target-dot" cx="{y2}" r="3" fill="#ff7a1a"/>`;
+    targetAndArc = `<path id="diag-arc" d="${d}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" opacity="0.9" ${dash}/>`
+      + `<circle id="diag-target" cx="${x2}" cy="${y2}" r="10" fill="none" stroke="#ff7a1a" stroke-width="3"/>`
+      + `<circle id="diag-target-dot" cx="${x2}" cy="${y2}" r="3" fill="#ff7a1a"/>`;
   }
 
 
@@ -1567,11 +1567,11 @@ function renderDiagnose(){
     <text x="${W*0.5}" y="20" text-anchor="middle" class="traj-zone-label">MIDDLE</text>
     <text x="${W*0.88}" y="20" text-anchor="middle" class="traj-zone-label">RIGHT</text>
   `;
-  const ball = `<text id="diag-ball" x="{setterY-16}" text-anchor="middle" font-size="22">🏐</text>`;
-  const setterCircle = `<circle id="diag-setter" cx="{setterY}" r="12" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/>`;
+  const ball = `<text id="diag-ball" x="${setterX}" y="${setterY-16}" text-anchor="middle" font-size="22">🏐</text>`;
+  const setterCircle = `<circle id="diag-setter" cx="${setterX}" cy="${setterY}" r="12" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/>`;
 
 
-  svg.innerHTML = `{targetAndArc}{setterCircle}${ball}`;
+  svg.innerHTML = `${zoneLabels}${buildNetSVG()}${targetAndArc}${setterCircle}${ball}`;
 
 
   attachDiagDrag();
@@ -1671,7 +1671,7 @@ function renderDiagnosePanelForType(key, panel){
   const type = SET_TYPE_MAP[key];
   const list = sets.filter(s=>s.setTypeKey===key);
   if(list.length < 3){
-    panel.innerHTML = diagHeading(type.label) + `<div class="empty">Log at least 3 "{list.length} so far).</div>`;
+    panel.innerHTML = diagHeading(type.label) + `<div class="empty">Log at least 3 "${type.label}" sets to get a diagnosis (${list.length} so far).</div>`;
     return;
   }
   const agg = computeAgg(list);
@@ -1686,7 +1686,7 @@ function renderDiagnosePanelForType(key, panel){
     issue = { text:`Your ${type.label} sets look accurate (avg ${agg.avgQ.toFixed(2)}) but hitting % is only ${(agg.hittingPct*100).toFixed(0)}% — might be getting read early.`, category:'disguise' };
   } else if(stdev > 0.85){
     const cat = type.group==='Quick' ? 'quick' : type.group==='Fast' ? 'fasttempo' : 'highball';
-    issue = { text:`Your {stdev.toFixed(2)} rep to rep.`, category: cat };
+    issue = { text:`Your ${type.label} sets are inconsistent — quality swings by about ±${stdev.toFixed(2)} rep to rep.`, category: cat };
   }
 
 
@@ -1696,13 +1696,13 @@ function renderDiagnosePanelForType(key, panel){
     const goodAvg = passGood.reduce((a,s)=>a+s.quality,0)/passGood.length;
     const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
     if(goodAvg-badAvg >= 1){
-      issue = { text:`{goodAvg.toFixed(2)} → ${badAvg.toFixed(2)} avg quality).`, category:'outofsystem' };
+      issue = { text:`Your ${type.label} sets fall off a lot on bad passes (${goodAvg.toFixed(2)} → ${badAvg.toFixed(2)} avg quality).`, category:'outofsystem' };
     }
   }
 
 
   panel.innerHTML = diagHeading(type.label) + diagStatBoxes(agg, list.length) +
-    (issue ? `<div class="tip-block"><div class="tip-issue">{renderVideoCategory(issue.category)}</div>`
+    (issue ? `<div class="tip-block"><div class="tip-issue">${escapeHtml(issue.text)}</div>${renderVideoCategory(issue.category)}</div>`
            : `<div class="empty">No clear issue detected on this one — it's solid. Keep it up.</div>`);
 }
 
@@ -1719,11 +1719,11 @@ function renderDiagnosePanelForZone(zone, panel){
   const cat = !dominant ? 'general' : dominant.group==='Quick' ? 'quick' : dominant.group==='Fast' ? 'fasttempo' : 'highball';
   let issueText = null;
   if(agg.avgQ < 1.8) issueText = `Your ${zone} sets overall average ${agg.avgQ.toFixed(2)}/3 quality.`;
-  else if(agg.attempts>=3 && agg.hittingPct < 0.25) issueText = `{agg.avgQ.toFixed(2)}) but only converting ${(agg.hittingPct*100).toFixed(0)}% of the time.`;
+  else if(agg.attempts>=3 && agg.hittingPct < 0.25) issueText = `Your ${zone} sets look accurate (avg ${agg.avgQ.toFixed(2)}) but only converting ${(agg.hittingPct*100).toFixed(0)}% of the time.`;
 
 
   panel.innerHTML = diagHeading(zone+' zone (overall)') + diagStatBoxes(agg, list.length) +
-    (issueText ? `<div class="tip-block"><div class="tip-issue">{renderVideoCategory(cat)}</div>`
+    (issueText ? `<div class="tip-block"><div class="tip-issue">${escapeHtml(issueText)}</div>${renderVideoCategory(cat)}</div>`
                : `<div class="empty">No clear zone-wide issue — tap a specific set type above for a sharper read.</div>`);
 }
 
@@ -2118,7 +2118,7 @@ function renderCoachingTips(){
     const worstZone = zoneStats.reduce((a,b)=> a.avgQ<=b.avgQ ? a : b);
     if(worstZone.avgQ < 2){
       suggestions.push({
-        text: `Your ${worstZone.zone} sets average {worstZone.count} sets logged).`,
+        text: `Your ${worstZone.zone} sets average ${worstZone.avgQ.toFixed(2)}/3 quality — your weakest zone (${worstZone.count} sets logged).`,
         category: 'offNet'
       });
     }
@@ -2138,7 +2138,7 @@ function renderCoachingTips(){
     if(mostInconsistent.stdev > 0.8){
       const cat = mostInconsistent.group==='Quick' ? 'quick' : mostInconsistent.group==='Fast' ? 'fasttempo' : 'highball';
       suggestions.push({
-        text: `Your {mostInconsistent.stdev.toFixed(2)} within the same speed group (${mostInconsistent.count} sets).`,
+        text: `Your ${mostInconsistent.group} tempo sets are the least consistent — quality std dev of ${mostInconsistent.stdev.toFixed(2)} within the same speed group (${mostInconsistent.count} sets).`,
         category: cat
       });
     }
@@ -2172,7 +2172,7 @@ function renderCoachingTips(){
     const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
     if(goodAvg - badAvg >= 1){
       suggestions.push({
-        text: `Your set quality drops from ${goodAvg.toFixed(2)}/3 on perfect passes to {passBad.length} out-of-system reps logged) — a bigger gap than most of your other splits.`,
+        text: `Your set quality drops from ${goodAvg.toFixed(2)}/3 on perfect passes to ${badAvg.toFixed(2)}/3 on bad ones (${passBad.length} out-of-system reps logged) — a bigger gap than most of your other splits.`,
         category: 'outofsystem'
       });
     }
