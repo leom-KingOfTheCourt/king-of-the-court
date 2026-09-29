@@ -751,19 +751,19 @@
   <section id="court3d">
     <div class="card">
       <h2>3D court — set trajectories</h2>
-      <div class="sub">Drag the orange setter around your side of the court (or click the court and use the arrow keys). Drag anywhere else to orbit, scroll or pinch to zoom. Turn set types on and off below. Each one draws an arc from the setter's hands to where the hitter meets it: quicks stay low, shoot and C ball are medium-fast, and 4 and 5 ball go highest. The 1 ball, 2 ball, push 1, and back 1 move with the setter. Court is 18 × 9 m with a 2.43 m net.</div>
+      <div class="sub">Drag the baby-blue setter around your side of the court, or use W/A/S/D or the arrow keys. Drag anywhere else to orbit, scroll or pinch to zoom. No sets are drawn until you tap a set type below; tap more to add them, tap again to hide. Each one draws an arc from the setter's hands to where the hitter meets it: quicks stay low, shoot and C ball are medium-fast, and 4 and 5 ball go highest. The 1 ball, 2 ball, push 1, and back 1 move with the setter. Court is 18 × 9 m with a 2.43 m net.</div>
       <label>Set types <span class="batch-mode-note">(tap to toggle — pick as many as you like)</span></label>
       <div class="opt-group" id="c3d-types"></div>
       <div class="top-actions" style="justify-content:flex-start; margin:10px 0 12px;">
         <button class="secondary" id="c3d-all">All</button>
         <button class="secondary" id="c3d-none">None</button>
-        <button class="secondary" id="c3d-reset-setter">Reset setter</button>
+        <button class="secondary" id="c3d-reset-setter" title="Setter back to the usual spot, all trajectories hidden">Reset</button>
         <button class="secondary" id="c3d-reset-view">Reset view</button>
       </div>
       <div id="court3d-wrap" tabindex="0" aria-label="3D volleyball court. Arrow keys move the setter.">
         <div class="c3d-hud" id="c3d-hud"></div>
       </div>
-      <div class="diag-3d-hint">Mouse: drag the setter to move them · drag elsewhere to rotate · scroll to zoom. Touch: drag the setter · one finger elsewhere rotates · pinch zooms. Keyboard: arrow keys move the setter (Shift for bigger steps).</div>
+      <div class="diag-3d-hint">Mouse: drag the setter to move them · drag elsewhere to rotate · scroll to zoom. Touch: drag the setter · one finger elsewhere rotates · pinch zooms. Keyboard: W/A/S/D or arrow keys move the setter (Shift for bigger steps) — ignored while you're typing in a field.</div>
       <div id="c3d-table" style="margin-top:12px;"></div>
     </div>
   </section>
@@ -3319,8 +3319,8 @@ const SET_TARGETS_M = {
   // 3 ball and C ball stay on the RIGHT, matching their zone data and the Diagnose map
   // (TRAJECTORY_X '3':0.965, c:0.88 of the 9 m width; C ball's back-row contact at 9 ft = 2.74 m).
   '3':    { x:8.69, d:0.9, apex:1.7, contact:2.9, color:'#7ec4ff', note:'fast set to the right pin (same spot as the 5 ball, lower arc)' },
-  '5':    { x:8.55, d:1.0, apex:3.2, contact:3.0, color:'#b78cff', note:'high ball to the right/back antenna' },
-  c:      { x:7.92, d:2.74, apex:1.8, contact:3.0, color:'#4de0d0', note:'back-row attack on the right, ~2.7 m off the net' },
+  '5':    { x:8.55, d:1.0, apex:3.0, contact:3.0, color:'#b78cff', note:'high ball to the right/back antenna' },
+  c:      { x:7.92, d:2.74, apex:1.92, contact:3.0, color:'#4de0d0', note:'back-row attack on the right, ~2.7 m off the net' },
   '31':   { x:3.3,  d:0.8, apex:0.9, contact:2.9, color:'#ff9d6b', note:'quick in front of zone 3' },
   '32':   { x:2.0,  d:0.9, apex:1.4, contact:2.9, color:'#6bdba3', note:'between the 31 and the 4' },
   bic:    { x:5.4,  d:3.2, apex:1.2, contact:3.0, color:'#c9c3d6', note:'back-row quick near the setter' }
@@ -3454,7 +3454,7 @@ function renderCourt2D(){
 // Landing points come from SET_TARGETS_M, the same table the 2D court map uses.
 const C3D_TYPE_ORDER = ['1','2','push1','back1','4','shoot','3','5','c'];
 const C3D = { NET_H:2.43, RELEASE_Y:2.4, G:9.81 };
-let c3dSelected = new Set(C3D_TYPE_ORDER);
+let c3dSelected = new Set(); // nothing drawn until a set-type button is tapped
 let c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d };
 let c3d = null;
 TAB_HOOKS.court3d = ()=>{ renderC3DTypeButtons(); initCourt3D(); if(c3d){ resizeCourt3D(); updateC3DTrajectories(); startC3DLoop(); } };
@@ -3473,7 +3473,7 @@ document.getElementById('c3d-types').addEventListener('click', e=>{
 });
 document.getElementById('c3d-all').addEventListener('click', ()=>{ c3dSelected = new Set(C3D_TYPE_ORDER); renderC3DTypeButtons(); updateC3DTrajectories(); });
 document.getElementById('c3d-none').addEventListener('click', ()=>{ c3dSelected = new Set(); renderC3DTypeButtons(); updateC3DTrajectories(); });
-document.getElementById('c3d-reset-setter').addEventListener('click', ()=>{ c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d }; placeC3DSetter(); });
+document.getElementById('c3d-reset-setter').addEventListener('click', ()=>{ c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d }; c3dSelected = new Set(); renderC3DTypeButtons(); placeC3DSetter(); });
 document.getElementById('c3d-reset-view').addEventListener('click', ()=>{ if(c3d){ Object.assign(c3d.orbit, C3D_DEFAULT_ORBIT); applyC3DCamera(); } });
 
 const C3D_DEFAULT_ORBIT = { theta: 0.38, phi: 1.08, radius: 13 };
@@ -3556,18 +3556,18 @@ function initCourt3D(){
 
   // setter marker: body + head + floor ring + ball at the release point, plus a fat invisible hit target for dragging
   const setter = new THREE.Group();
-  const orange = 0xff6a00;
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,1.45,20), new THREE.MeshStandardMaterial({ color:orange, roughness:0.5, emissive:0x331400 }));
+  const SETTER_COLOR = 0x89cff0; // baby blue
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,1.45,20), new THREE.MeshStandardMaterial({ color:SETTER_COLOR, roughness:0.5, emissive:0x0d2a38 }));
   body.position.y = 0.725; setter.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15,20,16), new THREE.MeshStandardMaterial({ color:orange, roughness:0.5, emissive:0x331400 }));
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15,20,16), new THREE.MeshStandardMaterial({ color:SETTER_COLOR, roughness:0.5, emissive:0x0d2a38 }));
   head.position.y = 1.62; setter.add(head);
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.38,0.48,40), new THREE.MeshBasicMaterial({ color:orange, side:THREE.DoubleSide, transparent:true, opacity:0.85 }));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.38,0.48,40), new THREE.MeshBasicMaterial({ color:SETTER_COLOR, side:THREE.DoubleSide, transparent:true, opacity:0.85 }));
   ring.rotation.x = -Math.PI/2; ring.position.y = 0.012; setter.add(ring);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.105,20,16), new THREE.MeshStandardMaterial({ color:0xf4f2f0, roughness:0.6 }));
   ball.position.y = C3D.RELEASE_Y; setter.add(ball);
   const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,2.6,12), new THREE.MeshBasicMaterial({ visible:false }));
   hit.position.y = 1.3; setter.add(hit);
-  const sLabel = c3dLabelSprite('SETTER', '#ff6a00'); sLabel.position.y = 2.05; sLabel.scale.set(1.1,0.275,1); setter.add(sLabel);
+  const sLabel = c3dLabelSprite('SETTER', '#89cff0'); sLabel.position.y = 2.05; sLabel.scale.set(1.1,0.275,1); setter.add(sLabel);
   scene.add(setter);
 
   const trajGroup = new THREE.Group(); scene.add(trajGroup);
@@ -3710,15 +3710,22 @@ function attachC3DControls(){
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', e=>{ e.preventDefault(); c3d.orbit.radius *= Math.exp(e.deltaY*0.001); applyC3DCamera(); }, { passive:false });
-  wrap.addEventListener('keydown', e=>{
-    const step = e.shiftKey ? 0.75 : 0.25;
-    const moves = { ArrowLeft:[-step,0], ArrowRight:[step,0], ArrowUp:[0,-step], ArrowDown:[0,step] };
-    if(!moves[e.key]) return;
-    e.preventDefault();
-    c3dSetter.x += moves[e.key][0]; c3dSetter.z += moves[e.key][1];
-    placeC3DSetter();
-  });
 }
+// W/A/S/D + arrow keys move the setter while the 3D Court tab is open —
+// never while typing in a text field / select, and not with Ctrl/Cmd/Alt shortcuts.
+document.addEventListener('keydown', e=>{
+  if(!c3d || !document.getElementById('court3d').classList.contains('active')) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const a = document.activeElement;
+  if(a && (a.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(a.tagName))) return;
+  const step = e.shiftKey ? 0.75 : 0.25;
+  const k = e.key.length===1 ? e.key.toLowerCase() : e.key;
+  const moves = { ArrowLeft:[-step,0], a:[-step,0], ArrowRight:[step,0], d:[step,0], ArrowUp:[0,-step], w:[0,-step], ArrowDown:[0,step], s:[0,step] };
+  if(!moves[k]) return;
+  e.preventDefault();
+  c3dSetter.x += moves[k][0]; c3dSetter.z += moves[k][1];
+  placeC3DSetter();
+});
 function startC3DLoop(){
   if(!c3d || c3d.raf) return;
   const tick = now=>{
