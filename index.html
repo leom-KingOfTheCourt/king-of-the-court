@@ -301,6 +301,23 @@
   #pg-summary h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:10px 0 0; font-size:17px; }
   .bt-game-msg{ font-size:12.5px; font-weight:700; margin-top:4px; }
   .bt-game-msg a{ color:var(--orange2); cursor:pointer; text-decoration:underline; }
+  .rc-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:14px; }
+  .rc-cat{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 16px; position:relative; }
+  .rc-cat h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--text); margin:0; font-size:20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .rc-chip{ font-family:var(--font-body); font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; padding:2px 9px; border-radius:20px; }
+  .rc-chip.strong{ background:rgba(53,212,136,.16); color:var(--good); border:1px solid var(--good); }
+  .rc-chip.ok{ background:rgba(255,204,51,.14); color:var(--mid); border:1px solid var(--mid); }
+  .rc-chip.work{ background:rgba(255,71,87,.14); color:var(--bad); border:1px solid var(--bad); }
+  .rc-chip.nodata{ background:#24212b; color:var(--text-dim); border:1px solid var(--border); }
+  .rc-nums{ display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; }
+  .rc-num .v{ font-family:var(--font-display); font-size:28px; color:var(--orange); line-height:1; }
+  .rc-num .l{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin-top:2px; }
+  .rc-note{ margin-top:10px; line-height:1.45; font-size:14px; }
+  .rc-cmp{ margin-top:6px; font-size:13px; font-weight:700; }
+  .rc-info{ margin-top:8px; font-size:11.5px; color:var(--text-dim); line-height:1.4; border-top:1px solid var(--border); padding-top:6px; }
+  .rc-cat table{ margin-top:8px; font-size:12.5px; }
+  .rc-cat.rc-wide{ grid-column:1 / -1; border-left:3px solid var(--orange); }
+  .rc-cue{ color:var(--orange2); font-weight:700; }
 </style>
 </head>
 <body>
@@ -318,6 +335,7 @@
     <button class="active" data-tab="balltime">Balltime</button>
     <button data-tab="stats">Match Stats</button>
     <button data-tab="progress">Progress</button>
+    <button data-tab="report">Report Card</button>
     <button data-tab="court2d">Court Map</button>
     <button data-tab="court3d">3D Court</button>
     <button data-tab="data">All Sets</button>
@@ -621,6 +639,17 @@
       <div id="pg-detail-bucket"></div>
       <div class="pass-tbl-wrap" id="pg-detail"></div>
     </div>
+  </section>
+
+  <!-- REPORT CARD -->
+  <section id="report">
+    <div class="card">
+      <h2>Setter report card — Leo #5</h2>
+      <div class="sub">A post-game report card built from the game's ball-by-ball Balltime data (Leo's sets only). Every chip comes from simple rules on the real numbers, shown under each category; nothing is graded by hand. Games added through the ingest script get a report card automatically.</div>
+      <div class="row" style="max-width:520px"><div><label>Game</label><select id="rc-game"></select></div></div>
+      <div id="rc-head" class="pg-note"></div>
+    </div>
+    <div class="rc-grid" id="rc-grid"></div>
   </section>
 
 
@@ -3575,6 +3604,147 @@ async function renderPgDetail(){
 }
 document.getElementById('pg-detail-game').addEventListener('change', renderPgDetail);
 document.getElementById('pg-detail-filter').addEventListener('change', renderPgDetail);
+
+// ---------- Report Card tab: post-game setter report from a game's ball-by-ball file (data/games/) ----------
+TAB_HOOKS.report = ()=>{ renderReportCard(); };
+const RC_SWING = ['kill','error','in_play'];
+const rcClamp = x=>Math.max(0, Math.min(100, Math.round(x)));
+const rcSwings = cs=>cs.filter(c=>RC_SWING.includes(c.result));
+function rcEff(cs){ const s = rcSwings(cs); if(!s.length) return null; return (s.filter(c=>c.result==='kill').length - s.filter(c=>c.result==='error').length)/s.length; }
+const rcE = v=>PG_FMT.eff(v), rcP = v=>PG_FMT.pct(v);
+function rcFrontRow(c){ return c.zone && c.zone!=='back-row'; }
+
+// Each category returns {status: strong|ok|work|nodata, score 0-100 (for ranking/comparison), nums:[[value,label]], note, info, extra}
+const RC_CATS = [
+  { key:'accuracy', title:'Setting accuracy', cue:'neutral spine, push with thumbs/wrists',
+    info:'Balltime has no set-accuracy or set-grade field, so accuracy = what happened next: % of Leo\'s sets that were attacked (not free-balled over or dropped) plus hitting efficiency (kills − errors) ÷ attacks off his sets. Strong = 95%+ attacked and eff .300+; needs work = under 85% attacked or eff under .150.',
+    calc(g){ const cs = g.chains, att = cs.filter(c=>!['free','none'].includes(c.result)).length/cs.length, e = rcEff(cs);
+      if(!cs.length) return { status:'nodata' };
+      const status = (att>=0.95 && e>=0.3) ? 'strong' : (att<0.85 || e==null || e<0.15) ? 'work' : 'ok';
+      return { status, score: rcClamp(((att-0.7)/0.3*100 + ((e??-0.1)+0.1)/0.5*100)/2), nums:[[rcP(att),'sets attacked'],[rcE(e),'hitting eff'],[String(rcSwings(cs).length),'swings']],
+        detail: `${Math.round(att*100)}% of your ${cs.length} sets turned into an attack and hitters went ${rcE(e)} off them` }; } },
+  { key:'tempo', title:'Tempo', cue:'beat the ball, jump straight up — get under it early so you can push the tempo',
+    info:'Balltime doesn\'t tag tempo directly. When it tracked the ball, each set has an air time: quick = front-row set in the air 0.9 s or less, fast = 1.2 s or less (quicks plus go/hut-type sets). Strong = 40%+ of front-row sets fast and they hit at least as well as the high balls; needs work = under 20% fast.',
+    calc(g){ const fr = g.chains.filter(c=>rcFrontRow(c) && c.airTime!=null);
+      if(fr.length<5) return { status:'nodata', note: g.available && !g.available.positional ? 'Tempo isn\'t tagged by Balltime for this game — there\'s no ball tracking, so no air times or set destinations to read tempo from.' : 'Not enough tracked front-row sets to read tempo.' };
+      const fast = fr.filter(c=>c.airTime<=1.2), quick = fr.filter(c=>c.airTime<=0.9), slow = fr.filter(c=>c.airTime>1.2);
+      const share = fast.length/fr.length, ef = rcEff(fast), es = rcEff(slow);
+      const status = (share>=0.4 && (ef??-1)>=(es??-1)) ? 'strong' : share<0.2 ? 'work' : 'ok';
+      const avg = fr.reduce((s,c)=>s+c.airTime,0)/fr.length;
+      return { status, score: rcClamp(share/0.5*70 + (ef!=null && es!=null ? (ef>=es?30:15) : 15)), nums:[[rcP(share),'fast sets'],[String(quick.length),'quicks'],[avg.toFixed(2)+' s','avg air time']],
+        detail: `${fast.length} of ${fr.length} tracked front-row sets were fast (${quick.length} true quicks), hitting ${rcE(ef)} vs ${rcE(es)} on the higher balls` }; } },
+  { key:'consistency', title:'Consistency', cue:'neutral spine, push with thumbs/wrists — same hands every ball',
+    info:'Set-to-set steadiness: hitting eff and attack-error rate off Leo\'s sets in each set of the match (first half vs second half of his sets when only one set was played). Strong = eff within .150 between sets and error rate 15% or less; needs work = a gap over .300 or error rate over 25%.',
+    calc(g){ const cs = g.chains; if(cs.length<6) return { status:'nodata', note:'Too few sets to judge consistency.' };
+      const setNums = [...new Set(cs.map(c=>c.set))].sort();
+      const parts = setNums.length>1 ? setNums.map(n=>({ label:'Set '+n, cs: cs.filter(c=>c.set===n) })) : [{ label:'1st half', cs: cs.slice(0, Math.ceil(cs.length/2)) }, { label:'2nd half', cs: cs.slice(Math.ceil(cs.length/2)) }];
+      const effs = parts.map(p=>rcEff(p.cs)).filter(v=>v!=null);
+      const gap = effs.length>1 ? Math.max(...effs)-Math.min(...effs) : 0;
+      const sw = rcSwings(cs), er = sw.length ? sw.filter(c=>c.result==='error').length/sw.length : 0;
+      const status = (gap<=0.15 && er<=0.15) ? 'strong' : (gap>0.3 || er>0.25) ? 'work' : 'ok';
+      return { status, score: rcClamp(100 - gap*150 - Math.max(0,er-0.1)*200), nums:[[parts.map(p=>rcE(rcEff(p.cs))).join(' / '), parts.map(p=>p.label).join(' / ')+' eff'],[rcP(er),'attack-error rate']],
+        detail: `hitters went ${parts.map(p=>`${rcE(rcEff(p.cs))} in ${p.label.toLowerCase()}`).join(' and ')}, with ${Math.round(er*100)}% of swings ending in an error` + (effs.length>1 && gap>0.15 ? (effs[effs.length-1]>effs[0] ? ' — you got better as the match went on; the goal is starting that sharp' : ' — it tailed off late, so keep the same hands when you\'re tired') : '') }; } },
+  { key:'distribution', title:'Distribution', cue:'eyes on the middle first, then pick the best option',
+    info:'How spread out the attacks off Leo\'s sets were across hitters (by jersey): top-hitter share and an evenness score (normalised entropy, 100% = perfectly even). Strong = evenness 80%+ and no hitter over 40%; needs work = one hitter over 55% or fewer than 3 hitters used.',
+    calc(g){ const sw = g.chains.filter(c=>!['free','none'].includes(c.result) && c.attacker);
+      if(sw.length<5) return { status:'nodata', note:'Too few attacks with a known hitter.' };
+      const by = {}; sw.forEach(c=>by[c.attacker]=(by[c.attacker]||0)+1);
+      const ns = Object.values(by), k = ns.length, top = Math.max(...ns)/sw.length;
+      const H = -ns.reduce((s,n)=>s+(n/sw.length)*Math.log(n/sw.length),0), even = k>1 ? H/Math.log(k) : 0;
+      const topJ = Object.entries(by).sort((a,b)=>b[1]-a[1])[0][0];
+      const status = (even>=0.8 && top<=0.4) ? 'strong' : (top>0.55 || k<3) ? 'work' : 'ok';
+      return { status, score: rcClamp(even*70 + (1-top)*30), nums:[[String(k),'hitters used'],[rcP(top),'top hitter (#'+topJ+')'],[rcP(even),'evenness']],
+        detail: `you spread ${sw.length} attacks over ${k} hitters; the busiest, #${topJ}, got ${Math.round(top*100)}%` }; } },
+  { key:'oos', title:'Out-of-system setting', cue:'beat the ball, jump straight up',
+    info:'Sets off a pass rated 0–1 or off a dig, free ball, overpass or scramble. Hitting eff and % attacked on those. Strong = eff .250+; needs work = eff under .100. Passes Balltime left unrated don\'t count as either.',
+    calc(g){ const cs = g.chains.filter(c=>c.system==='oos');
+      if(cs.length<3) return { status:'nodata', note:'Fewer than 3 out-of-system sets were identifiable in this game.' };
+      const e = rcEff(cs), att = cs.filter(c=>!['free','none'].includes(c.result)).length/cs.length;
+      const status = e==null ? 'nodata' : e>=0.25 ? 'strong' : e<0.1 ? 'work' : 'ok';
+      return { status, score: rcClamp(((e??-0.1)+0.1)/0.5*80 + att*20), nums:[[rcE(e),'OOS eff'],[rcP(att),'attacked'],[String(cs.length),'OOS sets']],
+        detail: `off ${cs.length} out-of-system balls your hitters went ${rcE(e)}, and ${Math.round(att*100)}% were attacked` }; } },
+  { key:'diversity', title:'Decision diversity', cue:'same pass, different answer — mix in the quick and the back set',
+    info:'How many different destinations (left / middle-quick / right-back set / back row) and Balltime set calls Leo used, and how predictable he was: for each pass rating with 3+ sets, the share going to the single most common destination (lower = harder to read). Strong = all 4 destinations and predictability 50% or less; needs work = 2 or fewer destinations or predictability 70%+.',
+    calc(g){ const cs = g.chains.filter(c=>c.zone);
+      if(cs.length<5) return { status:'nodata', note:'Set destinations aren\'t in this game\'s data (no ball tracking), so diversity can\'t be read' + (g.chains.some(c=>c.call)?'':' and there are no set calls either') + '.' };
+      const B = c=>(c.quick||c.zone==='middle') ? 'middle/quick' : (c.zone==='behind-setter'||c.zone==='right') ? 'right/back set' : c.zone;
+      const dests = new Set(cs.map(B)), calls = new Set(cs.map(c=>c.call).filter(Boolean));
+      const byPass = {}; cs.filter(c=>c.origin==='serve-receive' && c.pass!=null).forEach(c=>(byPass[c.pass]=byPass[c.pass]||[]).push(B(c)));
+      const pr = Object.entries(byPass).filter(([k,v])=>v.length>=3).map(([k,v])=>{ const cnt = {}; v.forEach(d=>cnt[d]=(cnt[d]||0)+1); const [d,n] = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; return { pass:k, n:v.length, top:d, share:n/v.length }; });
+      const pred = pr.length ? pr.reduce((s,p)=>s+p.share*p.n,0)/pr.reduce((s,p)=>s+p.n,0) : null;
+      const status = (dests.size>=4 && (pred??0)<=0.5) ? 'strong' : (dests.size<=2 || (pred??0)>=0.7) ? 'work' : 'ok';
+      return { status, score: rcClamp(dests.size/4*60 + (pred==null?20:(1-pred)*40)), nums:[[String(dests.size)+'/4','destinations'],[String(calls.size),'set calls'],[pred==null?'n/a':rcP(pred),'predictability']],
+        detail: `you used ${dests.size} of 4 destinations and ${calls.size} different set calls` + (pr.length ? `; after the same pass you went to the same place ${Math.round(pred*100)}% of the time (${pr.map(p=>`pass ${p.pass}: ${p.top} ${Math.round(p.share*100)}%`).join(', ')})` : '') }; } },
+  { key:'hitters', title:'Hitter efficiency', cue:'feed the hot hand; give a struggling hitter a high, hittable ball',
+    info:'Per-hitter hitting eff on attacks off Leo\'s sets (hitters with 2+ swings). Strong = at least two hitters at .250+ and none below .000; needs work = no hitter at .250+ or two below .000.',
+    calc(g){ const sw = rcSwings(g.chains).filter(c=>c.attacker); const by = {};
+      sw.forEach(c=>(by[c.attacker]=by[c.attacker]||[]).push(c));
+      const rows = Object.entries(by).filter(([j,cs])=>cs.length>=2).map(([j,cs])=>({ j, n:cs.length, k:cs.filter(c=>c.result==='kill').length, e:cs.filter(c=>c.result==='error').length, eff:rcEff(cs) })).sort((a,b)=>b.eff-a.eff || b.n-a.n);
+      if(!rows.length) return { status:'nodata', note:'No hitter had 2+ swings off your sets.' };
+      const good = rows.filter(r=>r.eff>=0.25).length, neg = rows.filter(r=>r.eff<0).length;
+      const status = (good>=2 && neg===0) ? 'strong' : (good===0 || neg>=2) ? 'work' : 'ok';
+      return { status, score: rcClamp(50 + good*15 - neg*20), nums:[[String(good),'hitters at .250+'],[String(neg),'below .000']],
+        extra: `<table><thead><tr><th>Hitter</th><th>Swings</th><th>K</th><th>E</th><th>Eff</th></tr></thead><tbody>${rows.map(r=>`<tr><td>#${escapeHtml(r.j)}</td><td>${r.n}</td><td>${r.k}</td><td>${r.e}</td><td>${rcE(r.eff)}</td></tr>`).join('')}</tbody></table>`,
+        detail: `${good} hitter${good===1?' was':'s were'} at .250 or better off your sets and ${neg} below zero` }; } },
+  { key:'connection', title:'Best connection', cue:'keep finding your best connection when the pass is good',
+    info:'The hitter with the best hitting eff off Leo\'s sets, minimum 4 swings. Strong = .400+; OK = .200+.',
+    calc(g){ const sw = rcSwings(g.chains).filter(c=>c.attacker); const by = {};
+      sw.forEach(c=>(by[c.attacker]=by[c.attacker]||[]).push(c));
+      const rows = Object.entries(by).filter(([j,cs])=>cs.length>=4).map(([j,cs])=>({ j, n:cs.length, k:cs.filter(c=>c.result==='kill').length, eff:rcEff(cs) })).sort((a,b)=>b.eff-a.eff || b.k-a.k);
+      if(!rows.length) return { status:'nodata', note:'No hitter had 4+ swings off your sets.' };
+      const b = rows[0], status = b.eff>=0.4 ? 'strong' : b.eff>=0.2 ? 'ok' : 'work';
+      return { status, score: rcClamp((b.eff+0.1)/0.6*100), who:b.j, nums:[['#'+b.j,'hitter'],[rcE(b.eff),'eff'],[`${b.k}/${b.n}`,'kills / swings']],
+        detail: `#${b.j} was your best connection: ${b.k} kills on ${b.n} swings (${rcE(b.eff)})` }; } }
+];
+const RC_VOICE = {
+  strong: ['This was a strong area this game', 'This was one of your best areas this game'],
+  ok: ['Solid, with room to grow', 'This held up fine'],
+  work: ['This wasn\'t your best this game', 'This is the one to work on']
+};
+function rcNote(cat, r, prev){
+  if(r.status==='nodata') return r.note || 'Not enough data in this game.';
+  const v = RC_VOICE[r.status][cat.key.length % 2];
+  let s = `${v}: ${r.detail}.`;
+  return s;
+}
+function rcCompare(cat, r, pr, prevGame){
+  if(!prevGame) return '<span class="pg-flat">First game on file — no previous game to compare.</span>';
+  if(!pr || pr.status==='nodata' || r.status==='nodata') return `<span class="pg-flat">Can't compare with last game (${escapeHtml(prevGame.date)}): not in both games' data.</span>`;
+  const d = r.score - pr.score;
+  const extra = cat.key==='connection' ? ` (last game: #${escapeHtml(pr.who)} at ${pr.nums[1][0]})` : ` (last game: ${pr.nums.slice(0,2).map(n=>n[0]+' '+n[1]).join(', ')})`;
+  if(Math.abs(d)<5) return `<span class="pg-flat">= About the same as last game</span><span style="color:var(--text-dim);font-weight:600">${extra}</span>`;
+  return d>0 ? `<span class="pg-up">▲ Improved from last game</span><span style="color:var(--text-dim);font-weight:600">${extra}</span>` : `<span class="pg-down">▼ Dipped from last game</span><span style="color:var(--text-dim);font-weight:600">${extra}</span>`;
+}
+function buildReportCard(g, prev){
+  const res = RC_CATS.map(cat=>({ cat, r: cat.calc(g), pr: prev ? cat.calc(prev) : null }));
+  const scored = res.filter(x=>x.r.status!=='nodata' && x.cat.key!=='connection');
+  const worst = scored.slice().sort((a,b)=>a.r.score-b.r.score).slice(0,2);
+  return { res, worst };
+}
+async function renderReportCard(){
+  const sel = document.getElementById('rc-game');
+  let games;
+  try{ games = await loadAllGames(); }catch(err){ document.getElementById('rc-grid').innerHTML = `<div class="card"><div class="sub">Couldn't load data/games/ (${escapeHtml(String(err.message||err))}).</div></div>`; return; }
+  if(!games.length){ document.getElementById('rc-grid').innerHTML = '<div class="card"><div class="sub">No games yet — send a Balltime link to your Grok bot to add one.</div></div>'; return; }
+  const cur = sel.value;
+  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</option>`).join('');
+  sel.value = [...sel.options].some(o=>o.value===cur) ? cur : games[games.length-1].id;   // default: latest game
+  const i = games.findIndex(g=>g.id===sel.value), g = games[i], prev = i>0 ? games[i-1] : null;
+  const m = g.metrics;
+  document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
+  const { res, worst } = buildReportCard(g, prev);
+  const chipTxt = { strong:'Strong', ok:'OK', work:'Needs work', nodata:'No data' };
+  let html = res.map(({cat, r, pr})=>`<div class="rc-cat"><h3>${cat.title} <span class="rc-chip ${r.status}">${chipTxt[r.status]}</span></h3>
+    ${r.nums ? `<div class="rc-nums">${r.nums.map(([v,l])=>`<div class="rc-num"><div class="v">${escapeHtml(String(v))}</div><div class="l">${escapeHtml(l)}</div></div>`).join('')}</div>` : ''}
+    <div class="rc-note">${escapeHtml(rcNote(cat, r, pr))}</div>
+    <div class="rc-cmp">${rcCompare(cat, r, pr, prev)}</div>${r.extra||''}
+    <div class="rc-info">ⓘ ${escapeHtml(cat.info)}</div></div>`).join('');
+  html += `<div class="rc-cat rc-wide"><h3>What needs work <span class="rc-chip ${worst.length?'work':'nodata'}">${worst.length?'Focus':'No data'}</span></h3>
+    ${worst.length ? `<ul class="rc-note" style="padding-left:18px;margin-bottom:0">${worst.map(({cat, r})=>`<li><b>${cat.title}</b> (${chipTxt[r.status]}, ${r.nums.slice(0,2).map(n=>escapeHtml(n[0]+' '+n[1])).join(', ')}) — cue: <span class="rc-cue">"${escapeHtml(cat.cue)}"</span></li>`).join('')}</ul>` : '<div class="rc-note">Not enough data to pick focus areas.</div>'}
+    <div class="rc-info">ⓘ The two lowest-scoring categories this game (each category gets a 0–100 rule score behind its chip; best connection isn't counted). Cues reuse Leo's current focus where they fit ("neutral spine, push with thumbs/wrists", "beat the ball, jump straight up"); "press straight over, seal the seam" is a blocking cue, so it doesn't apply to setting categories.</div></div>`;
+  document.getElementById('rc-grid').innerHTML = html;
+}
+document.getElementById('rc-game').addEventListener('change', renderReportCard);
 
 populateFilters();
 updateBackupBanner();
