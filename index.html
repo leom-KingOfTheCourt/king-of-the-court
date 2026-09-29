@@ -88,12 +88,13 @@
   .card{
     background:var(--card); border:1px solid var(--border); border-left:4px solid var(--orange);
     border-radius:8px; padding:18px 20px; margin-bottom:16px; position:relative; overflow:hidden;
+    color:var(--text);
   }
   .card::after{
     content:''; position:absolute; top:-22px; right:-22px; width:100px; height:100px; pointer-events:none;
     background-image:radial-gradient(rgba(232,93,4,.10) 2px, transparent 2px); background-size:11px 11px;
   }
-  .card h2{margin:0 0 4px; font-size:21px; font-family:var(--font-display); letter-spacing:.03em; font-weight:400;}
+  .card h2{margin:0 0 4px; font-size:21px; font-family:var(--font-display); letter-spacing:.03em; font-weight:400; color:var(--orange2);}
   .card .sub{color:var(--text-dim); font-size:12.5px; margin-bottom:14px;}
   label{display:block; font-size:12px; color:var(--text-dim); margin-bottom:4px; font-weight:700; letter-spacing:.02em; text-transform:uppercase;}
   input[type=text], input[type=date], input[type=number], select, textarea{
