@@ -395,6 +395,15 @@
   .td-flag.ok{ background:rgba(53,212,136,.14); color:var(--good); border:1px solid var(--good); }
   .td-import-box{ background:var(--card2); border:1px dashed var(--border); border-radius:6px; padding:12px 14px; margin-top:12px; }
   .td-import-box textarea{ min-height:72px; margin-top:6px; }
+
+  details.td-whats{ margin:6px 0 10px; font-size:12.5px; color:var(--text-dim); }
+  details.td-whats summary{ cursor:pointer; color:var(--orange2); font-weight:700; list-style:none; }
+  details.td-whats summary::-webkit-details-marker{ display:none; }
+  details.td-whats .td-whats-body{ margin-top:6px; line-height:1.4; }
+  .td-big-row{ display:flex; flex-wrap:wrap; gap:10px; margin:8px 0 4px; }
+  .td-big{ background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; min-width:88px; text-align:center; }
+  .td-big .v{ font-family:var(--font-display); font-size:28px; color:var(--orange); line-height:1; }
+  .td-big .l{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin-top:3px; }
   .td-compare{ margin-top:10px; font-size:13px; color:var(--text-dim); }
 </style>
 </head>
@@ -775,13 +784,13 @@
         <svg class="crow-svg"><use href="#crow-perch"/></svg>
       </span>
       <h2>Tendencies <span id="td-exp-pill" class="td-pill" style="display:none;"></span></h2>
-      <div class="sub">How Leo (#5) chose where to set — by pass, system, and origin — plus how that changed across the match. Numbers come from AI-tagged Balltime chains in <code>data/games/</code>. Small samples; read as tendencies, not a verdict. No rotation or live score in the files, so those aren't shown.</div>
+      <div class="sub">Where Leo set the ball, and how that changed in the match.</div>
       <div class="row" style="max-width:640px">
         <div><label>Game</label><select id="td-game"></select></div>
         <div style="flex:0 0 auto; min-width:auto; padding-bottom:2px;">
           <label>&nbsp;</label>
           <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-weight:600;letter-spacing:0;font-size:13.5px;color:var(--text);cursor:pointer;">
-            <input type="checkbox" id="td-both" style="width:auto;margin:0;"> Compare both games (shared slices only)
+            <input type="checkbox" id="td-both" style="width:auto;margin:0;"> Compare both games
           </label>
         </div>
       </div>
@@ -790,13 +799,14 @@
 
     <div class="card">
       <h2>Setter decision making</h2>
-      <div class="sub">Who got the ball in each situation, and where it went. Efficiency = (kills − errors) ÷ swings off that slice (swings = kill / error / in-play). Pass ratings and set calls only appear when Balltime tagged them for that game.</div>
+      <div class="sub">Who got the ball · where it went · eff = (K−E)÷swings</div>
+      <details class="td-whats"><summary>What’s this?</summary><div class="td-whats-body">Tables use AI-tagged Balltime chains. Pass / calls / destinations show n/a when that game didn’t tag them. Small samples.</div></details>
       <div id="td-decision"></div>
     </div>
 
     <div class="card">
       <h2>Match timeline</h2>
-      <div class="sub">How setting changed from the first rally to the last. Rolling efficiency uses a window of 5 swings (or all swings so far if fewer). Distribution is share of destinations by set (or match thirds when there's only one set).</div>
+      <div class="sub">Eff and destination mix from start → end</div>
       <div id="td-timeline"></div>
     </div>
 
@@ -804,46 +814,44 @@
       <span class="hidden-crow crow-side on-dark" style="left:12px;bottom:10px;" aria-hidden="true" data-crow="health">
         <svg class="crow-svg"><use href="#crow-side"/></svg>
       </span>
-      <h2>Match-day body &amp; health</h2>
-      <div class="sub">Check-in for sleep, fatigue, and training load. Saved in this browser only (<code>kotc-health-v1</code>). A static GitHub Pages site can't OAuth Apple Health or Garmin — paste a sleep CSV below when you have one. Nothing is seeded; Leo starts at 0 rows until he logs.</div>
+      <h2>Match-day body</h2>
+      <div class="sub">Sleep · tired · load — saved in this browser only</div>
 
       <div class="row" style="max-width:720px;margin-bottom:8px;">
         <div style="flex:0 0 auto;min-width:auto;">
           <label>&nbsp;</label>
-          <button class="secondary" type="button" id="td-health-use-game">Use selected game date</button>
+          <button class="secondary" type="button" id="td-health-use-game">Use game date</button>
         </div>
         <div style="flex:0 0 auto;min-width:auto;">
           <label>&nbsp;</label>
-          <button class="secondary" type="button" id="td-health-new">New blank check-in</button>
+          <button class="secondary" type="button" id="td-health-new">New</button>
         </div>
       </div>
       <div id="td-health-form" class="td-health-grid"></div>
       <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
-        <button class="primary" id="td-health-save" type="button">Save check-in</button>
-        <button class="secondary" id="td-health-clear" type="button">Delete this date</button>
+        <button class="primary" id="td-health-save" type="button">Save</button>
+        <button class="secondary" id="td-health-clear" type="button">Delete date</button>
       </div>
       <div id="td-health-msg" class="bt-msg" style="margin-top:8px;"></div>
 
-      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Saved check-ins</h3>
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Saved</h3>
       <div id="td-health-list" class="td-health-list"><div class="empty">No check-ins yet.</div></div>
 
-      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Paired with setting</h3>
-      <div class="sub" style="margin-bottom:6px;">When a check-in date matches a loaded game, body numbers sit next to that day's set quality. Charts unlock at 2+ paired days; correlations need 4+.</div>
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Body vs setting</h3>
       <div id="td-health-pair"></div>
 
-      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Personal baseline</h3>
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Your averages</h3>
       <div id="td-health-baseline"></div>
 
-      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Exploratory correlations</h3>
-      <div class="sub" style="margin-bottom:6px;">Pearson r on paired match days only. Not medical advice — self-report health + AI-tagged Balltime. Tiny n.</div>
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Links (sleep ↔ setting)</h3>
       <div id="td-health-corr"></div>
 
       <div class="td-import-box">
-        <b style="color:var(--text)">Paste sleep / wearable export</b>
-        <div class="pg-note" style="margin-top:4px;">CSV or TSV with a header row. Recognized columns (any case / spacing): <code>date</code>, <code>sleep_hours</code> / <code>sleep</code>, <code>hrv</code>, <code>rhr</code>, optional <code>sleep_quality</code>. Merges by date into your check-ins (won't wipe fatigue/notes you already typed). Full Apple Health / Garmin live connect needs a backend later.</div>
+        <b style="color:var(--text)">Paste sleep CSV</b>
+        <div class="pg-note" style="margin-top:4px;">Header + rows: <code>date,sleep_hours,hrv,rhr</code> — merges by date.</div>
         <textarea id="td-health-import" placeholder="date,sleep_hours,hrv,rhr&#10;2026-07-10,7.5,62,54"></textarea>
         <div class="top-actions" style="justify-content:flex-start;margin-top:8px;">
-          <button class="secondary" type="button" id="td-health-import-btn">Merge paste into check-ins</button>
+          <button class="secondary" type="button" id="td-health-import-btn">Merge</button>
           <label class="secondary" style="cursor:pointer;">Upload CSV<input type="file" id="td-health-import-file" accept=".csv,.tsv,.txt" style="display:none;"></label>
         </div>
         <div id="td-health-import-msg" class="bt-msg" style="margin-top:6px;"></div>
@@ -852,16 +860,16 @@
 
     <div class="card">
       <h2>Current experiment</h2>
-      <div class="sub">One focus at a time. Saved in this browser. Report Card and Tendencies show the name when set — no fake weekly results.</div>
+      <div class="sub">One focus. Saved here only.</div>
       <div class="td-health-grid">
         <div style="grid-column:1/-1;"><label>Name</label><input type="text" id="td-exp-name" placeholder="e.g. OOS right-side sets" maxlength="80"></div>
         <div style="grid-column:1/-1;"><label>Hypothesis</label><input type="text" id="td-exp-hyp" placeholder="e.g. improve OOS right-side sets" maxlength="160"></div>
-        <div><label>Start date</label><input type="date" id="td-exp-start"></div>
-        <div><label>Target metric (optional)</label><input type="text" id="td-exp-metric" placeholder="e.g. OOS eff, assist %" maxlength="60"></div>
+        <div><label>Start</label><input type="date" id="td-exp-start"></div>
+        <div><label>Target (optional)</label><input type="text" id="td-exp-metric" placeholder="e.g. OOS eff" maxlength="60"></div>
       </div>
       <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
-        <button class="primary" id="td-exp-save" type="button">Save experiment</button>
-        <button class="secondary" id="td-exp-clear" type="button">Clear experiment</button>
+        <button class="primary" id="td-exp-save" type="button">Save</button>
+        <button class="secondary" id="td-exp-clear" type="button">Clear</button>
       </div>
       <div id="td-exp-msg" class="bt-msg" style="margin-top:8px;"></div>
     </div>
@@ -4056,9 +4064,8 @@ async function renderTendencies(){
   const m = g.metrics;
   const avail = g.available || {};
   document.getElementById('td-head').innerHTML =
-    `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists, overall eff ${tdFmtEff(m.quality.eff)}. ` +
-    `Pass ratings ${avail.passRatings?'tagged':'not tagged'}; set calls ${avail.setCalls?'tagged':'not tagged'}; destinations ${avail.positional?'tagged':'not tagged'}. ` +
-    `Rotation and live score are not in the JSON — omitted on purpose.`;
+    `<b style="color:var(--text)">${escapeHtml(g.date||'')}</b> · ${escapeHtml((g.meta&&g.meta.resultText)||'—')} · ${m.quality.n} sets · eff ${tdFmtEff(m.quality.eff)} · assist ${tdFmtPct(m.quality.assistPct)}` +
+    `<span style="color:var(--text-dim)"> · pass ${avail.passRatings?'✓':'—'}/calls ${avail.setCalls?'✓':'—'}/dest ${avail.positional?'✓':'—'}</span>`;
 
   updateTdExperimentPill();
   renderTdDecision(g, both ? other : null);
@@ -4081,26 +4088,24 @@ function renderTdDecision(g, other){
   const parts = [];
 
   // --- Who he set by pass ---
-  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:4px 0 8px;">Who he set — by pass rating</h3>');
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:4px 0 8px;">By pass</h3>');
   if(!avail.passRatings){
-    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — Balltime left pass ratings untagged (<code>available.passRatings: false</code>). Same pattern as Progress.</div>`);
+    parts.push(`<div class="pg-note">n/a — no pass ratings this game.</div>`);
   } else {
     parts.push(tdHitterSituationTable(cs, c=>tdPassKey(c.pass), ['0-1','2','3','unrated'], TD_PASS_LABELS));
-    parts.push(`<div class="pg-def" style="margin-top:6px;">Pass 0–1 / 2 / 3 from Balltime's serve-receive rating; digs and free balls are usually unrated. Efficiency only on swings (kill / error / in-play).</div>`);
   }
 
   // --- Who he set by system ---
-  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Who he set — by in vs out of system</h3>');
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">By system</h3>');
   const sysKeys = ['in','oos','unknown'].filter(k=>cs.some(c=>c.system===k));
   if(!sysKeys.length){
-    parts.push('<div class="pg-note">No system tags on chains.</div>');
+    parts.push('<div class="pg-note">n/a — no system tags.</div>');
   } else {
     parts.push(tdHitterSituationTable(cs, c=>c.system||'unknown', sysKeys, TD_SYS_LABELS));
-    parts.push(`<div class="pg-def" style="margin-top:6px;">In / out of system from the ingest rules (pass 2–3 ≈ in; pass 0–1 or dig/free/overpass ≈ oos). Unrated receives can land in "unknown".</div>`);
   }
 
   // --- Destination by pass ---
-  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Destination by pass quality</h3>');
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Where · by pass</h3>');
   if(!avail.passRatings || !avail.positional){
     const why = [];
     if(!avail.passRatings) why.push('pass ratings untagged');
@@ -4111,20 +4116,19 @@ function renderTdDecision(g, other){
   }
 
   // --- Destination by origin ---
-  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Destination by origin</h3>');
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Where · by origin</h3>');
   if(!avail.positional){
-    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — destinations untagged (<code>available.positional: false</code>). Origins themselves are still counted in Progress metrics.</div>`);
     const origins = tdCountBy(cs, c=>c.origin||'—');
-    parts.push(`<div class="pg-note">Origin counts only: ${Object.entries(origins).map(([k,n])=>`${TD_ORIGIN_LABELS[k]||k} ${n}`).join(' · ')}.</div>`);
+    parts.push(`<div class="pg-note">n/a destinations. Origins: ${Object.entries(origins).map(([k,n])=>`${TD_ORIGIN_LABELS[k]||k} ${n}`).join(' · ')}.</div>`);
   } else {
     const oKeys = ['serve-receive','dig','free'].filter(k=>cs.some(c=>c.origin===k));
     parts.push(tdDestTable(cs, c=>c.origin||'—', oKeys, TD_ORIGIN_LABELS));
   }
 
   // --- Set-call mix ---
-  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Set-call mix</h3>');
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Calls</h3>');
   if(!avail.setCalls){
-    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — Balltime did not tag set calls (<code>available.setCalls: false</code>).</div>`);
+    parts.push(`<div class="pg-note">n/a — no set calls this game.</div>`);
   } else {
     const calls = cs.map(c=>c.call).filter(Boolean);
     const nullN = cs.length - calls.length;
@@ -4152,7 +4156,7 @@ function renderTdDecision(g, other){
   if(other){
     parts.push(tdCrossGame(g, other));
   } else {
-    parts.push('<div class="td-compare">Tick "Compare both games" to see slices both games share (origins always; pass / destination / calls only when both tagged them).</div>');
+    parts.push('<div class="td-compare">Tick Compare for both-game slices.</div>');
   }
 
   box.innerHTML = parts.join('');
@@ -4195,64 +4199,51 @@ function tdDestTable(cs, keyFn, keys, labels){
     const cnt = tdBucketCounts(sub);
     return `<tr><td>${escapeHtml(labels[k]||k)}</td><td>${sub.length}</td>${cols.map(b=>`<td>${cnt[b]||0}</td>`).join('')}<td>${tdFmtEff(tdEff(sub))}</td></tr>`;
   }).filter(Boolean).join('');
-  return `<div class="pass-tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="pg-def" style="margin-top:6px;">Buckets from the ingest: left pin · middle/quick · right/back-set · back-row (plus not-attacked / unknown when present).</div>`;
+  return `<div class="pass-tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function tdHonestRead(g){
   const cs = g.chains||[];
   const avail = g.available||{};
   const lines = [];
-  lines.push(`Tendencies from AI-tagged Balltime — ${cs.length} of Leo's sets in this game. Small sample.`);
 
   if(avail.passRatings && avail.positional){
     const bad = cs.filter(c=>tdPassKey(c.pass)==='0-1');
     if(bad.length){
-      const cnt = tdBucketCounts(bad);
-      const mid = cnt['middle/quick']||0;
-      lines.push(`On 0–1 passes (n=${bad.length}) you ${mid===0?'never went middle':'went middle '+mid}; ${tdBucketText(bad)}.`);
+      const mid = (tdBucketCounts(bad)['middle/quick']||0);
+      lines.push(`0–1 passes (n=${bad.length}): ${mid===0?'no middle':'middle '+mid} — ${tdBucketText(bad)}`);
     }
     const p3 = cs.filter(c=>tdPassKey(c.pass)==='3');
-    if(p3.length){
-      lines.push(`On perfect (3) passes (n=${p3.length}): ${tdBucketText(p3)} — eff ${tdFmtEff(tdEff(p3))}.`);
-    }
+    if(p3.length) lines.push(`Pass 3 (n=${p3.length}): ${tdBucketText(p3)} · eff ${tdFmtEff(tdEff(p3))}`);
   } else if(!avail.passRatings){
-    lines.push(`Pass-based destination reads are n/a — this game has no pass ratings.`);
+    lines.push('Pass reads n/a this game');
   }
 
   const oos = cs.filter(c=>c.system==='oos');
   const inn = cs.filter(c=>c.system==='in');
   if(oos.length || inn.length){
-    lines.push(`System split: in-system ${inn.length} (eff ${tdFmtEff(tdEff(inn))}), out-of-system ${oos.length} (eff ${tdFmtEff(tdEff(oos))}).`);
-  }
-
-  if(avail.positional){
-    const sr = cs.filter(c=>c.origin==='serve-receive');
-    const dig = cs.filter(c=>c.origin==='dig');
-    if(sr.length) lines.push(`Off serve-receive (n=${sr.length}): ${tdBucketText(sr)}.`);
-    if(dig.length) lines.push(`Off digs (n=${dig.length}): ${tdBucketText(dig)}.`);
+    lines.push(`In ${inn.length} (${tdFmtEff(tdEff(inn))}) · OOS ${oos.length} (${tdFmtEff(tdEff(oos))})`);
   }
 
   if(avail.setCalls){
     const calls = cs.map(c=>c.call).filter(Boolean);
     const cnt = {}; calls.forEach(c=>cnt[c]=(cnt[c]||0)+1);
     const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
-    if(top) lines.push(`Call mix: ${new Set(calls).size} distinct calls; most common "${top[0]}" (${top[1]} of ${calls.length} tagged).`);
+    if(top) lines.push(`${new Set(calls).size} calls · top “${top[0]}” ×${top[1]}`);
   }
 
-  // Busiest hitter
   const byH = {};
   cs.forEach(c=>{ const h=c.attacker||'—'; if(h==='—') return; byH[h]=(byH[h]||0)+1; });
   const topH = Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
-  if(topH) lines.push(`Busiest hitter: #${topH[0]} on ${topH[1]} of ${cs.length} sets (${tdFmtPct(topH[1]/cs.length)}).`);
+  if(topH) lines.push(`Busiest: #${topH[0]} (${topH[1]}/${cs.length})`);
 
-  return `<div class="td-read"><h3>Honest read</h3><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+  if(!lines.length) return '';
+  return `<div class="td-read"><h3>Quick read</h3><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
 }
 
 function tdCrossGame(a, b){
   const lines = [];
-  lines.push(`<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Both games — shared slices only</h3>`);
-  lines.push(`<div class="pg-note">Comparing ${escapeHtml(a.date)} (n=${(a.chains||[]).length}) with ${escapeHtml(b.date)} (n=${(b.chains||[]).length}). Only slices both games can support.</div>`);
+  lines.push(`<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Both games</h3>`);
 
   // Origins always available
   const originKeys = ['serve-receive','dig','free'];
@@ -4279,18 +4270,18 @@ function tdCrossGame(a, b){
     }).join('');
     lines.push(`<div class="pass-tbl-wrap" style="margin-top:10px;"><table><thead><tr><th>System</th><th>${escapeHtml(a.date)} n</th><th>Eff</th><th>${escapeHtml(b.date)} n</th><th>Eff</th></tr></thead><tbody>${sRows}</tbody></table></div>`);
   } else {
-    lines.push(`<div class="pg-note" style="margin-top:8px;">In/out-of-system comparison limited — one game has mostly unknown system tags.</div>`);
+    lines.push(`<div class="pg-note" style="margin-top:8px;">System compare limited (unknown tags).</div>`);
   }
 
   const bothPass = a.available?.passRatings && b.available?.passRatings;
   const bothPos = a.available?.positional && b.available?.positional;
   const bothCalls = a.available?.setCalls && b.available?.setCalls;
-  if(!bothPass) lines.push(`<div class="pg-note">Pass-rating slices: n/a in comparison — ${!a.available?.passRatings?a.date:'ok'} / ${!b.available?.passRatings?b.date+' missing pass ratings':'ok'}.</div>`);
-  if(!bothPos) lines.push(`<div class="pg-note">Destination slices: n/a in comparison — need positional tags in both games.</div>`);
-  if(!bothCalls) lines.push(`<div class="pg-note">Set-call mix: n/a in comparison — need setCalls in both games.</div>`);
-
-  // Overall quality always
-  lines.push(`<div class="pg-note" style="margin-top:8px;">Overall: ${escapeHtml(a.date)} eff ${tdFmtEff(a.metrics.quality.eff)}, assist ${tdFmtPct(a.metrics.quality.assistPct)} · ${escapeHtml(b.date)} eff ${tdFmtEff(b.metrics.quality.eff)}, assist ${tdFmtPct(b.metrics.quality.assistPct)}.</div>`);
+  const miss = [];
+  if(!bothPass) miss.push('pass');
+  if(!bothPos) miss.push('dest');
+  if(!bothCalls) miss.push('calls');
+  if(miss.length) lines.push(`<div class="pg-note">n/a both games: ${miss.join(', ')}</div>`);
+  lines.push(`<div class="pg-note">${escapeHtml(a.date)} eff ${tdFmtEff(a.metrics.quality.eff)} · ${escapeHtml(b.date)} eff ${tdFmtEff(b.metrics.quality.eff)}</div>`);
 
   return lines.join('');
 }
@@ -4318,23 +4309,21 @@ function renderTdTimeline(g){
     const s1 = tdEff(cs.filter(c=>c.set===1)), s2 = tdEff(cs.filter(c=>c.set===2));
     const b1 = tdBucketText(cs.filter(c=>c.set===1));
     const b2 = tdBucketText(cs.filter(c=>c.set===2));
-    parts.push(`<div class="td-read"><h3>Set 1 → set 2</h3><ul>
-      <li>Set 1 hitting eff ${tdFmtEff(s1)} (n=${cs.filter(c=>c.set===1).length}) vs set 2 ${tdFmtEff(s2)} (n=${cs.filter(c=>c.set===2).length}) — Leo got sharper late.</li>
-      <li>Set 1 distribution: ${b1}.</li>
-      <li>Set 2 distribution: ${b2}${g.available?.positional ? ' — fewer middle/quick sets, more back-row and left.' : ''}.</li>
+    parts.push(`<div class="td-read"><h3>Set 1 → 2</h3><ul>
+      <li>Eff ${tdFmtEff(s1)} (n=${cs.filter(c=>c.set===1).length}) → ${tdFmtEff(s2)} (n=${cs.filter(c=>c.set===2).length})</li>
+      <li>S1: ${b1}</li>
+      <li>S2: ${b2}</li>
     </ul></div>`);
   }
 
   if(small){
-    parts.push(`<div class="pg-note" style="margin-bottom:10px;">Small sample (n=${cs.length}) — showing each swing as a point, not a smoothed spline.</div>`);
+    parts.push(`<div class="pg-note" style="margin-bottom:10px;">Small n=${cs.length} — points, not a smooth curve.</div>`);
   }
 
   parts.push(`<div class="td-charts">
-    <div class="td-chart"><h3>Rolling / per-swing efficiency</h3>
-      <div class="pg-def">${small?'Each point is one swing (kill=+1, error=−1, in-play=0) in rally order, colored by set.':'Rolling window of 5 swings: (kills − errors) ÷ swings in the window. Colored by which set the last swing of the window is in.'}</div>
+    <div class="td-chart"><h3>Eff over time</h3>
       <div class="td-box"><canvas id="td-chart-roll"></canvas></div></div>
-    <div class="td-chart"><h3>Distribution over time</h3>
-      <div class="pg-def">${setNums.length>1?'Share of destinations in each set of the match.':'Share of destinations in early / mid / late thirds of Leo\'s sets (only one set played).'}${!g.available?.positional?' Destinations untagged — chart shows n/a.':''}</div>
+    <div class="td-chart"><h3>Where over time</h3>
       <div class="td-box"><canvas id="td-chart-dist"></canvas></div></div>
   </div>`);
 
@@ -4464,17 +4453,17 @@ function drawTdDistChart(g, cs, setNums){
 // ---- Health form (richer check-in, pairing, baseline, correlations, paste import) ----
 const HEALTH_FIELDS = [
   ['date','Date','date'],
-  ['sleepHours','Sleep hours','number'],
-  ['sleepQuality','Sleep quality 1–5','number'],
-  ['fatigue','Fatigue 1–5','number'],
-  ['soreness','Soreness 1–5','number'],
+  ['sleepHours','Sleep hrs','number'],
+  ['sleepQuality','Sleep 1–5','number'],
+  ['fatigue','Tired 1–5','number'],
+  ['soreness','Sore 1–5','number'],
   ['stress','Stress 1–5','number'],
-  ['practiceMin','Practice minutes','number'],
-  ['practiceIntensity','Practice intensity 1–5','number'],
-  ['rpe','Session RPE 1–10','number'],
-  ['loadSimple','Training load 1–10','number'],
-  ['hrv','HRV (optional)','number'],
-  ['rhr','RHR (optional)','number']
+  ['practiceMin','Practice min','number'],
+  ['practiceIntensity','Intensity 1–5','number'],
+  ['rpe','RPE 1–10','number'],
+  ['loadSimple','Load 1–10','number'],
+  ['hrv','HRV','number'],
+  ['rhr','RHR','number']
 ];
 let tdHealthEditingDate = null;
 let tdHealthGamesCache = [];
@@ -4549,8 +4538,8 @@ function fillTdHealthForm(date){
     return `<div><label>${label}</label><input type="${type}" id="td-h-${id}" value="${escapeHtml(v)}"${extra}></div>`;
   }).join('');
   const tl = healthTrainingLoad(h);
-  html += `<div><label>Load (RPE × min)</label><input type="text" id="td-h-trainingLoadDisplay" value="${tl==null?'':escapeHtml(String(tl))}" readonly style="opacity:.85;" title="Auto from practice minutes × session RPE"></div>`;
-  html += `<div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="td-h-notes" value="${escapeHtml(h.notes||'')}" placeholder="e.g. short sleep after travel"></div>`;
+  html += `<div><label>RPE×min</label><input type="text" id="td-h-trainingLoadDisplay" value="${tl==null?'':escapeHtml(String(tl))}" readonly style="opacity:.85;" title="Practice min × RPE"></div>`;
+  html += `<div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="td-h-notes" value="${escapeHtml(h.notes||'')}" placeholder="optional"></div>`;
   document.getElementById('td-health-form').innerHTML = html;
   const syncLoad = ()=>{
     const min = document.getElementById('td-h-practiceMin')?.value;
@@ -4589,7 +4578,7 @@ function readTdHealthForm(){
 function renderTdHealthList(){
   const el = document.getElementById('td-health-list');
   const rows = loadHealthLog();
-  if(!rows.length){ el.innerHTML = '<div class="empty">No check-ins yet — Leo has 0 rows until he logs one.</div>'; return; }
+  if(!rows.length){ el.innerHTML = '<div class="empty">None yet.</div>'; return; }
   const gameDates = new Set((tdHealthGamesCache||[]).map(g=>g.date));
   el.innerHTML = `<div class="pass-tbl-wrap"><table><thead><tr>
     <th>Date</th><th>Sleep</th><th>Fatigue</th><th>Load</th><th>HRV</th><th>RHR</th><th>Game?</th><th></th>
@@ -4625,7 +4614,7 @@ function renderTdHealthList(){
       renderTdHealthPanel(g, games);
     }).catch(()=>renderTdHealthPanel(null, tdHealthGamesCache));
     const msg = document.getElementById('td-health-msg');
-    msg.className='bt-msg ok'; msg.textContent='Deleted check-in for '+date+'.';
+    msg.className='bt-msg ok'; msg.textContent='Deleted '+date;
   }));
 }
 
@@ -4656,38 +4645,39 @@ async function renderTdHealthPair(g, games){
 
   if(g){
     if(!h){
-      parts.push(`<div class="pg-note">No check-in for <b>${escapeHtml(g.date)}</b> yet. Setting that day: eff ${tdFmtEff(g.metrics.quality.eff)}, assist ${tdFmtPct(g.metrics.quality.assistPct)}, OOS eff ${tdFmtEff(g.metrics.system.effOos)}, decision ${g.metrics.decision?.score!=null?Math.round(g.metrics.decision.score):'n/a'}.</div>`);
+      parts.push(`<div class="td-big-row">
+        <div class="td-big"><div class="v">${tdFmtEff(g.metrics.quality.eff)}</div><div class="l">Set eff</div></div>
+        <div class="td-big"><div class="v">${tdFmtPct(g.metrics.quality.assistPct)}</div><div class="l">Assist</div></div>
+        <div class="td-big"><div class="v">${tdFmtEff(g.metrics.system.effOos)}</div><div class="l">OOS eff</div></div>
+      </div>
+      <div class="pg-note">No body log for ${escapeHtml(g.date)} yet.</div>`);
     } else {
       const load = healthTrainingLoad(h);
       const flags = healthBaselineFlags(h);
-      parts.push(`<div class="td-pair-grid"><div class="td-pair-card"><h3>Body · ${escapeHtml(g.date)}</h3>
-        <div>${[
-          h.sleepHours!=null?`Sleep <b style="color:var(--orange2)">${escapeHtml(String(h.sleepHours))}h</b>${flags.sleep?' <span class="td-flag low">below sleep baseline</span>':''}`:null,
-          h.sleepQuality!=null?`quality ${h.sleepQuality}/5`:null,
-          h.fatigue!=null?`Fatigue <b>${h.fatigue}/5</b>${flags.fatigue?' <span class="td-flag low">above fatigue baseline</span>':''}`:null,
-          h.soreness!=null?`soreness ${h.soreness}/5`:null,
-          h.stress!=null?`stress ${h.stress}/5`:null,
-          load!=null?`Load <b>${escapeHtml(String(load))}</b>`:null,
-          h.hrv!=null?`HRV ${escapeHtml(String(h.hrv))}${flags.hrv?' <span class="td-flag low">below HRV baseline</span>':''}`:null,
-          h.rhr!=null?`RHR ${escapeHtml(String(h.rhr))}`:null
-        ].filter(Boolean).join('<br>')}${h.notes?`<div class="pg-note" style="margin-top:6px;">“${escapeHtml(h.notes)}”</div>`:''}</div></div>
-        <div class="td-pair-card"><h3>Setting · ${escapeHtml(g.date)}</h3>
-        <div>Eff <b style="color:var(--orange2)">${tdFmtEff(g.metrics.quality.eff)}</b> · assist ${tdFmtPct(g.metrics.quality.assistPct)} · attacked ${tdFmtPct(g.metrics.quality.attackedPct)}<br>
-        OOS eff ${tdFmtEff(g.metrics.system.effOos)} · decision ${g.metrics.decision?.score!=null?Math.round(g.metrics.decision.score)+'/100':'n/a'} (${g.metrics.decision?.used||0}/${g.metrics.decision?.of||0} parts)<br>
-        <span style="color:var(--text-dim)">${g.metrics.quality.n} sets · ${(g.meta&&g.meta.resultText)||''}</span></div></div></div>`);
+      const flagBits = [flags.sleep?'sleep↓':null, flags.fatigue?'tired↑':null, flags.hrv?'HRV↓':null].filter(Boolean);
+      parts.push(`<div class="td-big-row">
+        <div class="td-big"><div class="v">${h.sleepHours!=null?escapeHtml(String(h.sleepHours)):'—'}</div><div class="l">Sleep hrs</div></div>
+        <div class="td-big"><div class="v">${h.fatigue!=null?h.fatigue:'—'}</div><div class="l">Tired</div></div>
+        <div class="td-big"><div class="v">${load!=null?escapeHtml(String(load)):'—'}</div><div class="l">Load</div></div>
+        <div class="td-big"><div class="v">${h.hrv!=null?escapeHtml(String(h.hrv)):'—'}</div><div class="l">HRV</div></div>
+        <div class="td-big"><div class="v">${tdFmtEff(g.metrics.quality.eff)}</div><div class="l">Set eff</div></div>
+        <div class="td-big"><div class="v">${tdFmtPct(g.metrics.quality.assistPct)}</div><div class="l">Assist</div></div>
+        <div class="td-big"><div class="v">${tdFmtEff(g.metrics.system.effOos)}</div><div class="l">OOS eff</div></div>
+      </div>
+      ${flagBits.length?`<div>${flagBits.map(f=>`<span class="td-flag low">${f}</span>`).join(' ')}</div>`:''}`);
     }
   }
 
-  parts.push(`<div class="pg-note" style="margin-top:10px;">Paired match days on file: <b>${paired.length}</b> (check-in date = game date). Unpaired check-ins still count toward your health baseline.</div>`);
+  parts.push(`<div class="pg-note" style="margin-top:8px;">Paired days: <b>${paired.length}</b></div>`);
 
   if(paired.length < 2){
-    parts.push(`<div class="empty" style="text-align:left;padding:14px 0;">Log match-day check-ins for July 8 and July 10 (and future games) to unlock sleep vs setting charts. Right now you have ${paired.length} paired day${paired.length===1?'':'s'} — nothing is invented.</div>`);
+    parts.push(`<div class="empty" style="text-align:left;padding:10px 0;">Log July 8 and July 10 to see charts.</div>`);
     destroyChart('td-health-chart-sleep');
     destroyChart('td-health-chart-fatigue');
   } else {
     parts.push(`<div class="td-charts">
-      <div class="td-chart"><h3>Sleep hours vs set eff</h3><div class="pg-def">One point per paired match day. Orange = sleep hours (left), green = set eff (right).</div><div class="td-box"><canvas id="td-health-chart-sleep"></canvas></div></div>
-      <div class="td-chart"><h3>Fatigue vs OOS eff</h3><div class="pg-def">Fatigue 1–5 (left) vs out-of-system hitting eff (right). Days without OOS eff are skipped on the green series.</div><div class="td-box"><canvas id="td-health-chart-fatigue"></canvas></div></div>
+      <div class="td-chart"><h3>Sleep vs eff</h3><div class="td-box"><canvas id="td-health-chart-sleep"></canvas></div></div>
+      <div class="td-chart"><h3>Tired vs OOS</h3><div class="td-box"><canvas id="td-health-chart-fatigue"></canvas></div></div>
     </div>`);
   }
   el.innerHTML = parts.join('');
@@ -4764,33 +4754,19 @@ function renderTdHealthBaseline(g){
   const el = document.getElementById('td-health-baseline');
   const rows = loadHealthLog();
   if(rows.length < 3){
-    el.innerHTML = `<div class="empty" style="text-align:left;padding:10px 0;">Personal baseline needs at least 3 check-ins (any dates). You have ${rows.length}. Log more match days — we won't flag "below baseline" until then.</div>`;
+    el.innerHTML = `<div class="empty" style="text-align:left;padding:8px 0;">Need 3+ check-ins (have ${rows.length}).</div>`;
     return;
   }
   const means = healthMeans(rows);
-  const fmt = (m, digits=1)=> m ? `${m.mean.toFixed(digits)} <span style="color:var(--text-dim)">(n=${m.n})</span>` : '<span class="na">n/a</span>';
   const flags = g ? healthBaselineFlags(healthForDate(g.date)) : {};
-  el.innerHTML = `<div class="stat-grid">
-    <div class="stat-box"><div class="val" style="font-size:22px;">${means.sleepHours?means.sleepHours.mean.toFixed(1):'—'}</div><div class="lbl">Avg sleep hours</div></div>
-    <div class="stat-box"><div class="val" style="font-size:22px;">${means.fatigue?means.fatigue.mean.toFixed(1):'—'}</div><div class="lbl">Avg fatigue</div></div>
-    <div class="stat-box"><div class="val" style="font-size:22px;">${means.hrv?Math.round(means.hrv.mean):'—'}</div><div class="lbl">Avg HRV</div></div>
-    <div class="stat-box"><div class="val" style="font-size:22px;">${means.trainingLoad?Math.round(means.trainingLoad.mean):'—'}</div><div class="lbl">Avg training load</div></div>
+  const flagBits = [flags.sleep?'sleep↓':null, flags.fatigue?'tired↑':null, flags.hrv?'HRV↓':null].filter(Boolean);
+  el.innerHTML = `<div class="td-big-row">
+    <div class="td-big"><div class="v">${means.sleepHours?means.sleepHours.mean.toFixed(1):'—'}</div><div class="l">Avg sleep</div></div>
+    <div class="td-big"><div class="v">${means.fatigue?means.fatigue.mean.toFixed(1):'—'}</div><div class="l">Avg tired</div></div>
+    <div class="td-big"><div class="v">${means.hrv?Math.round(means.hrv.mean):'—'}</div><div class="l">Avg HRV</div></div>
+    <div class="td-big"><div class="v">${means.trainingLoad?Math.round(means.trainingLoad.mean):'—'}</div><div class="l">Avg load</div></div>
   </div>
-  <div class="pass-tbl-wrap" style="margin-top:10px;"><table><thead><tr><th>Field</th><th>Your average</th></tr></thead><tbody>
-    <tr><td>Sleep hours</td><td>${fmt(means.sleepHours)}</td></tr>
-    <tr><td>Sleep quality</td><td>${fmt(means.sleepQuality)}</td></tr>
-    <tr><td>Fatigue</td><td>${fmt(means.fatigue)}</td></tr>
-    <tr><td>Soreness</td><td>${fmt(means.soreness)}</td></tr>
-    <tr><td>Stress</td><td>${fmt(means.stress)}</td></tr>
-    <tr><td>HRV</td><td>${fmt(means.hrv,0)}</td></tr>
-    <tr><td>RHR</td><td>${fmt(means.rhr,0)}</td></tr>
-    <tr><td>Training load (RPE×min or 1–10)</td><td>${fmt(means.trainingLoad,0)}</td></tr>
-  </tbody></table></div>
-  <div class="pg-note" style="margin-top:8px;">Flags on a match day (when n≥3): sleep ≤ avg − 0.75h; fatigue ≥ avg + 1; HRV ≤ 90% of avg.
-    ${g && healthForDate(g.date) ? (flags.sleep||flags.fatigue||flags.hrv
-      ? ` For <b>${escapeHtml(g.date)}</b>: ${[flags.sleep?'below sleep baseline':null, flags.fatigue?'above fatigue baseline':null, flags.hrv?'below HRV baseline':null].filter(Boolean).join('; ')}.`
-      : ` For <b>${escapeHtml(g.date)}</b>: within your current baselines.`)
-      : ''}</div>`;
+  ${flagBits.length && g ? `<div>${flagBits.map(f=>`<span class="td-flag low">${escapeHtml(g.date)} ${f}</span>`).join(' ')}</div>` : `<div class="pg-note">n=${rows.length}</div>`}`;
 }
 
 function pearson(xs, ys){
@@ -4806,28 +4782,27 @@ function renderTdHealthCorr(games){
   const el = document.getElementById('td-health-corr');
   const paired = healthPaired(games);
   if(paired.length < 4){
-    el.innerHTML = `<div class="empty" style="text-align:left;padding:10px 0;">Need more match days for correlations (n≥4 paired points). You have ${paired.length}. Log check-ins on game dates — exploratory only, not medical advice.</div>`;
+    el.innerHTML = `<div class="empty" style="text-align:left;padding:8px 0;">Need 4+ match days (have ${paired.length}). Not medical advice.</div>`;
     return;
   }
   const candidates = [
-    { label:'Sleep hours vs set eff', x:p=>p.health.sleepHours, y:p=>p.setEff, fmtY:tdFmtEff },
-    { label:'Sleep hours vs assist %', x:p=>p.health.sleepHours, y:p=>p.assistPct, fmtY:tdFmtPct },
-    { label:'Fatigue vs OOS eff', x:p=>p.health.fatigue, y:p=>p.oosEff, fmtY:tdFmtEff },
-    { label:'Training load vs attacked %', x:p=>p.load, y:p=>p.attackedPct, fmtY:tdFmtPct }
+    { label:'Sleep → eff', x:p=>p.health.sleepHours, y:p=>p.setEff, fmtY:tdFmtEff },
+    { label:'Sleep → assist', x:p=>p.health.sleepHours, y:p=>p.assistPct, fmtY:tdFmtPct },
+    { label:'Tired → OOS', x:p=>p.health.fatigue, y:p=>p.oosEff, fmtY:tdFmtEff },
+    { label:'Load → attacked', x:p=>p.load, y:p=>p.attackedPct, fmtY:tdFmtPct }
   ];
   const rows = candidates.map(c=>{
     const pts = paired.map(p=>({x:c.x(p), y:c.y(p)})).filter(p=>p.x!=null && p.y!=null);
     const r = pearson(pts.map(p=>p.x), pts.map(p=>p.y));
     return { label:c.label, n:pts.length, r };
   });
-  el.innerHTML = `<div class="pass-tbl-wrap"><table><thead><tr><th>Pair</th><th>n</th><th>Pearson r</th><th>Note</th></tr></thead><tbody>
+  el.innerHTML = `<div class="pass-tbl-wrap"><table><thead><tr><th>Link</th><th>n</th><th>r</th></tr></thead><tbody>
     ${rows.map(r=>{
-      if(r.n < 4) return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td colspan="2" style="color:var(--text-dim)">need 4+ points with both values</td></tr>`;
-      const strength = Math.abs(r.r)<0.2?'≈ none':Math.abs(r.r)<0.4?'weak':Math.abs(r.r)<0.6?'moderate':'strong-ish';
-      return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td>${r.r.toFixed(2)}</td><td style="color:var(--text-dim)">${strength} · tiny n, exploratory</td></tr>`;
+      if(r.n < 4) return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td style="color:var(--text-dim)">need 4+</td></tr>`;
+      return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td>${r.r.toFixed(2)}</td></tr>`;
     }).join('')}
   </tbody></table></div>
-  <div class="pg-note" style="margin-top:8px;">Self-report health + AI-tagged volleyball. Not medical advice. With only ${paired.length} paired days, treat every r as a hint to collect more data.</div>`;
+  <div class="pg-note" style="margin-top:6px;">Not medical advice. Need 4+ match days.</div>`;
 }
 
 function parseHealthCsv(text){
@@ -4903,7 +4878,7 @@ document.getElementById('td-health-save').addEventListener('click', ()=>{
   all.push(row);
   saveHealthLog(all);
   tdHealthEditingDate = row.date;
-  msg.className='bt-msg ok'; msg.textContent='Saved check-in for '+row.date+' (this browser only).';
+  msg.className='bt-msg ok'; msg.textContent='Saved '+row.date;
   const sel = document.getElementById('td-game');
   loadAllGames().then(games=>{
     tdHealthGamesCache = games;
@@ -4917,7 +4892,7 @@ document.getElementById('td-health-clear').addEventListener('click', ()=>{
   if(!date){ msg.className='bt-msg err'; msg.textContent='Pick a date to delete.'; return; }
   saveHealthLog(loadHealthLog().filter(h=>h.date!==date));
   tdHealthEditingDate = null;
-  msg.className='bt-msg ok'; msg.textContent='Deleted check-in for '+date+'.';
+  msg.className='bt-msg ok'; msg.textContent='Deleted '+date;
   const sel = document.getElementById('td-game');
   loadAllGames().then(games=>{
     tdHealthGamesCache = games;
@@ -4975,7 +4950,7 @@ function fillTdExperimentForm(){
 document.getElementById('td-exp-save').addEventListener('click', ()=>{
   const name = document.getElementById('td-exp-name').value.trim();
   const msg = document.getElementById('td-exp-msg');
-  if(!name){ msg.className='bt-msg err'; msg.textContent='Give the experiment a name.'; return; }
+  if(!name){ msg.className='bt-msg err'; msg.textContent='Need a name.'; return; }
   saveExperiment({
     name,
     hypothesis: document.getElementById('td-exp-hyp').value.trim() || 'improve OOS right-side sets',
@@ -4983,7 +4958,7 @@ document.getElementById('td-exp-save').addEventListener('click', ()=>{
     targetMetric: document.getElementById('td-exp-metric').value.trim(),
     updatedAt: new Date().toISOString()
   });
-  msg.className='bt-msg ok'; msg.textContent='Experiment saved (this browser only).';
+  msg.className='bt-msg ok'; msg.textContent='Saved.';
   updateTdExperimentPill();
 });
 document.getElementById('td-exp-clear').addEventListener('click', ()=>{
