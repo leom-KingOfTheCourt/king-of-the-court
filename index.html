@@ -7,52 +7,69 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@500;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#132743; --navy2:#1c3a63; --orange:#ff6a00; --orange2:#ffab4d;
-    --crimson:#e8283f; --bg:#0a0a0e; --card:#151319; --card2:#1c1a22; --border:#2c2933;
-    --text:#f4f2f0; --text-dim:#a29fae; --good:#35d488; --bad:#ff4757; --mid:#ffcc33;
+    --ink:#1a1a1a; --ink2:#111111;
+    --navy:#1a1a1a; --navy2:#2a2622;
+    --orange:#e85d04; --orange2:#ff7a18;
+    --crimson:#c2410c;
+    --bg:#f7f1e8; --card:#2a2622; --card2:#35302b; --border:#4a433c;
+    --text:#f7f1e8; --text-dim:#b8aea3; --good:#35d488; --bad:#ff4757; --mid:#e6b422;
     --font-display:'Bebas Neue',sans-serif; --font-body:'Rajdhani',-apple-system,sans-serif;
+    --font-jp:'Noto Sans JP',sans-serif;
+    --page-ink:#1a1a1a; --page-muted:#5c534a;
   }
   *{box-sizing:border-box;}
   body{
     margin:0; font-family:var(--font-body); font-weight:500; font-size:15px;
     background:
-      repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0 2px, transparent 2px 46px),
-      radial-gradient(circle at 85% 0%, rgba(232,40,63,.10), transparent 45%),
-      linear-gradient(180deg,var(--bg),#050506 65%);
+      repeating-linear-gradient(90deg, rgba(26,26,26,.035) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(0deg, rgba(26,26,26,.03) 0 1px, transparent 1px 72px),
+      radial-gradient(ellipse at 12% 0%, rgba(232,93,4,.07), transparent 42%),
+      linear-gradient(180deg, #faf6ef, var(--bg) 40%, #f0e8db 100%);
     background-attachment:fixed;
-    color:var(--text); padding:24px 16px 80px; position:relative;
+    color:var(--page-ink); padding:24px 16px 80px; position:relative;
   }
   body::after{
-    content:''; position:fixed; right:-60px; bottom:-40px; width:340px; height:170px; z-index:0; pointer-events:none;
-    opacity:.05;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 90'%3E%3Cpath d='M0 45 Q35 5 70 42 Q85 15 100 40 Q115 15 130 42 Q165 5 200 45' stroke='white' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    content:''; position:fixed; right:-50px; bottom:-30px; width:280px; height:140px; z-index:0; pointer-events:none;
+    opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 90'%3E%3Cpath d='M0 45 Q35 5 70 42 Q85 15 100 40 Q115 15 130 42 Q165 5 200 45' stroke='%231a1a1a' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-size:contain;
   }
   .wrap{max-width:1100px;margin:0 auto; position:relative; z-index:1;}
   header{
     display:flex; align-items:center; gap:16px; margin-bottom:26px;
-    background:linear-gradient(100deg, var(--crimson), var(--orange));
+    background:linear-gradient(105deg, #111111 0%, #1a1a1a 58%, #2a1608 82%, #e85d04 100%);
     clip-path:polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 34px) 100%, 0 100%);
-    padding:22px 30px 34px; box-shadow:0 10px 28px rgba(255,90,0,.22); position:relative; overflow:hidden;
+    padding:22px 30px 34px; box-shadow:0 10px 24px rgba(26,26,26,.18); position:relative; overflow:hidden;
+    border-bottom:3px solid var(--orange);
   }
   header::before{
     content:''; position:absolute; inset:0;
-    background-image:repeating-linear-gradient(100deg, rgba(255,255,255,.10) 0 3px, transparent 3px 22px);
-    mix-blend-mode:overlay; pointer-events:none;
+    background-image:
+      repeating-linear-gradient(100deg, rgba(255,255,255,.06) 0 2px, transparent 2px 28px),
+      linear-gradient(180deg, transparent 62%, rgba(232,93,4,.12));
+    pointer-events:none;
+  }
+  header::after{
+    content:''; position:absolute; left:18px; right:18px; top:10px; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(247,241,232,.22), transparent);
+    opacity:.55; pointer-events:none;
   }
   header .ball{
     margin-left:auto; flex-shrink:0; font-size:44px; line-height:1;
-    filter:drop-shadow(0 3px 6px rgba(0,0,0,.35)); position:relative;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.35)); position:relative; z-index:1;
   }
   header h1{
-    font-family:var(--font-display); font-size:32px; letter-spacing:.04em; margin:0; color:#100603;
-    text-shadow:1px 1px 0 rgba(255,255,255,.2); position:relative;
+    font-family:var(--font-display); font-size:32px; letter-spacing:.04em; margin:0; color:#f7f1e8;
+    text-shadow:0 1px 0 rgba(0,0,0,.35); position:relative; z-index:1;
   }
-  header h1 .crow{font-size:1em; margin:0 10px; text-shadow:none; vertical-align:middle; display:inline-block;}
-  header p{margin:4px 0 0; color:#2a0f00; font-weight:700; font-size:13px; position:relative;}
+  header .jp-sub{
+    font-family:var(--font-jp); font-size:12px; font-weight:700; letter-spacing:.12em;
+    color:rgba(247,241,232,.72); margin:2px 0 0; position:relative; z-index:1;
+  }
+  header p{margin:6px 0 0; color:rgba(247,241,232,.78); font-weight:700; font-size:13px; position:relative; z-index:1;}
   nav{display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap;}
   nav button{
     font-family:var(--font-display); letter-spacing:.05em; font-size:15px;
@@ -62,9 +79,10 @@
   }
   nav button:hover{ transform:translateY(-1px); }
   nav button.active{
-    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border-color:var(--orange);
-    box-shadow:0 4px 14px rgba(255,90,0,.35);
+    background:linear-gradient(100deg, var(--orange), #ff7a18); color:#111; border-color:var(--orange);
+    box-shadow:0 4px 14px rgba(232,93,4,.28);
   }
+  nav{ position:relative; }
   section{display:none;}
   section.active{display:block;}
   .card{
@@ -73,7 +91,7 @@
   }
   .card::after{
     content:''; position:absolute; top:-22px; right:-22px; width:100px; height:100px; pointer-events:none;
-    background-image:radial-gradient(rgba(255,106,0,.14) 2px, transparent 2px); background-size:11px 11px;
+    background-image:radial-gradient(rgba(232,93,4,.10) 2px, transparent 2px); background-size:11px 11px;
   }
   .card h2{margin:0 0 4px; font-size:21px; font-family:var(--font-display); letter-spacing:.03em; font-weight:400;}
   .card .sub{color:var(--text-dim); font-size:12.5px; margin-bottom:14px;}
@@ -89,9 +107,9 @@
   .row > div{flex:1; min-width:130px;}
   button.primary{
     font-family:var(--font-display); letter-spacing:.04em; font-size:15px;
-    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border:none;
+    background:linear-gradient(100deg, var(--orange), #ff7a18); color:#111; border:none;
     padding:10px 24px 10px 20px; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
-    box-shadow:0 4px 14px rgba(255,90,0,.3);
+    box-shadow:0 4px 14px rgba(232,93,4,.28);
   }
   button.secondary{
     font-family:var(--font-display); letter-spacing:.04em; font-size:14px;
@@ -112,7 +130,7 @@
   .stat-box{background:var(--card2); border:1px solid var(--border); border-top:3px solid var(--orange); border-radius:6px; padding:14px;}
   .stat-box .val{
     font-family:var(--font-display); font-size:32px; letter-spacing:.02em; line-height:1.1;
-    background:linear-gradient(100deg, var(--orange), var(--crimson));
+    background:linear-gradient(100deg, var(--orange), var(--orange2));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
   .stat-box .lbl{font-size:11.5px; color:var(--text-dim); margin-top:3px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
@@ -180,8 +198,8 @@
   .opt-btn .opt-sub{display:block; font-size:10px; font-weight:600; opacity:.8; text-transform:uppercase; letter-spacing:.03em;}
   .opt-btn:hover{ border-color:var(--orange2); color:var(--text); }
   .opt-btn.selected{
-    background:linear-gradient(100deg, var(--orange), var(--crimson)); color:#100603; border-color:var(--orange);
-    box-shadow:0 3px 10px rgba(255,90,0,.3);
+    background:linear-gradient(100deg, var(--orange), #ff7a18); color:#111; border-color:var(--orange);
+    box-shadow:0 3px 10px rgba(232,93,4,.28);
   }
   .opt-btn.q0.selected{ background:linear-gradient(100deg,#ff4757,#c81e2e); color:#fff; }
   .opt-btn.q1.selected{ background:linear-gradient(100deg,#ff9a3d,#e8283f); color:#100603; }
@@ -318,16 +336,71 @@
   .rc-cat table{ margin-top:8px; font-size:12.5px; }
   .rc-cat.rc-wide{ grid-column:1 / -1; border-left:3px solid var(--orange); }
   .rc-cue{ color:var(--orange2); font-weight:700; }
+
+  /* --- Haikyuu / Karasuno: hidden crow silhouettes --- */
+  .crow-svg{ display:block; width:100%; height:100%; fill:currentColor; }
+  .hidden-crow{
+    position:absolute; width:22px; height:22px; opacity:.16; color:#1a1a1a;
+    z-index:3; cursor:default; transition:opacity .22s ease, transform .22s ease;
+    line-height:0;
+  }
+  .hidden-crow.on-dark{ color:var(--orange2); opacity:.14; }
+  .hidden-crow:hover, .hidden-crow:focus-visible{
+    opacity:1; outline:none;
+    animation:crow-perk .4s ease;
+  }
+  .hidden-crow.hop{ animation:crow-hop .4s ease; }
+  @keyframes crow-perk{
+    0%,100%{ transform:translateY(0) rotate(0); }
+    35%{ transform:translateY(-5px) rotate(-10deg); }
+    70%{ transform:translateY(-2px) rotate(6deg); }
+  }
+  @keyframes crow-hop{
+    0%,100%{ transform:translateY(0); }
+    40%{ transform:translateY(-7px); }
+    70%{ transform:translateY(-2px); }
+  }
+  .crow-perch{ width:20px; height:20px; }
+  .crow-fly{ width:28px; height:18px; }
+  .crow-side{ width:24px; height:20px; }
+  .crow-tiny{ width:16px; height:16px; }
+  .site-foot{
+    max-width:1100px; margin:28px auto 0; position:relative; z-index:1;
+    text-align:center; font-size:12px; color:var(--page-muted); font-weight:600;
+    padding:10px 8px 0;
+  }
+  .site-foot .hidden-crow{ position:relative; display:inline-block; vertical-align:-4px; margin:0 6px; }
 </style>
 </head>
 <body>
 <div class="wrap">
+  
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="crow-perch" viewBox="0 0 32 32">
+    <path d="M6 22c1.2-3.2 3.8-5.2 7-5.6.4-2.4 1.6-4.2 3.6-5.2 1.1-.5 1.4-1.8.6-2.7-.3-.4 0-1 .5-.9 2.2.4 3.8 2 4.4 4.1 2.4.6 4.2 2.2 5.1 4.5.3.7-.2 1.5-1 1.5h-1.2c.8 1.6 1 3.4.4 5.1-.2.6-.8.9-1.4.7l-1.1-.4c-.9 1.4-2.4 2.3-4.1 2.5-.4 0-.7-.3-.7-.7v-1.8c-2.2.2-4.3-.4-6-1.6-.3 1.2-1.1 2.1-2.3 2.4-.7.2-1.3-.4-1.1-1.1.3-1.2 1.1-2.1 2.3-2.4z"/>
+    <path d="M18.2 9.2c.9-.15 1.5-1 1.3-1.9-.05-.25.25-.4.4-.2.55.7.7 1.7.35 2.5-.15.35-.55.2-.7-.05-.2-.35-.7-.3-1.05.05-.2.2-.5.05-.3-.2z"/>
+  </symbol>
+  <symbol id="crow-fly" viewBox="0 0 40 24">
+    <path d="M2 14c4-1.5 7.5-5.5 9.5-10 .3-.7 1.3-.5 1.4.3.4 2.6-.1 5.2-1.4 7.4H20c1.8-2.8 4.6-4.8 8-5.5.8-.15 1.3.8.7 1.3-1.6 1.4-2.8 3.2-3.4 5.2h4.6c2.4 0 4.6 1.1 6 3 .4.55-.05 1.3-.75 1.15-2.3-.5-4.5-.3-6.6.6-1.5.65-3.2.9-4.85.7L20 18.5c-1.6.35-3.3.2-4.8-.4-2.2-.9-4.6-1.1-6.9-.5-.7.2-1.3-.5-1-.1C8.2 15.2 5.2 14.4 2 14z"/>
+  </symbol>
+  <symbol id="crow-side" viewBox="0 0 32 28">
+    <path d="M4 18c2.2-4 5.8-6.2 9.8-6.5 1-3.2 3.4-5.4 6.6-5.8 1.2-.15 1.8 1.2.9 1.9-.5.4-.3 1.2.3 1.4 1.8.6 3.1 2.1 3.5 4h1.8c1.1 0 1.7 1.3.9 2.1-1.2 1.2-1.8 2.8-1.7 4.5 0 .6-.5 1-1.1.9l-1.5-.3c-.6 1.6-2 2.8-3.7 3.2-.4.1-.8-.2-.8-.6v-2.1c-2.5.4-5-.2-7-1.8-.4 1.4-1.5 2.4-3 2.6-.7.1-1.2-.5-1-.1.4-1.4 1.4-2.5 2.8-2.9z"/>
+    <circle cx="22.5" cy="9.2" r=".9"/>
+    <path d="M25.2 8.4l3.2-1.1c.35-.12.55.3.28.5l-2.6 1.8c-.25.18-.55.05-.88-.2z"/>
+  </symbol>
+</svg>
+
   <header>
     <div>
-      <h1><span class="crow">🐦‍⬛</span>KING OF THE COURT<span class="crow">🐦‍⬛</span></h1>
+      <h1>KING OF THE COURT</h1>
+      <div class="jp-sub">コートの王</div>
       <p>Track every toss. Break down every tempo. Own the court.</p>
     </div>
-    <div class="ball">🏐</div>
+    <div class="ball" style="position:relative;">🏐
+      <span class="hidden-crow crow-perch on-dark" style="right:-6px;bottom:-4px;" title="" aria-hidden="true" data-crow="header">
+        <svg class="crow-svg"><use href="#crow-perch"/></svg>
+      </span>
+    </div>
   </header>
 
 
@@ -342,6 +415,9 @@
     <button data-tab="dashboard">Dashboard</button>
     <button data-tab="diagnose">Diagnose</button>
     <button data-tab="settings">Export / Backup</button>
+    <span class="hidden-crow crow-fly" style="position:absolute;right:4px;top:-2px;" aria-hidden="true" data-crow="nav">
+      <svg class="crow-svg"><use href="#crow-fly"/></svg>
+    </span>
   </nav>
 
 
@@ -458,6 +534,9 @@
   <!-- DIAGNOSE -->
   <section id="diagnose">
     <div class="card">
+      <span class="hidden-crow crow-side on-dark" style="right:12px;top:12px;" aria-hidden="true" data-crow="diagnose">
+        <svg class="crow-svg"><use href="#crow-side"/></svg>
+      </span>
       <h2>Diagnose your sets</h2>
       <div class="sub">Drag the setter along the net (2D), or walk them around the court yourself (3D — arrow keys / WASD once you click the court). Tap a set type below to send them there and see the target. The arc is colored by that type's real average quality — gray/dashed means you haven't logged any yet. The panel underneath breaks down what's actually happening with your numbers.</div>
       <div class="top-actions" style="justify-content:flex-start; margin-bottom:12px;">
@@ -486,6 +565,9 @@
   <!-- BALLTIME -->
   <section id="balltime" class="active">
     <div class="card">
+      <span class="hidden-crow crow-side on-dark" style="right:14px;bottom:10px;" aria-hidden="true" data-crow="balltime">
+        <svg class="crow-svg"><use href="#crow-side"/></svg>
+      </span>
       <h2>Add a Balltime match</h2>
       <div class="sub">Balltime (by Hudl) has no public API, and this site can't talk to Balltime's servers directly — so nothing is pulled automatically. Paste the match's share link here to keep it linked to your sets, then bring the numbers in with Balltime's own CSV export below.</div>
       <div>
@@ -617,6 +699,9 @@
       <div id="pg-summary"></div>
     </div>
     <div class="card">
+      <span class="hidden-crow crow-perch on-dark" style="left:12px;bottom:8px;" aria-hidden="true" data-crow="progress">
+        <svg class="crow-svg"><use href="#crow-perch"/></svg>
+      </span>
       <h2>Trends</h2>
       <div class="sub" id="pg-trend-sub">One point per game, by date. A gap means that game's data can't support the number (see the notes under each chart).</div>
       <div class="pg-charts" id="pg-charts"></div>
@@ -644,6 +729,9 @@
   <!-- REPORT CARD -->
   <section id="report">
     <div class="card">
+      <span class="hidden-crow crow-fly on-dark" style="right:18px;top:14px;" aria-hidden="true" data-crow="report">
+        <svg class="crow-svg"><use href="#crow-fly"/></svg>
+      </span>
       <h2>Setter report card — Leo #5</h2>
       <div class="sub">A post-game report card built from the game's ball-by-ball Balltime data (Leo's sets only). Every chip comes from simple rules on the real numbers, shown under each category; nothing is graded by hand. Games added through the ingest script get a report card automatically.</div>
       <div class="row" style="max-width:520px"><div><label>Game</label><select id="rc-game"></select></div></div>
@@ -734,6 +822,11 @@
     </div>
   </section>
 </div>
+<div class="site-foot">
+  <span class="hidden-crow crow-tiny" aria-hidden="true" data-crow="footer">
+    <svg class="crow-svg"><use href="#crow-perch"/></svg>
+  </span>
+</div>
 <div class="toast" id="toast"></div>
 
 
@@ -784,6 +877,8 @@ function showTab(tab, updateHash=true){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
   btn.classList.add('active');
   sec.classList.add('active');
+  const hopCrow = document.querySelector('[data-crow="nav"]');
+  if(hopCrow){ hopCrow.classList.remove('hop'); void hopCrow.offsetWidth; hopCrow.classList.add('hop'); }
   if(tab==='dashboard') renderDashboard();
   if(tab==='diagnose') renderDiagnose();
   if(tab==='data') renderFullTable();
