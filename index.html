@@ -228,6 +228,22 @@
   .diag-stat-box{ background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-align:center; }
   .diag-stat-box .val{ font-family:var(--font-display); font-size:22px; color:var(--orange2); }
   .diag-stat-box .lbl{ font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .bt-msg{ font-size:12.5px; font-weight:700; margin-top:6px; min-height:18px; }
+  .bt-msg.ok{ color:var(--good); }
+  .bt-msg.err{ color:var(--bad); }
+  .bt-msg code{ color:var(--orange2); font-weight:600; }
+  .example-badge{ display:inline-block; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700; letter-spacing:.06em; background:#4a3a00; color:#ffd966; border:1px dashed #ffcc33; text-transform:uppercase; vertical-align:middle; }
+  .match-pill{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:10px; font-size:10.5px; font-weight:700; background:#1a3a5c; color:#9fd0ff; }
+  .bt-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .bt-actions a, .bt-actions button{ font-size:12px; padding:5px 12px 5px 10px; text-decoration:none; display:inline-block; }
+  a.secondary{ font-family:var(--font-display); letter-spacing:.04em; color:var(--text); border:2px solid var(--border); clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); }
+  a.secondary:hover{ border-color:var(--orange); color:var(--orange2); }
+  .map-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  .map-chip{ font-size:11.5px; padding:3px 8px; border-radius:5px; background:var(--card2); border:1px solid var(--border); }
+  .map-chip.mapped{ border-color:#1f6b45; color:#8ff0bd; }
+  .map-chip.raw{ border-color:#5c4a1a; color:#ffd98a; }
+  .table-scroll{ overflow-x:auto; }
+  .example-banner{ background:#2e2500; border:1px dashed #ffcc33; color:#ffe08a; border-radius:8px; padding:8px 14px; font-size:12.5px; margin:10px 0; font-weight:700; }
 </style>
 </head>
 <body>
@@ -247,6 +263,7 @@
     <button data-tab="data">All Sets</button>
     <button data-tab="dashboard">Dashboard</button>
     <button data-tab="diagnose">Diagnose</button>
+    <button data-tab="balltime">🎥 Balltime</button>
     <button data-tab="settings">Export / Backup</button>
   </nav>
 
@@ -290,6 +307,10 @@
         <div>
           <label>Game / Opponent</label>
           <input type="text" id="f-opponent" placeholder="e.g. vs Eastside">
+        </div>
+        <div>
+          <label>Balltime match (optional)</label>
+          <select id="f-match" class="match-select" data-empty="— Not tagged —"><option value="">— Not tagged —</option></select>
         </div>
       </div>
 
@@ -384,6 +405,14 @@
       </div>
 
 
+      <div class="row" style="margin-bottom:12px;">
+        <div>
+          <label>Tag imported sets with a Balltime match <span class="batch-mode-note">(optional)</span></label>
+          <select id="batch-match" class="match-select" data-empty="— Not tagged —"><option value="">— Not tagged —</option></select>
+        </div>
+      </div>
+
+
       <div class="format-box" id="format-box-short">
         Simplified format — one line per set, comma or tab separated (no Zone column — it's figured out from the set type):<br>
         <code>SetType, PassLevel, Quality, Outcome, Notes</code><br><br>
@@ -439,6 +468,20 @@
         <div>
           <label>Filter by pass level</label>
           <select id="filter-passlevel"><option value="">All pass levels</option><option value="1">1 — Not good</option><option value="2">2 — Playable</option><option value="3">3 — Perfect</option></select>
+        </div>
+        <div>
+          <label>Filter by Balltime match</label>
+          <select id="filter-match" class="match-select" data-empty="All matches" data-untagged="1"><option value="">All matches</option></select>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:12px; align-items:flex-end;">
+        <div style="max-width:320px;">
+          <label>Tag the sets shown below with a match</label>
+          <select id="bulk-tag-match" class="match-select" data-empty="— Pick a match —"><option value="">— Pick a match —</option></select>
+        </div>
+        <div style="flex:0 0 auto; min-width:0;">
+          <button class="secondary" id="bulk-tag-btn">Tag shown sets</button>
+          <button class="secondary" id="bulk-untag-btn">Untag shown sets</button>
         </div>
       </div>
       <div id="full-table"><div class="empty">No sets logged yet.</div></div>
@@ -531,6 +574,64 @@
   </section>
 
 
+  <!-- BALLTIME -->
+  <section id="balltime">
+    <div class="card">
+      <h2>Add a Balltime match</h2>
+      <div class="sub">Balltime (by Hudl) has no public API, and this site can't talk to Balltime's servers directly — so nothing is pulled automatically. Paste the match's share link here to keep it linked to your sets, then bring the numbers in with Balltime's own CSV export below.</div>
+      <div>
+        <label>Balltime share link</label>
+        <input type="text" id="bt-link" placeholder="https://app.balltime.com/video/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx?share=true" autocomplete="off" spellcheck="false">
+        <div class="bt-msg" id="bt-link-msg"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div><label>Match name</label><input type="text" id="bt-name" placeholder="e.g. League night — week 3"></div>
+        <div><label>Date</label><input type="date" id="bt-date"></div>
+        <div><label>Opponent</label><input type="text" id="bt-opponent" placeholder="e.g. vs Eastside"></div>
+      </div>
+      <div style="margin-top:10px;">
+        <label>Notes (optional)</label>
+        <input type="text" id="bt-notes" placeholder="e.g. lost 2-1, serve receive struggled in set 2">
+      </div>
+      <div class="top-actions">
+        <button class="secondary" id="bt-cancel-edit" style="display:none;">Cancel edit</button>
+        <button class="primary" id="bt-save-match">Save match</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Saved matches</h2>
+      <div class="sub">Tag sets with a match from the Log Sets form, Bulk Import, or the All Sets tab.</div>
+      <div id="bt-match-list" class="table-scroll"><div class="empty">No matches saved yet.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Import Balltime stats (CSV)</h2>
+      <div class="sub">In Balltime go to <b>Stats → Export → Spreadsheet (CSV)</b>, then upload the file or paste its contents here. The parser finds the header row on its own, matches common columns (player, #, set attempts, assists, set errors, kills, attack attempts/errors, hitting %, serves, aces, serve errors, receptions/pass rating, digs, blocks) without caring about capitalization, and keeps any columns it doesn't recognize as-is.</div>
+      <div class="row">
+        <div>
+          <label>Attach to match</label>
+          <select id="bt-csv-match" class="match-select" data-empty="— Pick a match —"><option value="">— Pick a match —</option></select>
+        </div>
+        <div>
+          <label>CSV file</label>
+          <input type="file" id="bt-csv-file" accept=".csv,.tsv,.txt,text/csv">
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label>…or paste the CSV</label>
+        <textarea id="bt-csv-text" rows="8" placeholder="Player,#,Assists,Kills,..."></textarea>
+      </div>
+      <div class="top-actions">
+        <button class="secondary" id="bt-example-btn" title="Fills the box with made-up rows so you can try the stats view">Load example data (fake)</button>
+        <button class="secondary" id="bt-preview-btn">Preview</button>
+        <button class="primary" id="bt-attach-btn">Attach to match</button>
+      </div>
+      <div id="bt-csv-preview" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+
   <!-- SETTINGS -->
   <section id="settings">
     <div class="card">
@@ -539,6 +640,7 @@
       <div class="top-actions" style="justify-content:flex-start;">
         <button class="secondary" id="export-json-btn">Export JSON backup</button>
         <button class="secondary" id="export-csv-btn">Export CSV</button>
+        <button class="secondary" id="export-matches-btn">Export Balltime matches</button>
         <label class="secondary" style="cursor:pointer;">
           Import JSON backup
           <input type="file" id="import-json-file" accept=".json" style="display:none;">
@@ -598,16 +700,24 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 
 
 // ---------- Tabs ----------
+// showTab is also driven by the URL hash (#balltime, #court2d, ...) — see tabFromHash below.
+function showTab(tab, updateHash=true){
+  const btn = document.querySelector(`nav button[data-tab="${tab}"]`);
+  const sec = document.getElementById(tab);
+  if(!btn || !sec) return;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  sec.classList.add('active');
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='diagnose') renderDiagnose();
+  if(tab==='data') renderFullTable();
+  if(tab==='balltime'){ populateMatchSelects(); renderMatchList(); }
+  if(typeof TAB_HOOKS!=='undefined' && TAB_HOOKS[tab]) TAB_HOOKS[tab]();
+  if(updateHash && location.hash!=='#'+tab) history.replaceState(null, '', '#'+tab);
+}
 document.querySelectorAll('nav button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab==='dashboard') renderDashboard();
-    if(btn.dataset.tab==='diagnose') renderDiagnose();
-    if(btn.dataset.tab==='data') renderFullTable();
-  });
+  btn.addEventListener('click', ()=>showTab(btn.dataset.tab));
 });
 
 
@@ -620,7 +730,9 @@ function toast(msg){
 
 
 // ---------- Entry form (tap-button option groups) ----------
-document.getElementById('f-date').valueAsDate = new Date();
+// local calendar date (valueAsDate would use UTC and jump a day ahead in the evening)
+function localToday(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+document.getElementById('f-date').value = localToday();
 
 
 // Zone isn't asked for directly anymore — it's derived from whichever set type is picked,
@@ -706,6 +818,8 @@ function prefillForm(rec){
   curOutcome = rec.outcome; selectInGroup('outcome-group', rec.outcome);
   curPassLevel = rec.passLevel ?? null; selectInGroup('passlevel-group', rec.passLevel!=null ? String(rec.passLevel) : null);
   document.getElementById('f-notes').value = rec.notes || '';
+  const fm = document.getElementById('f-match');
+  fm.value = (rec.matchId && [...fm.options].some(o=>o.value===rec.matchId)) ? rec.matchId : '';
 }
 
 
@@ -756,9 +870,11 @@ document.getElementById('add-set-btn').addEventListener('click', ()=>{
     outcome: curOutcome,
     notes: document.getElementById('f-notes').value.trim()
   };
+  const matchId = document.getElementById('f-match').value;
+  if(matchId) fields.matchId = matchId; // optional new field — older sets simply don't have it
   if(editingId){
     const idx = sets.findIndex(s=>s.id===editingId);
-    if(idx>-1) sets[idx] = { ...sets[idx], ...fields };
+    if(idx>-1){ sets[idx] = { ...sets[idx], ...fields }; if(!matchId) delete sets[idx].matchId; }
     saveData();
     exitEditMode();
     renderRecent(); renderFullTable(); toast('Set updated');
@@ -1070,7 +1186,7 @@ function rowHtml(rec, withActions){
   const pl = rec.passLevel;
   return `<tr>
     <td>${rec.date}</td>
-    <td>${escapeHtml(rec.opponent)}</td>
+    <td>${escapeHtml(rec.opponent)}${rec.matchId ? `<span class="match-pill" title="${escapeHtml(matchLabel(getMatch(rec.matchId)) || 'Deleted match')}">🎥 ${escapeHtml((getMatch(rec.matchId)||{}).name || 'deleted match')}</span>` : ''}</td>
     <td class="pass-${pl}">${passLevelLabel(pl)}</td>
     <td>${rec.zone}</td>
     <td>${escapeHtml(tempoLabel(rec))}<span class="badge-group g-${tempoGroup(rec)}">${tempoGroup(rec)}</span></td>
@@ -1095,11 +1211,16 @@ function renderRecent(){
 function populateFilters(){
   const gameSel = document.getElementById('filter-game');
   const typeSel = document.getElementById('filter-settype');
+  const prevGame = gameSel.value, prevType = typeSel.value;
   const games = [...new Set(sets.map(s=>s.opponent))];
   gameSel.innerHTML = '<option value="">All games</option>' + games.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
   typeSel.innerHTML = '<option value="">All types</option>' + SET_TYPES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+  // keep the current selections (the list is rebuilt on every render)
+  if([...gameSel.options].some(o=>o.value===prevGame)) gameSel.value = prevGame;
+  if([...typeSel.options].some(o=>o.value===prevType)) typeSel.value = prevType;
+  populateMatchSelects();
 }
-['filter-game','filter-zone','filter-settype','filter-passlevel'].forEach(id=>{
+['filter-game','filter-zone','filter-settype','filter-passlevel','filter-match'].forEach(id=>{
   document.getElementById(id).addEventListener('change', renderFullTable);
 });
 
@@ -1109,7 +1230,9 @@ function getFilteredSets(){
   const zone = document.getElementById('filter-zone').value;
   const type = document.getElementById('filter-settype').value;
   const passLevel = document.getElementById('filter-passlevel').value;
+  const match = document.getElementById('filter-match').value;
   return sets.filter(s=>
+    (!match || (match==='__none' ? !s.matchId : s.matchId===match)) &&
     (!game || s.opponent===game) &&
     (!zone || s.zone===zone) &&
     (!type || s.setTypeKey===type) &&
@@ -1227,6 +1350,12 @@ function parseLineShort(line, batchDate, batchOpponent){
 
 
 function parseBulk(){
+  const batchMatch = document.getElementById('batch-match').value;
+  const out = parseBulkLines();
+  if(batchMatch) out.forEach(r=>{ r.matchId = batchMatch; });
+  return out;
+}
+function parseBulkLines(){
   let lines = document.getElementById('bulk-text').value.split('\n');
   if(document.getElementById('skip-header').checked) lines = lines.slice(1);
   if(document.getElementById('lines-have-date-opponent').checked){
@@ -1244,7 +1373,7 @@ document.getElementById('lines-have-date-opponent').addEventListener('change', (
   document.getElementById('format-box-full').style.display = full ? 'block' : 'none';
   document.getElementById('format-box-short').style.display = full ? 'none' : 'block';
 });
-document.getElementById('batch-date').valueAsDate = new Date();
+document.getElementById('batch-date').value = localToday();
 
 
 document.getElementById('preview-btn').addEventListener('click', ()=>{
@@ -2262,6 +2391,13 @@ document.getElementById('import-json-file').addEventListener('change', (e)=>{
   reader.onload = (ev)=>{
     try{
       const data = JSON.parse(ev.target.result);
+      if(data && !Array.isArray(data) && Array.isArray(data.matches)){
+        // Balltime matches backup (Export Balltime matches) — merge by id
+        let added = 0;
+        data.matches.forEach(m=>{ if(m && m.id && !getMatch(m.id)){ matches.push(m); added++; } });
+        saveMatches(); refreshMatchUi(); toast(`Imported ${added} Balltime match(es)`);
+        return;
+      }
       if(Array.isArray(data)){
         sets = sets.concat(data.map(d=>({...d, id: d.id||uid()})));
         saveData(); renderRecent(); updateBackupBanner(); toast(`Imported ${data.length} sets from backup`);
@@ -2343,11 +2479,460 @@ slideHandle.addEventListener('pointerup', (e)=>{
 slideHandle.addEventListener('pointercancel', ()=>{ slideDragging=false; resetSlideConfirm(); });
 
 
+// ---------- Balltime matches (links + CSV stats) ----------
+// Balltime has no public API and a static page can't call its private backend,
+// so a "match" is just the share link + metadata you type in, plus whatever
+// stats you bring over from Balltime's own CSV export. Stored under its own
+// localStorage key so the existing set log (STORAGE_KEY) keeps its exact shape;
+// sets only gain an optional `matchId` field.
+const MATCH_KEY = 'kotc_balltimeMatches_v1';
+let matches = loadMatches();
+function loadMatches(){
+  try{ const m = JSON.parse(localStorage.getItem(MATCH_KEY)); return Array.isArray(m) ? m : []; }catch(e){ return []; }
+}
+function saveMatches(){ localStorage.setItem(MATCH_KEY, JSON.stringify(matches)); }
+function getMatch(id){ return matches.find(m=>m.id===id) || null; }
+function matchLabel(m){
+  if(!m) return '';
+  const bits = [m.date, m.name || 'Untitled match'];
+  if(m.opponent) bits.push('('+m.opponent+')');
+  return (m.isExample ? '[EXAMPLE] ' : '') + bits.filter(Boolean).join(' · ');
+}
+function matchesSorted(){ return [...matches].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.createdAt||0)-(a.createdAt||0)); }
+
+const UUID_FULL_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Accepts https://app.balltime.com/video/<uuid> with or without ?share=true (and
+// close variants like no https:// or a trailing slash), or a bare video UUID.
+// Returns { videoId, link } or { error }.
+function parseBalltimeLink(raw){
+  const s = (raw||'').trim();
+  if(!s) return { error:'Paste a Balltime share link.' };
+  if(UUID_FULL_RE.test(s)) return { videoId: s.toLowerCase(), link: `https://app.balltime.com/video/${s.toLowerCase()}` };
+  let url;
+  try{ url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(s) ? s : 'https://'+s); }catch(e){ return { error:"That doesn't look like a link." }; }
+  if(!/^https?:$/.test(url.protocol)) return { error:'Link must start with https://' };
+  const host = url.hostname.toLowerCase();
+  if(!(host==='balltime.com' || host.endsWith('.balltime.com'))) return { error:`That link is for ${host}, not Balltime (app.balltime.com).` };
+  const m = url.pathname.match(/\/video\/([^/?#]+)/i);
+  if(!m) return { error:'Balltime link found, but no /video/<id> in it — use the share link of a specific video.' };
+  if(!UUID_FULL_RE.test(m[1])) return { error:`Video id "${m[1]}" isn't a valid UUID (expected 8-4-4-4-12 hex characters).` };
+  const videoId = m[1].toLowerCase();
+  url.protocol = 'https:';
+  return { videoId, link: url.toString() };
+}
+function balltimeOpenUrl(m){
+  // rebuilt from the validated video id so a stored link can never point anywhere but Balltime
+  if(!m || !m.videoId || !UUID_FULL_RE.test(m.videoId)) return null;
+  let share = false;
+  try{ share = new URL(m.link).searchParams.has('share'); }catch(e){}
+  return `https://app.balltime.com/video/${m.videoId}` + (share ? '?share=true' : '');
+}
+
+// Fill every <select class="match-select"> with the saved matches, keeping each one's current value.
+function populateMatchSelects(){
+  document.querySelectorAll('select.match-select').forEach(sel=>{
+    const cur = sel.value;
+    const empty = sel.dataset.empty || '—';
+    let html = `<option value="">${escapeHtml(empty)}</option>`;
+    if(sel.dataset.untagged) html += `<option value="__none">Not tagged to any match</option>`;
+    html += matchesSorted().map(m=>`<option value="${m.id}">${escapeHtml(matchLabel(m))}</option>`).join('');
+    sel.innerHTML = html;
+    if([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+  });
+}
+
+let btEditingId = null;
+const btLinkInput = document.getElementById('bt-link');
+function updateBtLinkMsg(){
+  const el = document.getElementById('bt-link-msg');
+  if(!btLinkInput.value.trim()){ el.className='bt-msg'; el.textContent=''; return null; }
+  const r = parseBalltimeLink(btLinkInput.value);
+  if(r.error){ el.className='bt-msg err'; el.textContent = '✕ '+r.error; return null; }
+  el.className='bt-msg ok'; el.innerHTML = `✓ Valid Balltime video — id <code>${r.videoId}</code>`;
+  return r;
+}
+btLinkInput.addEventListener('input', updateBtLinkMsg);
+document.getElementById('bt-date').value = localToday();
+
+function resetBtForm(){
+  btEditingId = null;
+  ['bt-link','bt-name','bt-opponent','bt-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bt-date').value = localToday();
+  document.getElementById('bt-save-match').textContent = 'Save match';
+  document.getElementById('bt-cancel-edit').style.display = 'none';
+  updateBtLinkMsg();
+}
+document.getElementById('bt-cancel-edit').addEventListener('click', resetBtForm);
+
+document.getElementById('bt-save-match').addEventListener('click', ()=>{
+  const r = parseBalltimeLink(btLinkInput.value);
+  if(r.error){ updateBtLinkMsg(); toast(r.error); return; }
+  const dateVal = document.getElementById('bt-date').value || localToday();
+  const fields = {
+    link: r.link, videoId: r.videoId,
+    date: dateVal,
+    opponent: document.getElementById('bt-opponent').value.trim(),
+    name: document.getElementById('bt-name').value.trim() || ('Match ' + dateVal),
+    notes: document.getElementById('bt-notes').value.trim()
+  };
+  const dup = matches.find(m=>m.videoId===r.videoId && m.id!==btEditingId);
+  if(dup){ toast(`That video is already saved as "${dup.name}"`); return; }
+  if(btEditingId){
+    const m = getMatch(btEditingId);
+    if(m) Object.assign(m, fields);
+    toast('Match updated');
+  } else {
+    matches.push({ id:'m_'+uid(), ...fields, createdAt: Date.now(), stats:null });
+    toast('Match saved');
+  }
+  saveMatches(); resetBtForm(); refreshMatchUi();
+});
+
+function renderMatchList(){
+  const el = document.getElementById('bt-match-list');
+  if(!matches.length){ el.innerHTML = '<div class="empty">No matches saved yet — paste a Balltime share link above.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Date</th><th>Match</th><th>Opponent</th><th>Video id</th><th>Stats</th><th>Sets tagged</th><th></th></tr></thead><tbody>` +
+    matchesSorted().map(m=>{
+      const nSets = sets.filter(s=>s.matchId===m.id).length;
+      const st = m.stats && m.stats.rows ? `${m.stats.rows.filter(r=>!r.isTotal).length} players` + (m.stats.isExample ? ' <span class="example-badge">Example</span>' : '') : '—';
+      const open = balltimeOpenUrl(m);
+      return `<tr>
+        <td>${escapeHtml(m.date||'')}</td>
+        <td>${escapeHtml(m.name||'')}${m.isExample ? ' <span class="example-badge">Example</span>' : ''}${m.notes ? `<div class="sub" style="margin:2px 0 0; white-space:normal;">${escapeHtml(m.notes)}</div>` : ''}</td>
+        <td>${escapeHtml(m.opponent||'')}</td>
+        <td title="${escapeHtml(m.videoId||'')}"><code style="color:var(--orange2);">${m.videoId ? escapeHtml(m.videoId.slice(0,8))+'…' : '—'}</code></td>
+        <td>${st}</td>
+        <td>${nSets}</td>
+        <td><div class="bt-actions">
+          ${open ? `<a class="secondary" href="${open}" target="_blank" rel="noopener noreferrer">Open in Balltime ↗</a>` : ''}
+          <button class="secondary bt-stats-btn" data-id="${m.id}">Stats</button>
+          <button class="secondary bt-edit-btn" data-id="${m.id}">Edit</button>
+          <button class="secondary danger bt-del-btn" data-id="${m.id}">Delete</button>
+        </div></td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
+}
+document.getElementById('bt-match-list').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  const m = getMatch(btn.dataset.id); if(!m) return;
+  if(btn.classList.contains('bt-del-btn')){
+    const nSets = sets.filter(s=>s.matchId===m.id).length;
+    if(!confirm(`Delete "${m.name}" and its imported Balltime stats from this browser?` + (nSets ? `\n\n${nSets} logged set(s) are tagged with it — the sets themselves are kept.` : ''))) return;
+    matches = matches.filter(x=>x.id!==m.id); saveMatches(); refreshMatchUi(); toast('Match deleted');
+  } else if(btn.classList.contains('bt-edit-btn')){
+    btEditingId = m.id;
+    document.getElementById('bt-link').value = m.link || '';
+    document.getElementById('bt-name').value = m.name || '';
+    document.getElementById('bt-date').value = m.date || '';
+    document.getElementById('bt-opponent').value = m.opponent || '';
+    document.getElementById('bt-notes').value = m.notes || '';
+    document.getElementById('bt-save-match').textContent = 'Save changes';
+    document.getElementById('bt-cancel-edit').style.display = 'inline-block';
+    updateBtLinkMsg();
+    window.scrollTo({ top: document.getElementById('balltime').offsetTop - 10, behavior:'smooth' });
+  } else if(btn.classList.contains('bt-stats-btn')){
+    if(typeof openMatchStats==='function') openMatchStats(m.id);
+    else { document.getElementById('bt-csv-match').value = m.id; document.getElementById('bt-csv-text').focus(); }
+  }
+});
+
+// ---- Balltime CSV parsing ----
+// Header text is normalized (lowercase, only a-z 0-9 % #) and looked up in this
+// alias table. A group row above the header (e.g. "Attack" over "Errors") is
+// tried first, so "Attack"+"Errors" -> attackErrors and "Serve"+"Errors" -> serveErrors.
+const BT_COLUMNS = [
+  { key:'player', label:'Player', type:'text', aliases:['player','name','playername','athlete','players','fullname'] },
+  { key:'jersey', label:'#', type:'text', aliases:['#','jersey','jersey#','jerseynumber','number','num','no','playernumber'] },
+  { key:'setAttempts', label:'Set Att', type:'num', aliases:['setattempts','setatt','setsattempted','settingattempts','setattempt','totalsetattempts','tsa','settingatt','settotal','settingtotal'] },
+  { key:'assists', label:'Assists', type:'num', aliases:['assists','assist','ast','a','setassists','setast','settingassists','setassist'] },
+  { key:'setErrors', label:'Set Err', type:'num', aliases:['seterrors','seterror','seterr','settingerrors','ballhandlingerrors','bhe','settingerr'] },
+  { key:'kills', label:'Kills', type:'num', aliases:['kills','kill','k','attackkills','attackk','hittingkills'] },
+  { key:'attackAttempts', label:'Att', type:'num', aliases:['attackattempts','attackattempt','attackatt','attacks','att','ta','totalattempts','totalattacks','attempts','hitattempts','hittingattempts','attackta','attacktotal','swings','hittingatt'] },
+  { key:'attackErrors', label:'Att Err', type:'num', aliases:['attackerrors','attackerror','attackerr','attacke','e','ae','errors','hittingerrors','hitterrors','hittinge'] },
+  { key:'hittingPct', label:'Hit %', type:'pct', aliases:['hitting%','hitting','hit%','hitpct','hittingpct','hittingpercentage','attack%','attackpct','attackeff','efficiency','eff','pct','hitpercentage','attackpercentage','attackefficiency','killefficiency','hittingeff'] },
+  { key:'serves', label:'Serves', type:'num', aliases:['serves','serveattempts','serveatt','serviceattempts','totalserves','srvatt','servetotal','servingattempts'] },
+  { key:'aces', label:'Aces', type:'num', aliases:['aces','ace','sa','serviceaces','serveaces','serveace','srvace'] },
+  { key:'serveErrors', label:'Srv Err', type:'num', aliases:['serveerrors','serveerror','serveerr','serviceerrors','se','srverr','servee','servingerrors'] },
+  { key:'receptions', label:'Rec', type:'num', aliases:['receptions','reception','receptionattempts','receptionatt','rec','recatt','receives','receive','servereceive','servereceives','passes','passattempts','totalpasses','servereceiveattempts','ra','passingattempts'] },
+  { key:'receptionErrors', label:'Rec Err', type:'num', aliases:['receptionerrors','receptionerror','receptionerr','re','recerr','receiveerrors','servereceiveerrors','passerrors'] },
+  { key:'passRating', label:'Pass', type:'num', aliases:['passrating','passavg','passaverage','pass','receptionrating','rating','avgpass','pr','servereceiverating','receptionavg','receiverating','passingrating','passingavg','receptionaverage','passscore','averagepass'] },
+  { key:'digs', label:'Digs', type:'num', aliases:['digs','dig','ds','totaldigs','defensedigs'] },
+  { key:'blocks', label:'Blocks', type:'num', aliases:['blocks','block','blk','b','totalblocks','tb','blks','blockstotal','blockingtotal'] },
+  { key:'blockSolos', label:'Blk Solo', type:'num', aliases:['blocksolos','blocksolo','bs','soloblocks','blockingsolos'] },
+  { key:'blockAssists', label:'Blk Ast', type:'num', aliases:['blockassists','blockassist','ba','assistblocks','blockingassists'] }
+];
+const BT_COL_MAP = Object.fromEntries(BT_COLUMNS.map(c=>[c.key,c]));
+const BT_ALIAS = {};
+BT_COLUMNS.forEach(c=>c.aliases.forEach(a=>{ if(!(a in BT_ALIAS)) BT_ALIAS[a]=c.key; }));
+function btNorm(s){
+  return String(s||'').toLowerCase().replace(/percent(age)?/g,'%').replace(/[^a-z0-9%#]/g,'');
+}
+const BT_GROUP_GENERIC = {
+  serve:     { serveErrors:['e','err','errors','error','se'], serves:['att','attempts','ta','total','tot'], aces:['a','ace','aces','sa'] },
+  set:       { setAttempts:['att','attempts','ta','total','tot'], setErrors:['e','err','errors','error','bhe'], assists:['a','ast','assists','assist'] },
+  reception: { receptionErrors:['e','err','errors','error'], receptions:['att','attempts','ta','total','tot'], passRating:['avg','average','rating','score'] },
+  block:     { blockSolos:['solo','solos','bs'], blockAssists:['a','ast','assist','assists','ba'], blocks:['total','tot','tb','b','blocks'] },
+  dig:       { digs:['d','digs','dig','total','tot'] },
+  attack:    { kills:['k','kills'], attackErrors:['e','err','errors'], attackAttempts:['att','attempts','ta','total','tot'], hittingPct:['pct','%','eff','hit%'] }
+};
+function btLookup(header, group){
+  const h = btNorm(header);
+  if(!h) return null;
+  if(group){
+    const g = btNorm(group);
+    if(BT_ALIAS[g+h]) return BT_ALIAS[g+h];
+    const gk = /^serv/.test(g) ? 'serve' : /^(set|ballhandling)/.test(g) ? 'set' : /^(attack|hitting|offense)/.test(g) ? 'attack'
+             : /^(reception|receive|serverec|pass)/.test(g) ? 'reception' : /^block/.test(g) ? 'block' : /^(dig|defense)/.test(g) ? 'dig' : null;
+    if(gk){
+      for(const [key, words] of Object.entries(BT_GROUP_GENERIC[gk])) if(words.includes(h)) return key;
+    }
+  }
+  return BT_ALIAS[h] || null;
+}
+
+// Minimal RFC-4180-ish CSV reader: quoted fields, "" escapes, newlines inside
+// quotes; auto-detects comma / tab / semicolon.
+function btDetectDelimiter(text){
+  const sample = text.split(/\r?\n/).filter(l=>l.trim()).slice(0,15);
+  let best=',', bestScore=-1;
+  [',','\t',';'].forEach(d=>{
+    const score = sample.reduce((acc,l)=>{ let n=0, q=false; for(const ch of l){ if(ch==='"') q=!q; else if(ch===d && !q) n++; } return acc+n; },0);
+    if(score>bestScore){ best=d; bestScore=score; }
+  });
+  return best;
+}
+function btParseCsvRows(text){
+  text = String(text||'').replace(/^\uFEFF/,'');
+  const d = btDetectDelimiter(text);
+  const rows=[]; let row=[], field='', q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){
+      if(ch==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else q=false; }
+      else field+=ch;
+    } else if(ch==='"'){ q=true; }
+    else if(ch===d){ row.push(field); field=''; }
+    else if(ch==='\n' || ch==='\r'){
+      if(ch==='\r' && text[i+1]==='\n') i++;
+      row.push(field); rows.push(row); row=[]; field='';
+    } else field+=ch;
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows.map(r=>r.map(c=>c.trim()));
+}
+function btNum(raw, isPct){
+  if(raw==null) return null;
+  let s = String(raw).trim();
+  if(s==='' || s==='-' || s==='—' || /^n\/?a$/i.test(s)) return null;
+  const hadPct = s.includes('%');
+  s = s.replace(/[%,\s]/g,'');
+  if(!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  let v = parseFloat(s);
+  if(isPct && (hadPct || Math.abs(v)>1.5)) v = v/100;
+  return v;
+}
+// -> { rows, headerIndex, headers, mapping:[key|null per column], unknown:[header...], warnings } or { error }
+function parseBalltimeCsv(text){
+  const all = btParseCsvRows(text);
+  if(!all.some(r=>r.some(c=>c))) return { error:'Nothing to parse — upload or paste a CSV first.' };
+  // Header row = the row (within the first 25) that hits the most known column names.
+  let headerIndex=-1, bestScore=0;
+  all.slice(0,25).forEach((r,i)=>{
+    const keys = new Set(r.map(c=>btLookup(c)).filter(Boolean));
+    const score = keys.size + (keys.has('player')||keys.has('jersey') ? 1 : 0);
+    if(score>bestScore){ bestScore=score; headerIndex=i; }
+  });
+  if(headerIndex<0 || bestScore<3) return { error:"Couldn't find a header row — expected columns like Player, Kills, Assists, Digs…" };
+  const headers = all[headerIndex];
+  // Optional group row directly above ("Attack", "", "", "Serve", ...), forward-filled.
+  let groups = [];
+  const above = headerIndex>0 ? all[headerIndex-1] : null;
+  const aboveN = above ? above.filter(Boolean).length : 0;
+  if(above && aboveN>1 && aboveN < headers.filter(Boolean).length){
+    let last=''; groups = headers.map((_,i)=>{ if(above[i]) last=above[i]; return last; });
+  }
+  const used = new Set();
+  const mapping = headers.map((h,i)=>{
+    const k = btLookup(h, groups[i]);
+    if(!k || used.has(k)) return null;
+    used.add(k); return k;
+  });
+  const warnings=[];
+  if(!used.has('player') && !used.has('jersey')) warnings.push('No Player or # column found — rows are labeled by their position in the file.');
+  const unknown = headers.map((h,i)=> mapping[i] ? null : (h || `Column ${i+1}`)).filter(Boolean);
+  const rows=[];
+  all.slice(headerIndex+1).forEach((r, idx)=>{
+    if(!r.some(c=>c)) return;
+    if(r.filter((c,i)=>c && btNorm(c)===btNorm(headers[i])).length >= 3) return; // repeated header
+    const rec = { raw:{} };
+    headers.forEach((h,i)=>{
+      const k = mapping[i], v = r[i]!==undefined ? r[i] : '';
+      if(k){
+        const col = BT_COL_MAP[k];
+        rec[k] = col.type==='text' ? v : btNum(v, col.type==='pct');
+      } else if(v!=='') rec.raw[h || `Column ${i+1}`] = v;
+    });
+    if(!rec.player && !rec.jersey){
+      const numericCount = BT_COLUMNS.filter(c=>c.type!=='text' && rec[c.key]!=null).length;
+      if(!numericCount) return; // title / footer line, not a player
+      rec.player = used.has('player') ? '(no name)' : `Row ${idx+1}`;
+    }
+    if(!rec.player && rec.jersey) rec.player = '#'+rec.jersey;
+    rec.isTotal = /^(team|totals?|team\s*totals?|opponents?|opp(onent)?\s*totals?)$/i.test(String(rec.player||'').trim());
+    if(rec.hittingPct==null && rec.attackAttempts) rec.hittingPct = ((rec.kills||0)-(rec.attackErrors||0))/rec.attackAttempts;
+    if(rec.blocks==null && (rec.blockSolos!=null || rec.blockAssists!=null)) rec.blocks = (rec.blockSolos||0) + 0.5*(rec.blockAssists||0);
+    rows.push(rec);
+  });
+  if(!rows.length) return { error:'Found the header row but no player rows under it.' };
+  return { rows, headerIndex, headers, mapping, unknown, warnings };
+}
+
+// Obviously fake rows for trying the stats view (no real Balltime sample file exists yet).
+const BT_EXAMPLE_CSV = [
+  'EXAMPLE DATA - made-up numbers for trying out the stats view (not a real Balltime export)',
+  'Player,#,Set Attempts,Assists,Set Errors,Kills,Attack Attempts,Attack Errors,Hitting %,Serves,Aces,Serve Errors,Receptions,Pass Rating,Digs,Blocks,Example Note',
+  'EXAMPLE Setter,1,98,36,1,2,5,0,.400,14,2,1,3,2.33,9,1,fake row',
+  'EXAMPLE Outside A,7,4,1,0,12,30,4,.267,12,1,2,22,2.18,11,1,fake row',
+  'EXAMPLE Outside B,11,2,0,0,9,26,5,.154,13,0,2,19,1.95,8,0.5,fake row',
+  'EXAMPLE Middle A,14,0,0,0,7,13,1,.462,10,1,1,0,,2,3,fake row',
+  'EXAMPLE Middle B,21,1,0,0,5,11,2,.273,11,0,3,0,,1,2.5,fake row',
+  'EXAMPLE Opposite,9,6,2,0,8,22,3,.227,12,2,1,2,2.50,5,2,fake row',
+  'EXAMPLE Libero,3,9,3,0,0,0,0,,0,0,0,31,2.35,17,0,fake row',
+  'Team Totals,,120,42,1,43,107,15,.262,72,6,10,77,2.23,53,10,fake row'
+].join('\n');
+
+function btSourceIsExample(text){ return /^\s*EXAMPLE DATA\b/i.test(text||''); }
+function btFmt(v, col){
+  if(v==null || v==='') return '<span style="color:var(--text-dim);">—</span>';
+  if(col.type==='text') return escapeHtml(String(v));
+  if(col.type==='pct') return (v<0?'-':'') + Math.abs(v).toFixed(3).replace(/^0/,'');
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
+function renderBtPreview(){
+  const text = document.getElementById('bt-csv-text').value;
+  const el = document.getElementById('bt-csv-preview');
+  const res = parseBalltimeCsv(text);
+  if(res.error){ el.innerHTML = `<div class="bt-msg err">✕ ${escapeHtml(res.error)}</div>`; return null; }
+  const isEx = btSourceIsExample(text);
+  const chips = res.headers.map((h,i)=> res.mapping[i]
+      ? `<span class="map-chip mapped">${escapeHtml(h)} → ${BT_COL_MAP[res.mapping[i]].label}</span>`
+      : (h ? `<span class="map-chip raw">${escapeHtml(h)} (kept as-is)</span>` : '')).join('');
+  const cols = BT_COLUMNS.filter(c=>res.rows.some(r=>r[c.key]!=null && r[c.key]!==''));
+  el.innerHTML = (isEx ? '<div class="example-banner">⚠ EXAMPLE DATA — these rows are made up. Attach them to try the stats view, and delete the example match when you\'re done.</div>' : '') +
+    `<div class="bt-msg ok">✓ Header found on line ${res.headerIndex+1} · ${res.rows.filter(r=>!r.isTotal).length} player row(s)${res.rows.some(r=>r.isTotal) ? ' + totals row' : ''}</div>` +
+    res.warnings.map(w=>`<div class="bt-msg err">${escapeHtml(w)}</div>`).join('') +
+    `<div class="map-chips">${chips}</div>` +
+    `<div class="table-scroll"><table><thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}${res.unknown.length ? '<th>Other columns</th>' : ''}</tr></thead><tbody>` +
+    res.rows.map(r=>`<tr${r.isTotal ? ' style="opacity:.7;"' : ''}>${cols.map(c=>`<td>${btFmt(r[c.key], c)}</td>`).join('')}${res.unknown.length ? `<td>${escapeHtml(Object.entries(r.raw).map(([k,v])=>k+': '+v).join(' · '))}</td>` : ''}</tr>`).join('') +
+    '</tbody></table></div>';
+  return res;
+}
+document.getElementById('bt-preview-btn').addEventListener('click', renderBtPreview);
+document.getElementById('bt-csv-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{ const ta=document.getElementById('bt-csv-text'); ta.value = ev.target.result; ta.dataset.fileName = file.name; renderBtPreview(); };
+  reader.readAsText(file);
+});
+document.getElementById('bt-csv-text').addEventListener('input', e=>{ delete e.target.dataset.fileName; });
+document.getElementById('bt-example-btn').addEventListener('click', ()=>{
+  const ta = document.getElementById('bt-csv-text');
+  ta.value = BT_EXAMPLE_CSV; delete ta.dataset.fileName;
+  renderBtPreview();
+  toast('Loaded EXAMPLE rows (fake data)');
+});
+document.getElementById('bt-attach-btn').addEventListener('click', ()=>{
+  const ta = document.getElementById('bt-csv-text');
+  const res = renderBtPreview();
+  if(!res){ toast('Fix the CSV first'); return; }
+  const isEx = btSourceIsExample(ta.value);
+  let matchId = document.getElementById('bt-csv-match').value;
+  if(!matchId && isEx){
+    // example rows with no match picked: park them on a clearly-labeled example match
+    let ex = matches.find(m=>m.isExample);
+    if(!ex){
+      ex = { id:'m_'+uid(), isExample:true, link:'', videoId:'', date:localToday(), opponent:'EXAMPLE Opponent', name:'EXAMPLE match (fake data)', notes:'Made-up demo data — safe to delete.', createdAt:Date.now(), stats:null };
+      matches.push(ex);
+    }
+    matchId = ex.id;
+  }
+  const m = getMatch(matchId);
+  if(!m){ toast('Pick a match to attach the stats to'); return; }
+  if(m.stats && m.stats.rows && !confirm(`"${m.name}" already has Balltime stats (${m.stats.rows.length} rows). Replace them?`)) return;
+  m.stats = {
+    importedAt: new Date().toISOString(),
+    source: isEx ? 'example' : (ta.dataset.fileName ? 'file' : 'paste'),
+    fileName: ta.dataset.fileName || '',
+    isExample: isEx,
+    headers: res.headers,
+    mapping: Object.fromEntries(res.headers.map((h,i)=>[h||`Column ${i+1}`, res.mapping[i]]).filter(([,k])=>k)),
+    unknownColumns: res.unknown,
+    rows: res.rows
+  };
+  saveMatches(); refreshMatchUi();
+  document.getElementById('bt-csv-match').value = m.id;
+  toast(`Attached ${res.rows.length} rows to "${m.name}"`);
+});
+
+// Picking a match in the Log Sets form pre-fills its date (and opponent if blank).
+document.getElementById('f-match').addEventListener('change', (e)=>{
+  const m = getMatch(e.target.value); if(!m) return;
+  if(m.date) document.getElementById('f-date').value = m.date;
+  const opp = document.getElementById('f-opponent');
+  if(m.opponent && !opp.value.trim()) opp.value = m.opponent;
+});
+
+// All Sets tab: tag / untag everything the current filters show.
+document.getElementById('bulk-tag-btn').addEventListener('click', ()=>{
+  const m = getMatch(document.getElementById('bulk-tag-match').value);
+  if(!m){ toast('Pick a match to tag with'); return; }
+  const shown = getFilteredSets();
+  if(!shown.length){ toast('No sets shown'); return; }
+  if(!confirm(`Tag ${shown.length} shown set(s) with "${m.name}"?`)) return;
+  const ids = new Set(shown.map(s=>s.id));
+  sets.forEach(s=>{ if(ids.has(s.id)) s.matchId = m.id; });
+  saveData(); renderFullTable(); renderRecent(); renderMatchList();
+  toast(`Tagged ${shown.length} set(s)`);
+});
+document.getElementById('bulk-untag-btn').addEventListener('click', ()=>{
+  const shown = getFilteredSets().filter(s=>s.matchId);
+  if(!shown.length){ toast('None of the shown sets are tagged'); return; }
+  if(!confirm(`Remove the match tag from ${shown.length} shown set(s)?`)) return;
+  const ids = new Set(shown.map(s=>s.id));
+  sets.forEach(s=>{ if(ids.has(s.id)) delete s.matchId; });
+  saveData(); renderFullTable(); renderRecent(); renderMatchList();
+  toast(`Untagged ${shown.length} set(s)`);
+});
+
+document.getElementById('export-matches-btn').addEventListener('click', ()=>{
+  downloadFile('kotc-balltime-matches.json', JSON.stringify({ type:'kotc-balltime-matches', version:1, matches }, null, 2), 'application/json');
+  toast('Matches exported');
+});
+
+function refreshMatchUi(){
+  populateMatchSelects();
+  renderMatchList();
+  if(document.getElementById('data').classList.contains('active')) renderFullTable();
+  renderRecent();
+}
+
+
+// ---------- Tab routing via URL hash (#balltime, #court2d, #court3d, ...) ----------
+function tabFromHash(){
+  const h = decodeURIComponent((location.hash||'').replace(/^#/,'')).toLowerCase();
+  return h && document.querySelector(`nav button[data-tab="${CSS.escape(h)}"]`) ? h : null;
+}
+window.addEventListener('hashchange', ()=>{ const t = tabFromHash(); if(t) showTab(t, false); });
+
+
 // ---------- Init ----------
+populateMatchSelects();
+renderMatchList();
 renderRecent();
 populateFilters();
 updateBackupBanner();
 renderCoachingLibrary();
+{ const t = tabFromHash(); if(t) showTab(t, false); }
 </script>
 </body>
 </html>
