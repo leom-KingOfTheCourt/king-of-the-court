@@ -264,6 +264,7 @@
     <button data-tab="dashboard">Dashboard</button>
     <button data-tab="diagnose">Diagnose</button>
     <button data-tab="balltime">🎥 Balltime</button>
+    <button data-tab="stats">Match Stats</button>
     <button data-tab="settings">Export / Backup</button>
   </nav>
 
@@ -628,6 +629,67 @@
         <button class="primary" id="bt-attach-btn">Attach to match</button>
       </div>
       <div id="bt-csv-preview" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+
+  <!-- MATCH STATS -->
+  <section id="stats">
+    <div class="card">
+      <h2>Match stats</h2>
+      <div class="sub">Pick a match to see its Balltime team numbers (from the CSV you attached) and your own logged sets for that match side by side.</div>
+      <div class="row">
+        <div>
+          <label>Match</label>
+          <select id="stats-match" class="match-select" data-empty="All sets — no match filter" data-untagged="1"><option value="">All sets — no match filter</option></select>
+        </div>
+        <div>
+          <label>Setter (for assist %)</label>
+          <select id="stats-setter"><option value="">Auto — most assists</option></select>
+        </div>
+      </div>
+      <div id="stats-match-info" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="stats-balltime"></div>
+
+    <div class="card">
+      <h2>Leo #5 — Current focus</h2>
+      <div class="tip-block">
+        <div class="tip-issue">Fix 1: Less back-set arch</div>
+        <div class="sub" style="margin:0;">Cue: "neutral spine, push with thumbs/wrists".</div>
+      </div>
+      <div class="tip-block">
+        <div class="tip-issue">Fix 2: Straight-up jump on high digs</div>
+        <div class="sub" style="margin:0;">Cue: "beat the ball, jump straight up".</div>
+      </div>
+      <div class="tip-block">
+        <div class="tip-issue">Fix 3: Right-pin block seal</div>
+        <div class="sub" style="margin:0;">Cue: "press straight over, seal the seam".</div>
+      </div>
+      <div class="tip-block">
+        <div class="tip-issue">Drill: Triangle feeds (on-net / off-net / high dig) using those three cues.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Your logged sets <span id="stats-setlog-scope" style="color:var(--text-dim); font-size:15px;"></span></h2>
+      <div class="sub">Same numbers as the Dashboard, limited to the sets tagged with this match.</div>
+      <div class="stat-grid" id="stats-setlog-overview"></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h2>Sets by type</h2>
+        <div class="chart-box"><canvas id="chart-stats-types"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Avg quality by type</h2>
+        <div class="chart-box"><canvas id="chart-stats-types-q"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Set type breakdown</h2>
+      <div id="stats-type-table"><div class="empty">No sets for this match yet.</div></div>
     </div>
   </section>
 
@@ -2914,6 +2976,177 @@ function refreshMatchUi(){
   renderMatchList();
   if(document.getElementById('data').classList.contains('active')) renderFullTable();
   renderRecent();
+}
+
+
+// ---------- Match stats tab (Balltime CSV team view + set log filtered by match) ----------
+var TAB_HOOKS = TAB_HOOKS || {};
+TAB_HOOKS.stats = ()=>{ populateMatchSelects(); renderMatchStats(); };
+const PLAYER_COLORS = ['#ff6a00','#e8283f','#ffab4d','#35d488','#ffcc33','#7ec4ff','#b78cff','#ff7ab6','#4de0d0','#c9c3d6','#ff9d6b','#6bdba3'];
+
+function openMatchStats(matchId){
+  showTab('stats');
+  const sel = document.getElementById('stats-match');
+  sel.value = matchId;
+  document.getElementById('stats-setter').value = '';
+  renderMatchStats();
+}
+document.getElementById('stats-match').addEventListener('change', ()=>{ document.getElementById('stats-setter').value=''; renderMatchStats(); });
+document.getElementById('stats-setter').addEventListener('change', renderMatchStats);
+
+function btSum(rows, key){ return rows.reduce((a,r)=>a+(typeof r[key]==='number' ? r[key] : 0),0); }
+function btHas(rows, key){ return rows.some(r=>typeof r[key]==='number'); }
+function pct1(v){ return (v*100).toFixed(1)+'%'; }
+function hitFmt(v){ return v==null || isNaN(v) ? '—' : (v<0?'-':'') + Math.abs(v).toFixed(3).replace(/^0/,''); }
+
+function destroyChart(id){ if(chartRefs[id]){ chartRefs[id].destroy(); delete chartRefs[id]; } }
+
+function renderMatchStats(){
+  const matchVal = document.getElementById('stats-match').value;
+  const m = matchVal && matchVal!=='__none' ? getMatch(matchVal) : null;
+  const info = document.getElementById('stats-match-info');
+  if(m){
+    const open = balltimeOpenUrl(m);
+    info.innerHTML = `<div class="bt-actions" style="align-items:center;">
+      <span style="font-weight:700;">${escapeHtml(m.name||'')}</span>
+      ${m.isExample ? '<span class="example-badge">Example</span>' : ''}
+      <span class="sub" style="margin:0;">${escapeHtml(m.date||'')}${m.opponent ? ' · '+escapeHtml(m.opponent) : ''}</span>
+      ${open ? `<a class="secondary" href="${open}" target="_blank" rel="noopener noreferrer">Open in Balltime ↗</a>` : ''}
+    </div>`;
+  } else info.innerHTML = '';
+  renderMatchBalltime(m);
+  renderMatchSetLog(matchVal);
+}
+
+function renderMatchBalltime(m){
+  const el = document.getElementById('stats-balltime');
+  ['chart-bt-dist','chart-bt-ke'].forEach(destroyChart);
+  const setterSel = document.getElementById('stats-setter');
+  if(!m){ el.innerHTML = ''; setterSel.innerHTML = '<option value="">Auto — most assists</option>'; setterSel.disabled = true; return; }
+  if(!m.stats || !m.stats.rows || !m.stats.rows.length){
+    setterSel.innerHTML = '<option value="">Auto — most assists</option>'; setterSel.disabled = true;
+    el.innerHTML = `<div class="card"><h2>Balltime team stats</h2><div class="empty">No Balltime stats attached to this match yet — export the CSV from Balltime (Stats → Export → Spreadsheet) and attach it in the Balltime tab.</div></div>`;
+    return;
+  }
+  const players = m.stats.rows.filter(r=>!r.isTotal);
+  const totalRow = m.stats.rows.find(r=>r.isTotal && !/^opp/i.test(r.player||''));
+  // setter picker
+  setterSel.disabled = false;
+  const prev = setterSel.value;
+  setterSel.innerHTML = '<option value="">Auto — most assists</option>' + players.map((p,i)=>`<option value="${i}">${escapeHtml((p.jersey ? '#'+p.jersey+' ' : '') + (p.player||''))}</option>`).join('');
+  if([...setterSel.options].some(o=>o.value===prev)) setterSel.value = prev;
+  let setterIdx = setterSel.value!=='' ? parseInt(setterSel.value,10) : -1;
+  if(setterIdx<0 && btHas(players,'assists')) setterIdx = players.reduce((best,p,i)=> (p.assists||0) > (players[best].assists||0) ? i : best, 0);
+  const setter = setterIdx>=0 ? players[setterIdx] : null;
+
+  const T = {};
+  ['kills','attackAttempts','attackErrors','assists','setAttempts','setErrors','serves','aces','serveErrors','receptions','receptionErrors','digs','blocks'].forEach(k=>{ T[k] = btHas(players,k) ? btSum(players,k) : null; });
+  const teamHit = T.attackAttempts ? ((T.kills||0)-(T.attackErrors||0))/T.attackAttempts : null;
+  const passers = players.filter(p=>typeof p.passRating==='number' && (p.receptions||0)>0);
+  const passRating = passers.length ? passers.reduce((a,p)=>a+p.passRating*p.receptions,0)/passers.reduce((a,p)=>a+p.receptions,0)
+                   : (totalRow && typeof totalRow.passRating==='number' ? totalRow.passRating : null);
+  const setterAssistShare = setter && T.kills ? (setter.assists||0)/T.kills : null;
+  const setterAssistRate = setter && setter.setAttempts ? (setter.assists||0)/setter.setAttempts : null;
+
+  const box = (val,lbl)=>`<div class="stat-box"><div class="val">${val}</div><div class="lbl">${lbl}</div></div>`;
+  const totalsHtml = [
+    T.kills!=null && box(T.kills,'Kills'),
+    T.attackAttempts!=null && box(T.attackAttempts,'Attack attempts'),
+    T.attackErrors!=null && box(T.attackErrors,'Attack errors'),
+    teamHit!=null && box(hitFmt(teamHit),'Team hitting %'),
+    T.assists!=null && box(T.assists,'Assists'),
+    T.aces!=null && box(T.aces,'Aces'),
+    T.serveErrors!=null && box(T.serveErrors,'Serve errors'),
+    passRating!=null && box(passRating.toFixed(2),'Avg pass rating'),
+    T.digs!=null && box(T.digs,'Digs'),
+    T.blocks!=null && box(Number.isInteger(T.blocks)?T.blocks:T.blocks.toFixed(1),'Blocks')
+  ].filter(Boolean).join('');
+  const setterHtml = setter ? [
+    box(setterAssistShare!=null ? pct1(setterAssistShare) : '—', `Setter assist % (${escapeHtml(setter.player||'setter')}'s assists ÷ team kills)`),
+    box(setter.assists ?? '—', 'Setter assists'),
+    setterAssistRate!=null ? box(pct1(setterAssistRate), 'Assists per set attempt') : '',
+    setter.setErrors!=null ? box(setter.setErrors, 'Set errors') : ''
+  ].join('') : '<div class="empty">No assists column in this CSV — pick the setter above to compute assist %.</div>';
+
+  const cols = BT_COLUMNS.filter(c=>c.key!=='player' && players.some(r=>r[c.key]!=null && r[c.key]!==''));
+  const extra = (m.stats.unknownColumns||[]);
+  const tableHtml = `<div class="table-scroll"><table><thead><tr><th>Player</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th>Att share</th>${extra.map(h=>`<th style="color:var(--text-dim);">${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>` +
+    players.map((p,i)=>`<tr${i===setterIdx ? ' style="background:rgba(255,106,0,.08);"' : ''}><td>${escapeHtml(p.player||'')}${i===setterIdx ? ' <span class="pill">Setter</span>' : ''}</td>${cols.map(c=>`<td>${btFmt(p[c.key], c)}</td>`).join('')}<td>${T.attackAttempts && p.attackAttempts ? pct1(p.attackAttempts/T.attackAttempts) : '—'}</td>${extra.map(h=>`<td>${escapeHtml(p.raw && p.raw[h] || '')}</td>`).join('')}</tr>`).join('') +
+    `<tr style="border-top:2px solid var(--border);"><td><b>Team (sum)</b></td>${cols.map(c=>{
+        if(c.key==='hittingPct') return `<td><b>${hitFmt(teamHit)}</b></td>`;
+        if(c.key==='passRating') return `<td><b>${passRating!=null ? passRating.toFixed(2) : '—'}</b></td>`;
+        if(c.key==='jersey') return '<td></td>';
+        const v = btHas(players,c.key) ? btSum(players,c.key) : null;
+        return `<td><b>${v==null ? '—' : (Number.isInteger(v) ? v : v.toFixed(1))}</b></td>`;
+      }).join('')}<td></td>${extra.map(()=>'<td></td>').join('')}</tr>` +
+    '</tbody></table></div>';
+
+  const hasAttack = btHas(players,'attackAttempts') || btHas(players,'kills');
+  el.innerHTML =
+    (m.stats.isExample ? '<div class="example-banner">⚠ EXAMPLE DATA — the Balltime numbers below are made up (loaded with "Load example data"). They are not from a real match.</div>' : '') +
+    `<div class="card"><h2>Team totals ${m.stats.isExample ? '<span class="example-badge">Example</span>' : ''}</h2>
+      <div class="sub">Summed from the player rows of the Balltime CSV${m.stats.fileName ? ' ('+escapeHtml(m.stats.fileName)+')' : ''}, imported ${escapeHtml((m.stats.importedAt||'').slice(0,10))}.</div>
+      <div class="stat-grid">${totalsHtml || '<div class="empty">No numeric team columns found.</div>'}</div>
+      <h2 style="margin-top:16px;">Setter</h2>
+      <div class="stat-grid">${setterHtml}</div>
+    </div>` +
+    (hasAttack ? `<div class="two-col">
+      <div class="card"><h2>Attack distribution</h2><div class="sub">Share of team attack attempts by player — who the offense ran through.</div><div class="chart-box"><canvas id="chart-bt-dist"></canvas></div></div>
+      <div class="card"><h2>Kills / errors / other attempts</h2><div class="sub">Per player, stacked to total attempts.</div><div class="chart-box"><canvas id="chart-bt-ke"></canvas></div></div>
+    </div>` : '') +
+    `<div class="card"><h2>Per-player stats ${m.stats.isExample ? '<span class="example-badge">Example</span>' : ''}</h2>
+      <div class="sub">Straight from the CSV; hitting % is recomputed as (K − E) ÷ Att when the file doesn't have it. Columns the parser didn't recognize are shown dimmed at the end.</div>
+      ${tableHtml}</div>`;
+
+  if(hasAttack && typeof Chart!=='undefined'){
+    const attackers = players.filter(p=>(p.attackAttempts||p.kills||0)>0);
+    const useAtt = btHas(players,'attackAttempts');
+    chartRefs['chart-bt-dist'] = new Chart(document.getElementById('chart-bt-dist').getContext('2d'), {
+      type:'doughnut',
+      data:{ labels: attackers.map(p=>p.player), datasets:[{ data: attackers.map(p=>useAtt ? (p.attackAttempts||0) : (p.kills||0)), backgroundColor: attackers.map((_,i)=>PLAYER_COLORS[i%PLAYER_COLORS.length]), borderColor:'#151319', borderWidth:2 }] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color:'#a29fae', font:{ family:'Rajdhani', weight:'600' } } },
+        tooltip:{ callbacks:{ label:(ctx)=>{ const tot = ctx.dataset.data.reduce((a,b)=>a+b,0); return `${ctx.label}: ${ctx.raw} ${useAtt?'att':'kills'} (${tot? (ctx.raw/tot*100).toFixed(0):0}%)`; } } } } }
+    });
+    chartRefs['chart-bt-ke'] = new Chart(document.getElementById('chart-bt-ke').getContext('2d'), {
+      type:'bar',
+      data:{ labels: attackers.map(p=>p.player), datasets:[
+        { label:'Kills', data: attackers.map(p=>p.kills||0), backgroundColor:'#35d488', borderRadius:4 },
+        { label:'Errors', data: attackers.map(p=>p.attackErrors||0), backgroundColor:'#ff4757', borderRadius:4 },
+        { label:'Other attempts', data: attackers.map(p=>Math.max(0,(p.attackAttempts||0)-(p.kills||0)-(p.attackErrors||0))), backgroundColor:'#3a3644', borderRadius:4 }
+      ]},
+      options:{ maintainAspectRatio:false, scales:{ x:{ stacked:true, grid:{display:false}, ticks:{color:'#a29fae'} }, y:{ stacked:true, beginAtZero:true, grid:{color:'#2c2933'}, ticks:{color:'#a29fae'} } },
+        plugins:{ legend:{ labels:{ color:'#a29fae' } } } }
+    });
+  }
+}
+
+function renderMatchSetLog(matchVal){
+  const list = !matchVal ? sets : matchVal==='__none' ? sets.filter(s=>!s.matchId) : sets.filter(s=>s.matchId===matchVal);
+  const m = getMatch(matchVal);
+  document.getElementById('stats-setlog-scope').textContent = !matchVal ? '— all sets' : matchVal==='__none' ? '— untagged sets' : `— ${m ? m.name : 'match'}`;
+  const ov = document.getElementById('stats-setlog-overview');
+  ['chart-stats-types','chart-stats-types-q'].forEach(destroyChart);
+  if(!list.length){
+    ov.innerHTML = `<div class="empty">No logged sets ${matchVal ? 'tagged with this match' : 'yet'}. Tag sets from Log Sets, Bulk Import, or All Sets.</div>`;
+    document.getElementById('stats-type-table').innerHTML = '<div class="empty">No sets for this match yet.</div>';
+    ['chart-stats-types','chart-stats-types-q'].forEach(id=>{ const c=document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height); });
+    return;
+  }
+  const agg = computeAgg(list);
+  ov.innerHTML = `
+    <div class="stat-box"><div class="val">${agg.total}</div><div class="lbl">Sets logged</div></div>
+    <div class="stat-box"><div class="val">${agg.avgQ.toFixed(2)}</div><div class="lbl">Avg quality (0-3)</div></div>
+    <div class="stat-box"><div class="val">${(agg.hittingPct*100).toFixed(1)}%</div><div class="lbl">Hitting % off your sets</div></div>
+    <div class="stat-box"><div class="val">${(agg.assistRate*100).toFixed(1)}%</div><div class="lbl">Assist rate (kills / sets)</div></div>
+    <div class="stat-box"><div class="val">${agg.kills}</div><div class="lbl">Kills (= assists)</div></div>
+    <div class="stat-box"><div class="val">${agg.errors}</div><div class="lbl">Hitting errors</div></div>`;
+  const used = SET_TYPES.filter(t=>list.some(s=>s.setTypeKey===t.key));
+  drawBar('chart-stats-types', used.map(t=>t.label), used.map(t=>list.filter(s=>s.setTypeKey===t.key).length), '#ff7a1a', 'Sets');
+  drawBar('chart-stats-types-q', used.map(t=>t.label), used.map(t=>{ const l=list.filter(s=>s.setTypeKey===t.key); return l.reduce((a,s)=>a+s.quality,0)/l.length; }), '#35d488', 'Avg quality', 3);
+  document.getElementById('stats-type-table').innerHTML = `<table><thead><tr><th>Type</th><th>Count</th><th>Avg quality</th><th>Kills</th><th>Errors</th><th>Hitting %</th></tr></thead><tbody>` +
+    used.map(t=>{ const a = computeAgg(list.filter(s=>s.setTypeKey===t.key));
+      return `<tr><td>${t.label}<span class="badge-group g-${t.group}">${t.group}</span></td><td>${a.total}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${a.kills}</td><td>${a.errors}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`; }).join('') +
+    '</tbody></table>';
 }
 
 
