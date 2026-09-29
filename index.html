@@ -3237,9 +3237,11 @@ const SET_TARGETS_M = {
   back1:  { rel:true,  dx:1.0,  d:0.7, apex:0.7, contact:2.9, color:'#ff7ab6', note:'~1 m behind the setter' },
   '4':    { x:0.45, d:1.0, apex:3.6, contact:3.0, color:'#35d488', note:'high ball to the left antenna' },
   shoot:  { x:0.9,  d:0.8, apex:1.1, contact:2.9, color:'#e8283f', note:'fast, flat set to the left pin' },
-  '3':    { x:2.5,  d:0.9, apex:1.7, contact:2.9, color:'#7ec4ff', note:'medium set, left side' },
+  // 3 ball and C ball stay on the RIGHT, matching their zone data and the Diagnose map
+  // (TRAJECTORY_X '3':0.965, c:0.88 of the 9 m width; C ball's back-row contact at 9 ft = 2.74 m).
+  '3':    { x:8.69, d:0.9, apex:1.7, contact:2.9, color:'#7ec4ff', note:'fast set to the right pin (same spot as the 5 ball, lower arc)' },
   '5':    { x:8.55, d:1.0, apex:3.2, contact:3.0, color:'#b78cff', note:'high ball to the right/back antenna' },
-  c:      { x:4.5,  d:3.5, apex:1.8, contact:3.0, color:'#4de0d0', note:'back-row pipe, center, ~3.5 m off the net' },
+  c:      { x:7.92, d:2.74, apex:1.8, contact:3.0, color:'#4de0d0', note:'back-row attack on the right, ~2.7 m off the net' },
   '31':   { x:3.3,  d:0.8, apex:0.9, contact:2.9, color:'#ff9d6b', note:'quick in front of zone 3' },
   '32':   { x:2.0,  d:0.9, apex:1.4, contact:2.9, color:'#6bdba3', note:'between the 31 and the 4' },
   bic:    { x:5.4,  d:3.2, apex:1.2, contact:3.0, color:'#c9c3d6', note:'back-row quick near the setter' }
