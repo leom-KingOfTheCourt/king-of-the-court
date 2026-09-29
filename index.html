@@ -382,6 +382,19 @@
   .td-chart .td-box{ position:relative; height:210px; }
   .td-health-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
   .td-pill{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; background:rgba(232,93,4,.14); color:var(--orange2); border:1px solid var(--orange); margin-left:8px; vertical-align:middle; }
+
+  .td-health-list{ margin-top:14px; }
+  .td-health-list table{ font-size:12.5px; }
+  .td-health-list .td-h-edit, .td-health-list .td-h-del{ background:none; border:none; cursor:pointer; font-size:13px; padding:2px 6px; }
+  .td-health-list .td-h-edit{ color:#7ec4ff; } .td-health-list .td-h-del{ color:var(--bad); }
+  .td-pair-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-top:10px; }
+  .td-pair-card{ background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; }
+  .td-pair-card h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.04em; color:var(--orange2); margin:0 0 6px; font-size:16px; }
+  .td-flag{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:10px; font-size:10.5px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; }
+  .td-flag.low{ background:rgba(255,71,87,.14); color:var(--bad); border:1px solid var(--bad); }
+  .td-flag.ok{ background:rgba(53,212,136,.14); color:var(--good); border:1px solid var(--good); }
+  .td-import-box{ background:var(--card2); border:1px dashed var(--border); border-radius:6px; padding:12px 14px; margin-top:12px; }
+  .td-import-box textarea{ min-height:72px; margin-top:6px; }
   .td-compare{ margin-top:10px; font-size:13px; color:var(--text-dim); }
 </style>
 </head>
@@ -788,15 +801,53 @@
     </div>
 
     <div class="card">
-      <h2>Match-day body</h2>
-      <div class="sub">Manual log for sleep, fatigue, and load on match day. Saved in this browser only (not Apple Health / Garmin — a static Pages site can't OAuth those yet). Log a few match days before looking for patterns; with 0–1 rows we won't invent correlations.</div>
+      <span class="hidden-crow crow-side on-dark" style="left:12px;bottom:10px;" aria-hidden="true" data-crow="health">
+        <svg class="crow-svg"><use href="#crow-side"/></svg>
+      </span>
+      <h2>Match-day body &amp; health</h2>
+      <div class="sub">Check-in for sleep, fatigue, and training load. Saved in this browser only (<code>kotc-health-v1</code>). A static GitHub Pages site can't OAuth Apple Health or Garmin — paste a sleep CSV below when you have one. Nothing is seeded; Leo starts at 0 rows until he logs.</div>
+
+      <div class="row" style="max-width:720px;margin-bottom:8px;">
+        <div style="flex:0 0 auto;min-width:auto;">
+          <label>&nbsp;</label>
+          <button class="secondary" type="button" id="td-health-use-game">Use selected game date</button>
+        </div>
+        <div style="flex:0 0 auto;min-width:auto;">
+          <label>&nbsp;</label>
+          <button class="secondary" type="button" id="td-health-new">New blank check-in</button>
+        </div>
+      </div>
       <div id="td-health-form" class="td-health-grid"></div>
       <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
-        <button class="primary" id="td-health-save" type="button">Save match-day body</button>
-        <button class="secondary" id="td-health-clear" type="button">Clear this date</button>
+        <button class="primary" id="td-health-save" type="button">Save check-in</button>
+        <button class="secondary" id="td-health-clear" type="button">Delete this date</button>
       </div>
       <div id="td-health-msg" class="bt-msg" style="margin-top:8px;"></div>
-      <div id="td-health-beside" class="pg-note" style="margin-top:12px;"></div>
+
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Saved check-ins</h3>
+      <div id="td-health-list" class="td-health-list"><div class="empty">No check-ins yet.</div></div>
+
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Paired with setting</h3>
+      <div class="sub" style="margin-bottom:6px;">When a check-in date matches a loaded game, body numbers sit next to that day's set quality. Charts unlock at 2+ paired days; correlations need 4+.</div>
+      <div id="td-health-pair"></div>
+
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Personal baseline</h3>
+      <div id="td-health-baseline"></div>
+
+      <h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 6px;">Exploratory correlations</h3>
+      <div class="sub" style="margin-bottom:6px;">Pearson r on paired match days only. Not medical advice — self-report health + AI-tagged Balltime. Tiny n.</div>
+      <div id="td-health-corr"></div>
+
+      <div class="td-import-box">
+        <b style="color:var(--text)">Paste sleep / wearable export</b>
+        <div class="pg-note" style="margin-top:4px;">CSV or TSV with a header row. Recognized columns (any case / spacing): <code>date</code>, <code>sleep_hours</code> / <code>sleep</code>, <code>hrv</code>, <code>rhr</code>, optional <code>sleep_quality</code>. Merges by date into your check-ins (won't wipe fatigue/notes you already typed). Full Apple Health / Garmin live connect needs a backend later.</div>
+        <textarea id="td-health-import" placeholder="date,sleep_hours,hrv,rhr&#10;2026-07-10,7.5,62,54"></textarea>
+        <div class="top-actions" style="justify-content:flex-start;margin-top:8px;">
+          <button class="secondary" type="button" id="td-health-import-btn">Merge paste into check-ins</button>
+          <label class="secondary" style="cursor:pointer;">Upload CSV<input type="file" id="td-health-import-file" accept=".csv,.tsv,.txt" style="display:none;"></label>
+        </div>
+        <div id="td-health-import-msg" class="bt-msg" style="margin-top:6px;"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -3936,7 +3987,9 @@ async function renderReportCard(){
   const m = g.metrics;
   const exp = (typeof loadExperiment==='function' && loadExperiment()) || null;
   const expBit = exp && exp.name ? ` · current experiment: <b style="color:var(--orange2)">${escapeHtml(exp.name)}</b>` : '';
-  document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}${expBit}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
+  const hRow = (typeof healthForDate==='function' && healthForDate(g.date)) || null;
+  const healthBit = hRow ? ` · match-day body: ${[hRow.sleepHours!=null?'sleep '+hRow.sleepHours+'h':null, hRow.fatigue!=null?'fatigue '+hRow.fatigue+'/5':null, hRow.hrv!=null?'HRV '+hRow.hrv:null].filter(Boolean).join(', ')||'logged'}` : '';
+  document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}${expBit}${healthBit}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
   const { res, worst } = buildReportCard(g, prev);
   const chipTxt = { strong:'Strong', ok:'OK', work:'Needs work', nodata:'No data' };
   let html = res.map(({cat, r, pr})=>`<div class="rc-cat"><h3>${cat.title} <span class="rc-chip ${r.status}">${chipTxt[r.status]}</span></h3>
@@ -3961,9 +4014,7 @@ const TD_PASS_LABELS = { '0-1':'Pass 0–1', '2':'Pass 2', '3':'Pass 3', unrated
 const TD_SYS_LABELS = { in:'In system', oos:'Out of system', unknown:'System unknown' };
 const TD_ORIGIN_LABELS = { 'serve-receive':'Serve-receive', dig:'Dig / scramble', free:'Free / overpass' };
 
-function loadHealthLog(){ try{ const a = JSON.parse(localStorage.getItem(HEALTH_KEY)); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
-function saveHealthLog(rows){ localStorage.setItem(HEALTH_KEY, JSON.stringify(rows)); }
-function healthForDate(date){ return loadHealthLog().find(h=>h.date===date) || null; }
+/* loadHealthLog / saveHealthLog / healthForDate: defined with migration in health section below */
 function loadExperiment(){ try{ const e = JSON.parse(localStorage.getItem(EXP_KEY)); return e && typeof e==='object' ? e : null; }catch(e){ return null; } }
 function saveExperiment(e){ if(!e) localStorage.removeItem(EXP_KEY); else localStorage.setItem(EXP_KEY, JSON.stringify(e)); }
 
@@ -4012,8 +4063,7 @@ async function renderTendencies(){
   updateTdExperimentPill();
   renderTdDecision(g, both ? other : null);
   renderTdTimeline(g);
-  fillTdHealthForm(g.date);
-  renderTdHealthBeside(g);
+  renderTdHealthPanel(g, games);
   fillTdExperimentForm();
 }
 
@@ -4411,102 +4461,504 @@ function drawTdDistChart(g, cs, setNums){
   });
 }
 
-// ---- Health form ----
+// ---- Health form (richer check-in, pairing, baseline, correlations, paste import) ----
+const HEALTH_FIELDS = [
+  ['date','Date','date'],
+  ['sleepHours','Sleep hours','number'],
+  ['sleepQuality','Sleep quality 1–5','number'],
+  ['fatigue','Fatigue 1–5','number'],
+  ['soreness','Soreness 1–5','number'],
+  ['stress','Stress 1–5','number'],
+  ['practiceMin','Practice minutes','number'],
+  ['practiceIntensity','Practice intensity 1–5','number'],
+  ['rpe','Session RPE 1–10','number'],
+  ['loadSimple','Training load 1–10','number'],
+  ['hrv','HRV (optional)','number'],
+  ['rhr','RHR (optional)','number']
+];
+let tdHealthEditingDate = null;
+let tdHealthGamesCache = [];
+
+function normalizeHealthRow(h){
+  if(!h || typeof h!=='object') return null;
+  const date = (h.date||'').toString().slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const num = v=>{ if(v==null||v==='') return null; const n=+v; return Number.isFinite(n)?n:null; };
+  const clamp = (v,lo,hi)=>{ const n=num(v); return n==null?null:Math.max(lo,Math.min(hi,Math.round(n))); };
+  const practiceMin = num(h.practiceMin);
+  const rpe = clamp(h.rpe,1,10);
+  let trainingLoad = num(h.trainingLoad);
+  if(trainingLoad==null && practiceMin!=null && rpe!=null) trainingLoad = Math.round(practiceMin * rpe);
+  return {
+    _v: 2,
+    date,
+    sleepHours: num(h.sleepHours),
+    sleepQuality: clamp(h.sleepQuality,1,5),
+    fatigue: clamp(h.fatigue,1,5),
+    soreness: clamp(h.soreness,1,5),
+    stress: clamp(h.stress,1,5),
+    practiceMin,
+    practiceIntensity: clamp(h.practiceIntensity,1,5),
+    rpe,
+    loadSimple: clamp(h.loadSimple,1,10),
+    trainingLoad,
+    hrv: num(h.hrv),
+    rhr: num(h.rhr),
+    notes: (h.notes||'').toString().trim(),
+    updatedAt: h.updatedAt || new Date().toISOString()
+  };
+}
+function loadHealthLog(){
+  try{
+    const a = JSON.parse(localStorage.getItem(HEALTH_KEY));
+    if(!Array.isArray(a)) return [];
+    return a.map(normalizeHealthRow).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date));
+  }catch(e){ return []; }
+}
+function saveHealthLog(rows){
+  const cleaned = (rows||[]).map(normalizeHealthRow).filter(Boolean)
+    .reduce((acc,h)=>{ acc[h.date]=h; return acc; }, {});
+  localStorage.setItem(HEALTH_KEY, JSON.stringify(Object.values(cleaned).sort((a,b)=>a.date.localeCompare(b.date))));
+}
+function healthForDate(date){ return loadHealthLog().find(h=>h.date===date) || null; }
+
+function healthTrainingLoad(h){
+  if(!h) return null;
+  if(h.trainingLoad!=null) return h.trainingLoad;
+  if(h.practiceMin!=null && h.rpe!=null) return h.practiceMin * h.rpe;
+  return h.loadSimple;
+}
+
+async function renderTdHealthPanel(g, games){
+  tdHealthGamesCache = games || [];
+  const date = (tdHealthEditingDate && healthForDate(tdHealthEditingDate)) ? tdHealthEditingDate : (g && g.date) || '';
+  fillTdHealthForm(date || (g && g.date) || '');
+  renderTdHealthList();
+  await renderTdHealthPair(g, tdHealthGamesCache);
+  renderTdHealthBaseline(g);
+  renderTdHealthCorr(tdHealthGamesCache);
+}
+
 function fillTdHealthForm(date){
-  const h = healthForDate(date) || { date };
-  const fields = [
-    ['date','Date','date', date],
-    ['sleepHours','Sleep hours','number', h.sleepHours],
-    ['sleepQuality','Sleep quality 1–5','number', h.sleepQuality],
-    ['fatigue','Fatigue 1–5','number', h.fatigue],
-    ['soreness','Soreness 1–5','number', h.soreness],
-    ['stress','Stress 1–5','number', h.stress],
-    ['practiceMin','Practice minutes','number', h.practiceMin],
-    ['hrv','HRV (optional)','number', h.hrv],
-    ['rhr','RHR (optional)','number', h.rhr],
-  ];
-  let html = fields.map(([id,label,type,val])=>{
+  const h = (date && healthForDate(date)) || { date: date||'' };
+  tdHealthEditingDate = h.date || date || null;
+  let html = HEALTH_FIELDS.map(([id,label,type])=>{
+    const val = id==='date' ? (h.date||date||'') : h[id];
     const extra = type==='number' ? ' step="any" min="0"' : '';
     const v = val==null||val==='' ? '' : String(val);
     return `<div><label>${label}</label><input type="${type}" id="td-h-${id}" value="${escapeHtml(v)}"${extra}></div>`;
   }).join('');
+  const tl = healthTrainingLoad(h);
+  html += `<div><label>Load (RPE × min)</label><input type="text" id="td-h-trainingLoadDisplay" value="${tl==null?'':escapeHtml(String(tl))}" readonly style="opacity:.85;" title="Auto from practice minutes × session RPE"></div>`;
   html += `<div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="td-h-notes" value="${escapeHtml(h.notes||'')}" placeholder="e.g. short sleep after travel"></div>`;
   document.getElementById('td-health-form').innerHTML = html;
-  // lock date to game date by default but allow edit
-  document.getElementById('td-h-date').value = h.date || date || '';
+  const syncLoad = ()=>{
+    const min = document.getElementById('td-h-practiceMin')?.value;
+    const rpe = document.getElementById('td-h-rpe')?.value;
+    const el = document.getElementById('td-h-trainingLoadDisplay');
+    if(!el) return;
+    if(min!=='' && rpe!=='' && Number.isFinite(+min) && Number.isFinite(+rpe)) el.value = String(Math.round(+min * +rpe));
+    else el.value = '';
+  };
+  ['td-h-practiceMin','td-h-rpe'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.addEventListener('input', syncLoad);
+  });
   document.getElementById('td-health-msg').textContent = '';
   document.getElementById('td-health-msg').className = 'bt-msg';
 }
 
 function readTdHealthForm(){
   const num = id=>{ const el=document.getElementById(id); if(!el||el.value==='') return null; const n=+el.value; return Number.isFinite(n)?n:null; };
-  const clamp15 = v=> v==null?null: Math.max(1, Math.min(5, Math.round(v)));
-  return {
-    date: document.getElementById('td-h-date').value,
+  return normalizeHealthRow({
+    date: document.getElementById('td-h-date')?.value,
     sleepHours: num('td-h-sleepHours'),
-    sleepQuality: clamp15(num('td-h-sleepQuality')),
-    fatigue: clamp15(num('td-h-fatigue')),
-    soreness: clamp15(num('td-h-soreness')),
-    stress: clamp15(num('td-h-stress')),
+    sleepQuality: num('td-h-sleepQuality'),
+    fatigue: num('td-h-fatigue'),
+    soreness: num('td-h-soreness'),
+    stress: num('td-h-stress'),
     practiceMin: num('td-h-practiceMin'),
+    practiceIntensity: num('td-h-practiceIntensity'),
+    rpe: num('td-h-rpe'),
+    loadSimple: num('td-h-loadSimple'),
     hrv: num('td-h-hrv'),
     rhr: num('td-h-rhr'),
-    notes: (document.getElementById('td-h-notes').value||'').trim(),
-    updatedAt: new Date().toISOString()
-  };
+    notes: document.getElementById('td-h-notes')?.value || ''
+  });
 }
 
-function renderTdHealthBeside(g){
-  const el = document.getElementById('td-health-beside');
+function renderTdHealthList(){
+  const el = document.getElementById('td-health-list');
   const rows = loadHealthLog();
-  const h = healthForDate(g.date);
-  const m = g.metrics;
-  if(!h){
-    el.innerHTML = rows.length
-      ? `No body log for <b>${escapeHtml(g.date)}</b> yet. You have ${rows.length} match-day row${rows.length===1?'':'s'} saved — open those dates to see them beside setting numbers. Log a few match days to see sleep vs setting; we won't invent a correlation from ${rows.length} row${rows.length===1?'':'s'}.`
-      : `No match-day body rows yet. Log sleep / fatigue here after a match; with 0–1 rows we'll only show the numbers side by side — no made-up correlation.`;
+  if(!rows.length){ el.innerHTML = '<div class="empty">No check-ins yet — Leo has 0 rows until he logs one.</div>'; return; }
+  const gameDates = new Set((tdHealthGamesCache||[]).map(g=>g.date));
+  el.innerHTML = `<div class="pass-tbl-wrap"><table><thead><tr>
+    <th>Date</th><th>Sleep</th><th>Fatigue</th><th>Load</th><th>HRV</th><th>RHR</th><th>Game?</th><th></th>
+  </tr></thead><tbody>${rows.slice().reverse().map(h=>{
+    const paired = gameDates.has(h.date);
+    const load = healthTrainingLoad(h);
+    return `<tr>
+      <td>${escapeHtml(h.date)}</td>
+      <td>${(h.sleepHours!=null||h.sleepQuality!=null)?(h.sleepHours!=null?escapeHtml(String(h.sleepHours))+'h':'')+(h.sleepQuality!=null?(h.sleepHours!=null?' · ':'')+h.sleepQuality+'/5':''):'<span class="na">—</span>'}</td>
+      <td>${h.fatigue!=null?h.fatigue+'/5':'<span class="na">—</span>'}</td>
+      <td>${load!=null?escapeHtml(String(load)):'<span class="na">—</span>'}</td>
+      <td>${h.hrv!=null?escapeHtml(String(h.hrv)):'<span class="na">—</span>'}</td>
+      <td>${h.rhr!=null?escapeHtml(String(h.rhr)):'<span class="na">—</span>'}</td>
+      <td>${paired?'<span class="pg-up">paired</span>':'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td><button type="button" class="td-h-edit" data-date="${escapeHtml(h.date)}">Edit</button>
+          <button type="button" class="td-h-del" data-date="${escapeHtml(h.date)}">Delete</button></td>
+    </tr>`;
+  }).join('')}</tbody></table></div>`;
+  el.querySelectorAll('.td-h-edit').forEach(btn=>btn.addEventListener('click', ()=>{
+    tdHealthEditingDate = btn.dataset.date;
+    fillTdHealthForm(btn.dataset.date);
+    document.getElementById('td-health-form').scrollIntoView({block:'nearest'});
+  }));
+  el.querySelectorAll('.td-h-del').forEach(btn=>btn.addEventListener('click', ()=>{
+    const date = btn.dataset.date;
+    if(!date) return;
+    saveHealthLog(loadHealthLog().filter(h=>h.date!==date));
+    if(tdHealthEditingDate===date) tdHealthEditingDate = null;
+    const sel = document.getElementById('td-game');
+    loadAllGames().then(games=>{
+      tdHealthGamesCache = games;
+      const g = games.find(x=>x.id===sel.value) || games[games.length-1];
+      renderTdHealthPanel(g, games);
+    }).catch(()=>renderTdHealthPanel(null, tdHealthGamesCache));
+    const msg = document.getElementById('td-health-msg');
+    msg.className='bt-msg ok'; msg.textContent='Deleted check-in for '+date+'.';
+  }));
+}
+
+function healthPaired(games){
+  const byDate = {};
+  (games||[]).forEach(g=>{ if(g.date) byDate[g.date]=g; });
+  return loadHealthLog().filter(h=>byDate[h.date]).map(h=>{
+    const g = byDate[h.date];
+    const m = g.metrics || {};
+    return {
+      date: h.date, health: h, game: g,
+      setEff: m.quality?.eff ?? null,
+      assistPct: m.quality?.assistPct ?? null,
+      oosEff: m.system?.effOos ?? null,
+      attackedPct: m.quality?.attackedPct ?? null,
+      decision: m.decision?.score ?? null,
+      load: healthTrainingLoad(h)
+    };
+  });
+}
+
+async function renderTdHealthPair(g, games){
+  const el = document.getElementById('td-health-pair');
+  if(!el) return;
+  const paired = healthPaired(games);
+  const h = g ? healthForDate(g.date) : null;
+  const parts = [];
+
+  if(g){
+    if(!h){
+      parts.push(`<div class="pg-note">No check-in for <b>${escapeHtml(g.date)}</b> yet. Setting that day: eff ${tdFmtEff(g.metrics.quality.eff)}, assist ${tdFmtPct(g.metrics.quality.assistPct)}, OOS eff ${tdFmtEff(g.metrics.system.effOos)}, decision ${g.metrics.decision?.score!=null?Math.round(g.metrics.decision.score):'n/a'}.</div>`);
+    } else {
+      const load = healthTrainingLoad(h);
+      const flags = healthBaselineFlags(h);
+      parts.push(`<div class="td-pair-grid"><div class="td-pair-card"><h3>Body · ${escapeHtml(g.date)}</h3>
+        <div>${[
+          h.sleepHours!=null?`Sleep <b style="color:var(--orange2)">${escapeHtml(String(h.sleepHours))}h</b>${flags.sleep?' <span class="td-flag low">below sleep baseline</span>':''}`:null,
+          h.sleepQuality!=null?`quality ${h.sleepQuality}/5`:null,
+          h.fatigue!=null?`Fatigue <b>${h.fatigue}/5</b>${flags.fatigue?' <span class="td-flag low">above fatigue baseline</span>':''}`:null,
+          h.soreness!=null?`soreness ${h.soreness}/5`:null,
+          h.stress!=null?`stress ${h.stress}/5`:null,
+          load!=null?`Load <b>${escapeHtml(String(load))}</b>`:null,
+          h.hrv!=null?`HRV ${escapeHtml(String(h.hrv))}${flags.hrv?' <span class="td-flag low">below HRV baseline</span>':''}`:null,
+          h.rhr!=null?`RHR ${escapeHtml(String(h.rhr))}`:null
+        ].filter(Boolean).join('<br>')}${h.notes?`<div class="pg-note" style="margin-top:6px;">“${escapeHtml(h.notes)}”</div>`:''}</div></div>
+        <div class="td-pair-card"><h3>Setting · ${escapeHtml(g.date)}</h3>
+        <div>Eff <b style="color:var(--orange2)">${tdFmtEff(g.metrics.quality.eff)}</b> · assist ${tdFmtPct(g.metrics.quality.assistPct)} · attacked ${tdFmtPct(g.metrics.quality.attackedPct)}<br>
+        OOS eff ${tdFmtEff(g.metrics.system.effOos)} · decision ${g.metrics.decision?.score!=null?Math.round(g.metrics.decision.score)+'/100':'n/a'} (${g.metrics.decision?.used||0}/${g.metrics.decision?.of||0} parts)<br>
+        <span style="color:var(--text-dim)">${g.metrics.quality.n} sets · ${(g.meta&&g.meta.resultText)||''}</span></div></div></div>`);
+    }
+  }
+
+  parts.push(`<div class="pg-note" style="margin-top:10px;">Paired match days on file: <b>${paired.length}</b> (check-in date = game date). Unpaired check-ins still count toward your health baseline.</div>`);
+
+  if(paired.length < 2){
+    parts.push(`<div class="empty" style="text-align:left;padding:14px 0;">Log match-day check-ins for July 8 and July 10 (and future games) to unlock sleep vs setting charts. Right now you have ${paired.length} paired day${paired.length===1?'':'s'} — nothing is invented.</div>`);
+    destroyChart('td-health-chart-sleep');
+    destroyChart('td-health-chart-fatigue');
+  } else {
+    parts.push(`<div class="td-charts">
+      <div class="td-chart"><h3>Sleep hours vs set eff</h3><div class="pg-def">One point per paired match day. Orange = sleep hours (left), green = set eff (right).</div><div class="td-box"><canvas id="td-health-chart-sleep"></canvas></div></div>
+      <div class="td-chart"><h3>Fatigue vs OOS eff</h3><div class="pg-def">Fatigue 1–5 (left) vs out-of-system hitting eff (right). Days without OOS eff are skipped on the green series.</div><div class="td-box"><canvas id="td-health-chart-fatigue"></canvas></div></div>
+    </div>`);
+  }
+  el.innerHTML = parts.join('');
+  if(paired.length >= 2){
+    drawHealthPairCharts(paired);
+  }
+}
+
+function drawHealthPairCharts(paired){
+  destroyChart('td-health-chart-sleep');
+  destroyChart('td-health-chart-fatigue');
+  const labels = paired.map(p=>p.date);
+  const sleepCanvas = document.getElementById('td-health-chart-sleep');
+  const fatCanvas = document.getElementById('td-health-chart-fatigue');
+  if(sleepCanvas){
+    chartRefs['td-health-chart-sleep'] = new Chart(sleepCanvas.getContext('2d'), {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'Sleep hours', data: paired.map(p=>p.health.sleepHours), borderColor:'#ff7a18', backgroundColor:'#ff7a18', yAxisID:'y', tension:0.15, spanGaps:true, pointRadius:4 },
+        { label:'Set eff', data: paired.map(p=>p.setEff), borderColor:'#35d488', backgroundColor:'#35d488', yAxisID:'yEff', tension:0.15, spanGaps:true, pointRadius:4 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{size:11} } },
+          tooltip:{ callbacks:{ label:(ctx)=> ctx.dataset.yAxisID==='yEff' ? `${ctx.dataset.label}: ${tdFmtEff(ctx.raw)}` : `${ctx.dataset.label}: ${ctx.raw}` } } },
+        scales:{
+          x:{ ticks:{ color:'#a29fae' }, grid:{ color:'#2c2933' } },
+          y:{ title:{ display:true, text:'Hours', color:'#a29fae' }, ticks:{ color:'#a29fae' }, grid:{ color:'#2c2933' } },
+          yEff:{ position:'right', title:{ display:true, text:'Eff', color:'#a29fae' }, ticks:{ color:'#a29fae', callback:v=>tdFmtEff(v) }, grid:{ drawOnChartArea:false } }
+        } }
+    });
+  }
+  if(fatCanvas){
+    chartRefs['td-health-chart-fatigue'] = new Chart(fatCanvas.getContext('2d'), {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'Fatigue', data: paired.map(p=>p.health.fatigue), borderColor:'#ff7a18', backgroundColor:'#ff7a18', yAxisID:'y', tension:0.15, spanGaps:true, pointRadius:4 },
+        { label:'OOS eff', data: paired.map(p=>p.oosEff), borderColor:'#7ec4ff', backgroundColor:'#7ec4ff', yAxisID:'yEff', tension:0.15, spanGaps:true, pointRadius:4 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{size:11} } },
+          tooltip:{ callbacks:{ label:(ctx)=> ctx.dataset.yAxisID==='yEff' ? `${ctx.dataset.label}: ${tdFmtEff(ctx.raw)}` : `${ctx.dataset.label}: ${ctx.raw}` } } },
+        scales:{
+          x:{ ticks:{ color:'#a29fae' }, grid:{ color:'#2c2933' } },
+          y:{ min:1, max:5, title:{ display:true, text:'Fatigue', color:'#a29fae' }, ticks:{ color:'#a29fae' }, grid:{ color:'#2c2933' } },
+          yEff:{ position:'right', title:{ display:true, text:'OOS eff', color:'#a29fae' }, ticks:{ color:'#a29fae', callback:v=>tdFmtEff(v) }, grid:{ drawOnChartArea:false } }
+        } }
+    });
+  }
+}
+
+function healthMeans(rows){
+  const keys = ['sleepHours','sleepQuality','fatigue','soreness','stress','hrv','rhr','practiceMin','loadSimple'];
+  const out = {};
+  keys.forEach(k=>{
+    const vals = rows.map(r=>r[k]).filter(v=>v!=null);
+    out[k] = vals.length ? { n: vals.length, mean: vals.reduce((a,b)=>a+b,0)/vals.length } : null;
+  });
+  const loads = rows.map(healthTrainingLoad).filter(v=>v!=null);
+  out.trainingLoad = loads.length ? { n: loads.length, mean: loads.reduce((a,b)=>a+b,0)/loads.length } : null;
+  return out;
+}
+function healthBaselineFlags(h){
+  const rows = loadHealthLog();
+  const flags = { sleep:false, fatigue:false, hrv:false };
+  if(rows.length < 3 || !h) return flags;
+  const means = healthMeans(rows);
+  // below sleep baseline: ≤ mean − 0.75h when we have sleepHours mean with n≥3
+  if(means.sleepHours && means.sleepHours.n>=3 && h.sleepHours!=null && h.sleepHours <= means.sleepHours.mean - 0.75) flags.sleep = true;
+  if(means.fatigue && means.fatigue.n>=3 && h.fatigue!=null && h.fatigue >= means.fatigue.mean + 1) flags.fatigue = true;
+  if(means.hrv && means.hrv.n>=3 && h.hrv!=null && h.hrv <= means.hrv.mean * 0.9) flags.hrv = true;
+  return flags;
+}
+function renderTdHealthBaseline(g){
+  const el = document.getElementById('td-health-baseline');
+  const rows = loadHealthLog();
+  if(rows.length < 3){
+    el.innerHTML = `<div class="empty" style="text-align:left;padding:10px 0;">Personal baseline needs at least 3 check-ins (any dates). You have ${rows.length}. Log more match days — we won't flag "below baseline" until then.</div>`;
     return;
   }
-  const bits = [
-    h.sleepHours!=null ? `sleep ${h.sleepHours}h` : null,
-    h.sleepQuality!=null ? `sleep quality ${h.sleepQuality}/5` : null,
-    h.fatigue!=null ? `fatigue ${h.fatigue}/5` : null,
-    h.soreness!=null ? `soreness ${h.soreness}/5` : null,
-    h.stress!=null ? `stress ${h.stress}/5` : null,
-    h.practiceMin!=null ? `practice ${h.practiceMin} min` : null,
-    h.hrv!=null ? `HRV ${h.hrv}` : null,
-    h.rhr!=null ? `RHR ${h.rhr}` : null
-  ].filter(Boolean);
-  el.innerHTML = `<b style="color:var(--text)">Beside ${escapeHtml(g.date)} setting:</b> body — ${bits.join(' · ')||'saved (empty fields)'}${h.notes?` · “${escapeHtml(h.notes)}”`:''}. 
-    Setting — quality eff ${tdFmtEff(m.quality.eff)}, OOS eff ${tdFmtEff(m.system.effOos)}, assist ${tdFmtPct(m.quality.assistPct)} (${m.quality.n} sets).
-    <span style="color:var(--text-dim)">${rows.length<3 ? `Only ${rows.length} match-day row${rows.length===1?'':'s'} on file — log a few more before reading sleep vs setting.` : `${rows.length} match-day rows on file; still treat any pattern as tentative.`}</span>`;
+  const means = healthMeans(rows);
+  const fmt = (m, digits=1)=> m ? `${m.mean.toFixed(digits)} <span style="color:var(--text-dim)">(n=${m.n})</span>` : '<span class="na">n/a</span>';
+  const flags = g ? healthBaselineFlags(healthForDate(g.date)) : {};
+  el.innerHTML = `<div class="stat-grid">
+    <div class="stat-box"><div class="val" style="font-size:22px;">${means.sleepHours?means.sleepHours.mean.toFixed(1):'—'}</div><div class="lbl">Avg sleep hours</div></div>
+    <div class="stat-box"><div class="val" style="font-size:22px;">${means.fatigue?means.fatigue.mean.toFixed(1):'—'}</div><div class="lbl">Avg fatigue</div></div>
+    <div class="stat-box"><div class="val" style="font-size:22px;">${means.hrv?Math.round(means.hrv.mean):'—'}</div><div class="lbl">Avg HRV</div></div>
+    <div class="stat-box"><div class="val" style="font-size:22px;">${means.trainingLoad?Math.round(means.trainingLoad.mean):'—'}</div><div class="lbl">Avg training load</div></div>
+  </div>
+  <div class="pass-tbl-wrap" style="margin-top:10px;"><table><thead><tr><th>Field</th><th>Your average</th></tr></thead><tbody>
+    <tr><td>Sleep hours</td><td>${fmt(means.sleepHours)}</td></tr>
+    <tr><td>Sleep quality</td><td>${fmt(means.sleepQuality)}</td></tr>
+    <tr><td>Fatigue</td><td>${fmt(means.fatigue)}</td></tr>
+    <tr><td>Soreness</td><td>${fmt(means.soreness)}</td></tr>
+    <tr><td>Stress</td><td>${fmt(means.stress)}</td></tr>
+    <tr><td>HRV</td><td>${fmt(means.hrv,0)}</td></tr>
+    <tr><td>RHR</td><td>${fmt(means.rhr,0)}</td></tr>
+    <tr><td>Training load (RPE×min or 1–10)</td><td>${fmt(means.trainingLoad,0)}</td></tr>
+  </tbody></table></div>
+  <div class="pg-note" style="margin-top:8px;">Flags on a match day (when n≥3): sleep ≤ avg − 0.75h; fatigue ≥ avg + 1; HRV ≤ 90% of avg.
+    ${g && healthForDate(g.date) ? (flags.sleep||flags.fatigue||flags.hrv
+      ? ` For <b>${escapeHtml(g.date)}</b>: ${[flags.sleep?'below sleep baseline':null, flags.fatigue?'above fatigue baseline':null, flags.hrv?'below HRV baseline':null].filter(Boolean).join('; ')}.`
+      : ` For <b>${escapeHtml(g.date)}</b>: within your current baselines.`)
+      : ''}</div>`;
+}
+
+function pearson(xs, ys){
+  const n = xs.length;
+  if(n < 4) return null;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, dx=0, dy=0;
+  for(let i=0;i<n;i++){ const a=xs[i]-mx, b=ys[i]-my; num+=a*b; dx+=a*a; dy+=b*b; }
+  if(dx===0 || dy===0) return null;
+  return num / Math.sqrt(dx*dy);
+}
+function renderTdHealthCorr(games){
+  const el = document.getElementById('td-health-corr');
+  const paired = healthPaired(games);
+  if(paired.length < 4){
+    el.innerHTML = `<div class="empty" style="text-align:left;padding:10px 0;">Need more match days for correlations (n≥4 paired points). You have ${paired.length}. Log check-ins on game dates — exploratory only, not medical advice.</div>`;
+    return;
+  }
+  const candidates = [
+    { label:'Sleep hours vs set eff', x:p=>p.health.sleepHours, y:p=>p.setEff, fmtY:tdFmtEff },
+    { label:'Sleep hours vs assist %', x:p=>p.health.sleepHours, y:p=>p.assistPct, fmtY:tdFmtPct },
+    { label:'Fatigue vs OOS eff', x:p=>p.health.fatigue, y:p=>p.oosEff, fmtY:tdFmtEff },
+    { label:'Training load vs attacked %', x:p=>p.load, y:p=>p.attackedPct, fmtY:tdFmtPct }
+  ];
+  const rows = candidates.map(c=>{
+    const pts = paired.map(p=>({x:c.x(p), y:c.y(p)})).filter(p=>p.x!=null && p.y!=null);
+    const r = pearson(pts.map(p=>p.x), pts.map(p=>p.y));
+    return { label:c.label, n:pts.length, r };
+  });
+  el.innerHTML = `<div class="pass-tbl-wrap"><table><thead><tr><th>Pair</th><th>n</th><th>Pearson r</th><th>Note</th></tr></thead><tbody>
+    ${rows.map(r=>{
+      if(r.n < 4) return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td colspan="2" style="color:var(--text-dim)">need 4+ points with both values</td></tr>`;
+      const strength = Math.abs(r.r)<0.2?'≈ none':Math.abs(r.r)<0.4?'weak':Math.abs(r.r)<0.6?'moderate':'strong-ish';
+      return `<tr><td>${escapeHtml(r.label)}</td><td>${r.n}</td><td>${r.r.toFixed(2)}</td><td style="color:var(--text-dim)">${strength} · tiny n, exploratory</td></tr>`;
+    }).join('')}
+  </tbody></table></div>
+  <div class="pg-note" style="margin-top:8px;">Self-report health + AI-tagged volleyball. Not medical advice. With only ${paired.length} paired days, treat every r as a hint to collect more data.</div>`;
+}
+
+function parseHealthCsv(text){
+  const lines = text.replace(/^\uFEFF/,'').trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length < 2) throw new Error('Need a header row and at least one data row');
+  const split = line=>{
+    // simple CSV/TSV: split on comma or tab; strip quotes
+    const delim = line.includes('\t') ? '\t' : ',';
+    return line.split(delim).map(c=>c.trim().replace(/^"|"$/g,''));
+  };
+  const header = split(lines[0]).map(h=>h.toLowerCase().replace(/[\s-]+/g,'_'));
+  const idx = name=>{
+    const aliases = {
+      date: ['date','day','sleep_date'],
+      sleepHours: ['sleep_hours','sleep','hours','total_sleep','sleep_h'],
+      sleepQuality: ['sleep_quality','quality','sleep_score'],
+      hrv: ['hrv','heart_rate_variability','rmssd'],
+      rhr: ['rhr','resting_hr','resting_heart_rate','resting_heart']
+    };
+    for(const a of aliases[name]){ const i = header.indexOf(a); if(i>=0) return i; }
+    return -1;
+  };
+  const iDate = idx('date'), iSleep = idx('sleepHours'), iQual = idx('sleepQuality'), iHrv = idx('hrv'), iRhr = idx('rhr');
+  if(iDate<0) throw new Error('No date column found (want date / day)');
+  const out = [];
+  for(let li=1; li<lines.length; li++){
+    const cols = split(lines[li]);
+    if(!cols[iDate]) continue;
+    let date = cols[iDate].slice(0,10);
+    // accept M/D/YYYY
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      const m = cols[iDate].match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+      if(m) date = `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const num = i=>{ if(i<0||cols[i]==null||cols[i]==='') return null; const n=+cols[i]; return Number.isFinite(n)?n:null; };
+    out.push(normalizeHealthRow({
+      date,
+      sleepHours: num(iSleep),
+      sleepQuality: num(iQual),
+      hrv: num(iHrv),
+      rhr: num(iRhr)
+    }));
+  }
+  return out.filter(Boolean);
+}
+function mergeHealthImport(incoming){
+  const by = Object.fromEntries(loadHealthLog().map(h=>[h.date,h]));
+  let added=0, updated=0;
+  incoming.forEach(row=>{
+    if(!row) return;
+    const cur = by[row.date];
+    if(!cur){ by[row.date]=row; added++; return; }
+    // merge: fill blanks from import; don't wipe existing fatigue/notes
+    const merged = { ...cur };
+    ['sleepHours','sleepQuality','hrv','rhr'].forEach(k=>{
+      if(row[k]!=null) merged[k]=row[k];
+    });
+    merged.updatedAt = new Date().toISOString();
+    merged._v = 2;
+    by[row.date] = normalizeHealthRow(merged);
+    updated++;
+  });
+  saveHealthLog(Object.values(by));
+  return { added, updated, total: Object.keys(by).length };
 }
 
 document.getElementById('td-health-save').addEventListener('click', ()=>{
   const row = readTdHealthForm();
   const msg = document.getElementById('td-health-msg');
-  if(!row.date){ msg.className='bt-msg err'; msg.textContent='Pick a date.'; return; }
+  if(!row || !row.date){ msg.className='bt-msg err'; msg.textContent='Pick a date.'; return; }
   const all = loadHealthLog().filter(h=>h.date!==row.date);
   all.push(row);
-  all.sort((a,b)=>a.date.localeCompare(b.date));
   saveHealthLog(all);
-  msg.className='bt-msg ok'; msg.textContent='Saved match-day body for '+row.date+' (this browser only).';
-  // refresh beside if game date matches
+  tdHealthEditingDate = row.date;
+  msg.className='bt-msg ok'; msg.textContent='Saved check-in for '+row.date+' (this browser only).';
+  const sel = document.getElementById('td-game');
+  loadAllGames().then(games=>{
+    tdHealthGamesCache = games;
+    const g = games.find(x=>x.id===sel.value) || games[games.length-1];
+    renderTdHealthPanel(g, games);
+  }).catch(()=>renderTdHealthPanel(null, tdHealthGamesCache));
+});
+document.getElementById('td-health-clear').addEventListener('click', ()=>{
+  const date = document.getElementById('td-h-date')?.value;
+  const msg = document.getElementById('td-health-msg');
+  if(!date){ msg.className='bt-msg err'; msg.textContent='Pick a date to delete.'; return; }
+  saveHealthLog(loadHealthLog().filter(h=>h.date!==date));
+  tdHealthEditingDate = null;
+  msg.className='bt-msg ok'; msg.textContent='Deleted check-in for '+date+'.';
+  const sel = document.getElementById('td-game');
+  loadAllGames().then(games=>{
+    tdHealthGamesCache = games;
+    const g = games.find(x=>x.id===sel.value) || games[games.length-1];
+    renderTdHealthPanel(g, games);
+  }).catch(()=>renderTdHealthPanel(null, tdHealthGamesCache));
+});
+document.getElementById('td-health-use-game').addEventListener('click', ()=>{
   const sel = document.getElementById('td-game');
   loadAllGames().then(games=>{
     const g = games.find(x=>x.id===sel.value);
-    if(g) renderTdHealthBeside(g);
+    if(!g) return;
+    tdHealthEditingDate = g.date;
+    fillTdHealthForm(g.date);
   }).catch(()=>{});
 });
-document.getElementById('td-health-clear').addEventListener('click', ()=>{
-  const date = document.getElementById('td-h-date').value;
-  if(!date) return;
-  saveHealthLog(loadHealthLog().filter(h=>h.date!==date));
-  fillTdHealthForm(date);
-  document.getElementById('td-health-msg').className='bt-msg ok';
-  document.getElementById('td-health-msg').textContent='Cleared body log for '+date+'.';
-  const sel = document.getElementById('td-game');
-  loadAllGames().then(games=>{ const g = games.find(x=>x.id===sel.value); if(g) renderTdHealthBeside(g); }).catch(()=>{});
+document.getElementById('td-health-new').addEventListener('click', ()=>{
+  tdHealthEditingDate = null;
+  fillTdHealthForm('');
+  const d = document.getElementById('td-h-date'); if(d) d.focus();
+});
+document.getElementById('td-health-import-btn').addEventListener('click', ()=>{
+  const msg = document.getElementById('td-health-import-msg');
+  try{
+    const rows = parseHealthCsv(document.getElementById('td-health-import').value);
+    if(!rows.length){ msg.className='bt-msg err'; msg.textContent='No usable rows.'; return; }
+    const r = mergeHealthImport(rows);
+    msg.className='bt-msg ok'; msg.textContent=`Merged ${rows.length} row(s): ${r.added} new, ${r.updated} updated (${r.total} total check-ins).`;
+    const sel = document.getElementById('td-game');
+    loadAllGames().then(games=>{ tdHealthGamesCache=games; renderTdHealthPanel(games.find(x=>x.id===sel.value)||games[games.length-1], games); }).catch(()=>{});
+  }catch(err){ msg.className='bt-msg err'; msg.textContent=String(err.message||err); }
+});
+document.getElementById('td-health-import-file').addEventListener('change', (e)=>{
+  const file = e.target.files?.[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    document.getElementById('td-health-import').value = String(reader.result||'');
+    document.getElementById('td-health-import-btn').click();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 });
 
 // ---- Experiment ----
