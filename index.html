@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>King Of The Court</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -405,6 +405,87 @@
   .td-big .v{ font-family:var(--font-display); font-size:28px; color:var(--orange); line-height:1; }
   .td-big .l{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin-top:3px; }
   .td-compare{ margin-top:10px; font-size:13px; color:var(--text-dim); }
+
+  /* --- Tonight takeaways / confidence / corrections --- */
+  .tonight-card .tonight-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; margin-top:8px; }
+  .tonight-card .tonight-stats{ display:flex; flex-wrap:wrap; gap:10px; }
+  .tonight-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .tonight-cue{ margin-top:10px; font-size:14px; line-height:1.4; }
+  .tonight-cue b{ color:var(--orange2); }
+  .data-conf{ display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin:8px 0 4px; font-size:12.5px; }
+  .data-conf .dc{ display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; background:var(--card2); border:1px solid var(--border); font-weight:700; }
+  .data-conf .dc.ok{ border-color:rgba(53,212,136,.45); color:var(--good); }
+  .data-conf .dc.no{ border-color:rgba(255,71,87,.35); color:var(--bad); }
+  .data-conf .dc-note{ color:var(--text-dim); font-weight:600; }
+  .fix-tbl input, .fix-tbl select{ width:auto; min-width:72px; padding:6px 8px; font-size:13px; }
+  .fix-tbl td{ white-space:nowrap; }
+  #tonight-print-btn{ margin-left:8px; }
+
+  /* --- Phone layout (auto-detect; no prompt) --- */
+  html, body{ overflow-x:hidden; max-width:100%; }
+  .wrap{ overflow-x:hidden; }
+  @media (max-width:768px){
+    body{ padding:12px 10px 72px; font-size:14.5px; }
+    body::after{ width:180px; height:90px; right:-40px; bottom:-20px; opacity:.03; }
+    header{
+      padding:14px 16px 22px; gap:10px; margin-bottom:14px;
+      clip-path:polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 20px) 100%, 0 100%);
+    }
+    header h1{ font-size:22px; letter-spacing:.03em; }
+    header .jp-sub{ font-size:11px; letter-spacing:.08em; }
+    header .ball{ font-size:28px; }
+    header .hidden-crow{ display:none; }
+    nav{
+      display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; overflow-y:hidden;
+      -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
+      padding-bottom:6px; margin-bottom:14px;
+    }
+    nav button{
+      flex:0 0 auto; scroll-snap-align:start;
+      padding:12px 16px 12px 14px; font-size:14px; min-height:44px;
+      white-space:nowrap;
+    }
+    nav .hidden-crow{ display:none; }
+    .card{ padding:14px 12px; margin-bottom:12px; }
+    .card h2{ font-size:18px; }
+    .stat-grid, .td-health-grid, .td-big-row, .tonight-stats, .pg-games, .rc-grid, .td-charts, .pg-charts, .td-pair-grid{
+      grid-template-columns:1fr !important;
+    }
+    .td-health-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .td-health-grid > div[style*="grid-column"]{ grid-column:1 / -1 !important; }
+    .chart-box, .td-box, .pg-box, .pass-chart-box{ height:200px !important; max-height:220px; }
+    .two-col, .court2d-layout, .pass-wrap{ grid-template-columns:1fr !important; }
+    .table-scroll, .pass-tbl-wrap, .td-health-list{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+    .row{ flex-direction:column; align-items:stretch; }
+    .row > div{ min-width:0; width:100%; }
+    .top-actions{ flex-wrap:wrap; justify-content:flex-start !important; }
+    button.primary, button.secondary, a.secondary, label.secondary{
+      min-height:44px; padding-top:10px; padding-bottom:10px;
+    }
+    .hidden-crow{ pointer-events:none; max-width:18px; max-height:18px; opacity:.1 !important; }
+    .site-foot .hidden-crow{ display:inline-block; }
+    #court3d-wrap, #diagnose-3d-canvas-wrap{ min-height:240px; max-height:360px; }
+    .tonight-card .tonight-row{ flex-direction:column; }
+  }
+  @media (max-width:480px){
+    body{ padding:10px 8px 64px; }
+    header h1{ font-size:18px; }
+    header .jp-sub{ font-size:10px; }
+    header .ball{ font-size:24px; }
+    nav button{ font-size:13px; padding:11px 12px 11px 10px; }
+    .td-health-grid{ grid-template-columns:1fr; }
+    .td-big{ min-width:72px; padding:8px 10px; }
+    .td-big .v{ font-size:22px; }
+    .card{ border-left-width:3px; }
+  }
+  @media print{
+    body{ background:#fff; color:#111; padding:0; }
+    body::after, nav, .hidden-crow, .site-foot, #backup-banner, .toast{ display:none !important; }
+    header{ background:#111 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .card{ break-inside:avoid; box-shadow:none; }
+    body.print-tonight section:not(#stats), body.print-tonight #stats > :not(.tonight-card){ display:none !important; }
+    body.print-tonight .tonight-card{ display:block !important; }
+  }
 </style>
 </head>
 <body>
@@ -663,6 +744,12 @@
 
   <!-- MATCH STATS -->
   <section id="stats">
+    <div class="card tonight-card" id="tonight-card">
+      <h2>Tonight / latest game <button type="button" class="secondary" id="tonight-print-btn" style="font-size:12px;padding:6px 12px;vertical-align:middle;">Print practice sheet</button></h2>
+      <div class="sub">What matters from your newest Balltime game — skimmable.</div>
+      <div id="tonight-body"><div class="empty">Loading…</div></div>
+    </div>
+
     <div class="card">
       <h2>Match stats</h2>
       <div class="sub">Pick a match to see its Balltime team numbers (from the CSV you attached) and your own logged sets for that match side by side.</div>
@@ -726,6 +813,7 @@
     <div class="card">
       <h2>Progress across games</h2>
       <div class="sub">Every game here was added from its Balltime link by the ingest script and lives in the site's repo (<code>data/games/</code>), so it's the same on every device. All numbers are Leo's (#5) sets only, counted from Balltime's AI-tagged share-page data. Tick the games to compare.</div>
+      <div id="pg-confidence" class="data-conf"></div>
       <div class="pg-games" id="pg-games"><div class="sub">Loading games…</div></div>
       <div class="pg-note" id="pg-howto">To add a game, send its Balltime link to your Grok bot — it runs <code>tools/ingest_balltime.py</code> and the game shows up here.</div>
     </div>
@@ -770,6 +858,7 @@
       <h2>Setter report card — Leo #5</h2>
       <div class="sub">A post-game report card built from the game's ball-by-ball Balltime data (Leo's sets only). Every chip comes from simple rules on the real numbers, shown under each category; nothing is graded by hand. Games added through the ingest script get a report card automatically.</div>
       <div class="row" style="max-width:520px"><div><label>Game</label><select id="rc-game"></select></div></div>
+      <div id="rc-confidence" class="data-conf"></div>
       <div id="rc-head" class="pg-note"></div>
     </div>
     <div class="rc-grid" id="rc-grid"></div>
@@ -793,6 +882,7 @@
           </label>
         </div>
       </div>
+      <div id="td-confidence" class="data-conf"></div>
       <div id="td-head" class="pg-note"></div>
     </div>
 
@@ -854,6 +944,21 @@
           <label class="secondary" style="cursor:pointer;">Upload CSV<input type="file" id="td-health-import-file" accept=".csv,.tsv,.txt" style="display:none;"></label>
         </div>
         <div id="td-health-import-msg" class="bt-msg" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="hidden-crow crow-tiny on-dark" style="right:10px;top:10px;" aria-hidden="true" data-crow="fix">
+        <svg class="crow-svg"><use href="#crow-perch"/></svg>
+      </span>
+      <h2>Fix a tag</h2>
+      <div class="sub">Balltime AI mis-IDs players a lot. Correct attacker / pass / result here — saved in this browser only, not the repo.</div>
+      <div class="row" style="max-width:420px"><div><label>Game</label><select id="fix-game"></select></div></div>
+      <div id="fix-msg" class="bt-msg" style="margin-top:6px;"></div>
+      <div class="table-scroll fix-tbl" style="margin-top:10px;" id="fix-table"><div class="empty">Pick a game.</div></div>
+      <div class="top-actions" style="justify-content:flex-start;margin-top:10px;">
+        <button class="primary" type="button" id="fix-save">Save corrections</button>
+        <button class="secondary" type="button" id="fix-clear">Clear this game’s fixes</button>
       </div>
     </div>
 
@@ -2102,14 +2207,15 @@ document.getElementById('backup-banner-btn').addEventListener('click', ()=>{
 // ---------- Export / Import / Clear ----------
 document.getElementById('export-json-btn').addEventListener('click', ()=>{
   const payload = {
-    type: 'kotc-backup', version: 2, exportedAt: new Date().toISOString(),
+    type: 'kotc-backup', version: 3, exportedAt: new Date().toISOString(),
     sets, matches,
     health: (typeof loadHealthLog==='function' ? loadHealthLog() : []),
-    experiment: (typeof loadExperiment==='function' ? loadExperiment() : null)
+    experiment: (typeof loadExperiment==='function' ? loadExperiment() : null),
+    corrections: (typeof loadCorrections==='function' ? loadCorrections() : {})
   };
   downloadFile('setter-stats-backup.json', JSON.stringify(payload, null, 2), 'application/json');
   markBackedUp();
-  toast('Backup exported (sets, matches, health, experiment)');
+  toast('Backup exported');
 });
 document.getElementById('export-csv-btn').addEventListener('click', ()=>{
   const header = 'Date,Opponent,PassLevel,Zone,SetType,Quality,Outcome,Notes\n';
@@ -2149,8 +2255,16 @@ document.getElementById('import-json-file').addEventListener('change', (e)=>{
         if(data.experiment && typeof saveExperiment==='function'){
           saveExperiment(data.experiment); msg.push('experiment');
         }
+        if(data.corrections && typeof saveCorrections==='function'){
+          const cur = loadCorrections();
+          Object.keys(data.corrections).forEach(gid=>{
+            cur[gid] = Object.assign({}, cur[gid]||{}, data.corrections[gid]||{});
+          });
+          saveCorrections(cur); msg.push('corrections');
+        }
         if(typeof renderTendencies==='function' && document.getElementById('tendencies')?.classList.contains('active')) renderTendencies();
         if(typeof renderReportCard==='function' && document.getElementById('report')?.classList.contains('active')) renderReportCard();
+        if(typeof renderTonightTakeaways==='function') renderTonightTakeaways();
         toast(msg.length ? 'Imported '+msg.join(', ') : 'Backup had nothing new');
         return;
       }
@@ -2708,7 +2822,7 @@ function refreshMatchUi(){
 
 // ---------- Match stats tab (Balltime CSV team view + set log filtered by match) ----------
 var TAB_HOOKS = TAB_HOOKS || {};
-TAB_HOOKS.stats = ()=>{ populateMatchSelects(); renderMatchStats(); };
+TAB_HOOKS.stats = ()=>{ populateMatchSelects(); renderMatchStats(); renderTonightTakeaways(); };
 const PLAYER_COLORS = ['#ff6a00','#e8283f','#ffab4d','#35d488','#ffcc33','#7ec4ff','#b78cff','#ff7ab6','#4de0d0','#c9c3d6','#ff9d6b','#6bdba3'];
 
 function openMatchStats(matchId){
@@ -3612,8 +3726,73 @@ function loadGame(entry){
 async function loadAllGames(){
   const idx = await loadGamesIndex();
   const games = await Promise.all(idx.map(loadGame));
-  return games.sort((a,b)=>(a.date||'').localeCompare(b.date||'') || (a.name||'').localeCompare(b.name||''));
+  const sorted = games.sort((a,b)=>(a.date||'').localeCompare(b.date||'') || (a.name||'').localeCompare(b.name||''));
+  return (typeof withCorrections==='function') ? sorted.map(withCorrections) : sorted;
 }
+
+
+// ---------- Data confidence + local tag corrections (kotc-corrections-v1) ----------
+const CORR_KEY = 'kotc-corrections-v1';
+function loadCorrections(){ try{ const o=JSON.parse(localStorage.getItem(CORR_KEY)); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
+function saveCorrections(o){ localStorage.setItem(CORR_KEY, JSON.stringify(o||{})); }
+function correctionsForGame(gameId){ return loadCorrections()[gameId] || {}; }
+function recomputeQualityFromChains(chains){
+  const n = chains.length;
+  const swings = chains.filter(c=>['kill','error','in_play'].includes(c.result));
+  const kills = swings.filter(c=>c.result==='kill').length;
+  const errors = swings.filter(c=>c.result==='error').length;
+  const assists = chains.filter(c=>!!c.assist).length;
+  const attacked = chains.filter(c=>!['free','none'].includes(c.result)).length;
+  return {
+    n, attacked, attackedPct: n? attacked/n : null,
+    swings: swings.length, kills, errors,
+    killPct: swings.length? kills/swings : null,
+    eff: swings.length? (kills-errors)/swings : null,
+    assists, assistPct: n? assists/n : null
+  };
+}
+function withCorrections(g){
+  if(!g || !g.id) return g;
+  const fixMap = correctionsForGame(g.id);
+  const keys = Object.keys(fixMap);
+  if(!keys.length) return g;
+  const chains = (g.chains||[]).map((c,i)=>{
+    const f = fixMap[String(i)];
+    if(!f) return c;
+    const out = {...c};
+    if(f.attacker!==undefined) out.attacker = f.attacker==='' ? null : f.attacker;
+    if(f.pass!==undefined) out.pass = f.pass===''||f.pass==null ? null : +f.pass;
+    if(f.result!==undefined && f.result!=='') out.result = f.result;
+    // keep assist in sync with kill when result edited
+    if(f.result==='kill') out.assist = true;
+    if(f.result && f.result!=='kill') out.assist = false;
+    return out;
+  });
+  const q = recomputeQualityFromChains(chains);
+  const metrics = g.metrics ? {...g.metrics, quality: Object.assign({}, g.metrics.quality||{}, q)} : { quality: q };
+  return {...g, chains, metrics, _corrected: true, _corrCount: keys.length};
+}
+function dataConfidenceHtml(g, {multi}={}){
+  if(!g) return '';
+  const a = g.available || {};
+  const chip = (ok, label)=>`<span class="dc ${ok?'ok':'no'}">${ok?'✓':'✕'} ${label}</span>`;
+  const nFix = g._corrCount || Object.keys(correctionsForGame(g.id)).length;
+  return `${chip(!!a.passRatings,'Pass')}${chip(!!a.positional,'Tracking')}${chip(!!a.setCalls,'Calls')}${chip(!!a.blockers,'Blockers')}` +
+    `<span class="dc-note">AI-tagged. Edit wrong tags below.${nFix?` · ${nFix} local fix${nFix===1?'':'es'}`:''}</span>`;
+}
+function dataConfidenceHtmlMany(games){
+  if(!games || !games.length) return '';
+  // show union: field is ✓ only if every selected game has it
+  const fields = [
+    ['passRatings','Pass'], ['positional','Tracking'], ['setCalls','Calls'], ['blockers','Blockers']
+  ];
+  return fields.map(([k,lab])=>{
+    const ok = games.every(g=>g.available && g.available[k]);
+    const some = games.some(g=>g.available && g.available[k]);
+    return `<span class="dc ${ok?'ok':(some?'':'no')}">${ok?'✓':(some?'~':'✕')} ${lab}</span>`;
+  }).join('') + `<span class="dc-note">AI-tagged · ${games.length} game${games.length===1?'':'s'} selected. Edit wrong tags on Tendencies.</span>`;
+}
+
 
 // Balltime tab: tell Leo whether a pasted link is already a Progress game
 async function updateBtGameMsg(videoId){
@@ -3702,6 +3881,8 @@ async function renderProgress(){
       <div>${badge(a.passRatings,'pass ratings')}${badge(a.positional,'set destinations')}${badge(a.setCalls,'set calls')}${badge(a.blockers,'blocker counts')}</div></label>`;
   }).join('');
   const sel = games.filter(g=>pgSelected.has(g.id));
+  const conf = document.getElementById('pg-confidence');
+  if(conf) conf.innerHTML = dataConfidenceHtmlMany(sel.length?sel:games);
   // comparable decision score: only components scored in every selected game
   const keys = sel.length ? sel[0].metrics.decision.components.map(c=>c.key).filter(k=>sel.every(g=>{ const c = g.metrics.decision.components.find(x=>x.key===k); return c && c.score!=null; })) : [];
   games.forEach(g=>{
@@ -3980,7 +4161,8 @@ function buildReportCard(g, prev){
   const res = RC_CATS.map(cat=>({ cat, r: cat.calc(g), pr: prev ? cat.calc(prev) : null }));
   const scored = res.filter(x=>x.r.status!=='nodata' && x.cat.key!=='connection');
   const worst = scored.slice().sort((a,b)=>a.r.score-b.r.score).slice(0,2);
-  return { res, worst };
+  const best = scored.slice().sort((a,b)=>b.r.score-a.r.score).slice(0,2);
+  return { res, worst, best, scored };
 }
 async function renderReportCard(){
   const sel = document.getElementById('rc-game');
@@ -3996,6 +4178,8 @@ async function renderReportCard(){
   const expBit = exp && exp.name ? ` · current experiment: <b style="color:var(--orange2)">${escapeHtml(exp.name)}</b>` : '';
   const hRow = (typeof healthForDate==='function' && healthForDate(g.date)) || null;
   const healthBit = hRow ? ` · match-day body: ${[hRow.sleepHours!=null?'sleep '+hRow.sleepHours+'h':null, hRow.fatigue!=null?'fatigue '+hRow.fatigue+'/5':null, hRow.hrv!=null?'HRV '+hRow.hrv:null].filter(Boolean).join(', ')||'logged'}` : '';
+  const confEl = document.getElementById('rc-confidence');
+  if(confEl) confEl.innerHTML = dataConfidenceHtml(g);
   document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}${expBit}${healthBit}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
   const { res, worst } = buildReportCard(g, prev);
   const chipTxt = { strong:'Strong', ok:'OK', work:'Needs work', nodata:'No data' };
@@ -4062,15 +4246,17 @@ async function renderTendencies(){
   const other = games.find(x=>x.id!==g.id) || null;
   const m = g.metrics;
   const avail = g.available || {};
+  const tdConf = document.getElementById('td-confidence');
+  if(tdConf) tdConf.innerHTML = dataConfidenceHtml(g);
   document.getElementById('td-head').innerHTML =
-    `<b style="color:var(--text)">${escapeHtml(g.date||'')}</b> · ${escapeHtml((g.meta&&g.meta.resultText)||'—')} · ${m.quality.n} sets · eff ${tdFmtEff(m.quality.eff)} · assist ${tdFmtPct(m.quality.assistPct)}` +
-    `<span style="color:var(--text-dim)"> · pass ${avail.passRatings?'✓':'—'}/calls ${avail.setCalls?'✓':'—'}/dest ${avail.positional?'✓':'—'}</span>`;
+    `<b style="color:var(--text)">${escapeHtml(g.date||'')}</b> · ${escapeHtml((g.meta&&g.meta.resultText)||'—')} · ${m.quality.n} sets · eff ${tdFmtEff(m.quality.eff)} · assist ${tdFmtPct(m.quality.assistPct)}`;
 
   updateTdExperimentPill();
   renderTdDecision(g, both ? other : null);
   renderTdTimeline(g);
   renderTdHealthPanel(g, games);
   fillTdExperimentForm();
+  renderFixTagTable(games, g.id);
 }
 
 function updateTdExperimentPill(){
@@ -4971,10 +5157,146 @@ document.getElementById('td-game').addEventListener('change', renderTendencies);
 document.getElementById('td-both').addEventListener('change', renderTendencies);
 
 
+
+// ---------- Tonight / latest takeaways (Match Stats) ----------
+async function renderTonightTakeaways(){
+  const el = document.getElementById('tonight-body');
+  if(!el) return;
+  let games;
+  try{ games = await loadAllGames(); }
+  catch(err){ el.innerHTML = `<div class="empty">Couldn't load games.</div>`; return; }
+  if(!games.length){ el.innerHTML = '<div class="empty">No games yet.</div>'; return; }
+  const g = games[games.length-1];
+  const prev = games.length>1 ? games[games.length-2] : null;
+  const m = g.metrics.quality;
+  const { best, worst } = buildReportCard(g, prev);
+  const chip = (item, kind)=>{
+    if(!item) return '';
+    const st = item.r.status;
+    return `<span class="rc-chip ${st}">${kind}: ${escapeHtml(item.cat.title)}</span>`;
+  };
+  const cue = (worst[0] && worst[0].cat.cue) || 'neutral spine, push with thumbs/wrists';
+  el.innerHTML = `
+    <div class="tonight-row">
+      <div>
+        <b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml((g.meta&&g.meta.resultText)||'—')}</b>
+        <div class="pg-note" style="margin-top:2px;">${escapeHtml(g.name||'')} · ${m.n} sets</div>
+      </div>
+      <div class="tonight-stats">
+        <div class="td-big"><div class="v">${PG_FMT.eff(m.eff)}</div><div class="l">Eff</div></div>
+        <div class="td-big"><div class="v">${PG_FMT.pct(m.assistPct)}</div><div class="l">Assist%</div></div>
+        <div class="td-big"><div class="v">${m.assists}</div><div class="l">Assists</div></div>
+      </div>
+    </div>
+    <div class="tonight-chips">${best.map(b=>chip(b,'Strong')).join('')}${worst.map(w=>chip(w,'Work')).join('')}</div>
+    <div class="tonight-cue">Next practice: <b>"${escapeHtml(cue)}"</b></div>
+    <div class="data-conf" style="margin-top:10px;">${dataConfidenceHtml(g)}</div>`;
+}
+document.getElementById('tonight-print-btn')?.addEventListener('click', ()=>{
+  document.body.classList.add('print-tonight');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('print-tonight'), 400);
+});
+
+// ---------- Fix a tag UI ----------
+async function renderFixTagTable(games, preferId){
+  const sel = document.getElementById('fix-game');
+  if(!sel) return;
+  if(!games){ try{ games = await loadAllGames(); }catch(e){ return; } }
+  // loadAllGames already applies corrections — for the editor we need RAW chains + overlay
+  // Re-fetch raw from cache by stripping: use games but show current (corrected) values as starting point is OK
+  const cur = sel.value || preferId;
+  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')} (${(g.chains||[]).length})</option>`).join('');
+  sel.value = [...sel.options].some(o=>o.value===cur) ? cur : (preferId && [...sel.options].some(o=>o.value===preferId) ? preferId : games[games.length-1].id);
+  const g = games.find(x=>x.id===sel.value);
+  const box = document.getElementById('fix-table');
+  if(!g){ box.innerHTML = '<div class="empty">No game.</div>'; return; }
+  const rawFix = correctionsForGame(g.id);
+  // Prefer showing underlying raw from gamesCache if possible
+  let rawChains = g.chains;
+  try{
+    const entry = (await loadGamesIndex()).find(e=>e.id===g.id);
+    if(entry){
+      const raw = await loadGame(entry);
+      rawChains = raw.chains || g.chains;
+    }
+  }catch(e){}
+  const passOpts = [['','—'],['0','0'],['1','1'],['2','2'],['3','3']];
+  const resOpts = ['kill','error','in_play','free','none'];
+  box.innerHTML = `<table><thead><tr><th>#</th><th>Set</th><th>Rally</th><th>Attacker</th><th>Pass</th><th>Result</th><th>Was</th></tr></thead><tbody>
+    ${rawChains.map((c,i)=>{
+      const f = rawFix[String(i)]||{};
+      const att = f.attacker!==undefined ? f.attacker : (c.attacker??'');
+      const pass = f.pass!==undefined ? f.pass : (c.pass??'');
+      const result = f.result!==undefined ? f.result : (c.result||'');
+      const changed = !!(f.attacker!==undefined || f.pass!==undefined || f.result!==undefined);
+      return `<tr data-idx="${i}"${changed?' style="background:rgba(232,93,4,.08);"':''}>
+        <td>${i+1}</td><td>${c.set??'—'}</td><td>${c.rally??'—'}</td>
+        <td><input type="text" data-f="attacker" value="${escapeHtml(String(att??''))}" placeholder="#" style="width:56px;"></td>
+        <td><select data-f="pass">${passOpts.map(([v,l])=>`<option value="${v}"${String(pass)===String(v)?' selected':''}>${l}</option>`).join('')}</select></td>
+        <td><select data-f="result"><option value="">—</option>${resOpts.map(r=>`<option value="${r}"${result===r?' selected':''}>${r}</option>`).join('')}</select></td>
+        <td style="color:var(--text-dim);font-size:11px;">#${escapeHtml(String(c.attacker??'—'))} · p${c.pass??'—'} · ${escapeHtml(c.result||'—')}</td>
+      </tr>`;
+    }).join('')}
+  </tbody></table>`;
+}
+document.getElementById('fix-game')?.addEventListener('change', ()=>renderFixTagTable());
+document.getElementById('fix-save')?.addEventListener('click', async ()=>{
+  const sel = document.getElementById('fix-game');
+  const gid = sel.value;
+  const msg = document.getElementById('fix-msg');
+  if(!gid) return;
+  let rawChains;
+  try{
+    const entry = (await loadGamesIndex()).find(e=>e.id===gid);
+    const raw = await loadGame(entry);
+    rawChains = raw.chains||[];
+  }catch(e){ msg.className='bt-msg err'; msg.textContent='Could not load game.'; return; }
+  const all = loadCorrections();
+  const gameFix = {};
+  document.querySelectorAll('#fix-table tr[data-idx]').forEach(tr=>{
+    const i = tr.dataset.idx;
+    const raw = rawChains[+i]||{};
+    const att = tr.querySelector('[data-f=attacker]')?.value.trim() ?? '';
+    const pass = tr.querySelector('[data-f=pass]')?.value ?? '';
+    const result = tr.querySelector('[data-f=result]')?.value ?? '';
+    const fix = {};
+    const rawAtt = raw.attacker==null ? '' : String(raw.attacker);
+    const rawPass = raw.pass==null ? '' : String(raw.pass);
+    const rawRes = raw.result||'';
+    if(att !== rawAtt) fix.attacker = att;
+    if(pass !== rawPass) fix.pass = pass==='' ? null : +pass;
+    if(result !== rawRes) fix.result = result;
+    if(Object.keys(fix).length) gameFix[i] = fix;
+  });
+  if(Object.keys(gameFix).length) all[gid] = gameFix; else delete all[gid];
+  saveCorrections(all);
+  msg.className='bt-msg ok'; msg.textContent = Object.keys(gameFix).length ? `Saved ${Object.keys(gameFix).length} fix(es).` : 'No changes — cleared fixes for this game.';
+  // refresh views
+  if(typeof renderTendencies==='function') renderTendencies();
+  if(typeof renderReportCard==='function' && document.getElementById('report')?.classList.contains('active')) renderReportCard();
+  if(typeof renderProgress==='function' && document.getElementById('progress')?.classList.contains('active')) renderProgress();
+  if(typeof renderTonightTakeaways==='function') renderTonightTakeaways();
+});
+document.getElementById('fix-clear')?.addEventListener('click', ()=>{
+  const gid = document.getElementById('fix-game')?.value;
+  if(!gid) return;
+  const all = loadCorrections();
+  delete all[gid];
+  saveCorrections(all);
+  document.getElementById('fix-msg').className='bt-msg ok';
+  document.getElementById('fix-msg').textContent='Cleared fixes.';
+  renderFixTagTable();
+  if(typeof renderTendencies==='function') renderTendencies();
+  if(typeof renderTonightTakeaways==='function') renderTonightTakeaways();
+});
+
+
 populateFilters();
 updateBackupBanner();
 renderCoachingLibrary();
 { const t = tabFromHash(); if(t) showTab(t, false); }
+if(typeof renderTonightTakeaways==='function') renderTonightTakeaways();
 </script>
 </body>
 </html>
