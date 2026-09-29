@@ -260,6 +260,18 @@
   .c3d-hud b{ color:var(--orange2); }
   .c3d-fallback{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--text-dim); }
   #c3d-types .opt-btn .legend-dot{ margin-right:5px; vertical-align:-1px; }
+  .pass-wrap{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:16px; align-items:start; }
+  @media (max-width:820px){ .pass-wrap{ grid-template-columns:1fr; } }
+  .pass-svg{ width:100%; height:auto; display:block; background:#0d1520; border:1px solid var(--border); border-radius:10px; }
+  .pass-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-dim); margin-top:8px; }
+  .pass-legend i{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+  .pass-legend i.sq{ border-radius:2px; }
+  .pass-read{ margin-top:14px; background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; }
+  .pass-read h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 6px; font-size:17px; }
+  .pass-read ul{ margin:0; padding-left:18px; }
+  .pass-read li{ margin:4px 0; line-height:1.4; }
+  .pass-tbl-wrap{ overflow-x:auto; }
+  .pass-chart-box{ position:relative; height:220px; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -413,6 +425,12 @@
       </div>
       <div class="opt-group" id="diagnose-type-group" style="margin-top:14px;"></div>
       <div id="diagnose-panel" style="margin-top:16px;"></div>
+    </div>
+    <div class="card" id="pass-card">
+      <h2>Pass → set: what happens off each pass</h2>
+      <div class="sub">Real serve-receive chains from the July 10 Balltime match (VID_20260710_104227_373): each Team A reception, the set that followed it and the attack off that set. Dots are where the pass landed (colored by Balltime's 0–3 pass rating); dashed lines run from where the set was taken to where it was hit. Shaded ovals are each pass level's zone (average spot ± spread). Balltime share-page data, AI-tagged — a small sample, so read it as a trend, not a verdict.</div>
+      <div class="opt-group" id="pass-filter" style="margin:12px 0 4px;"></div>
+      <div id="pass-body"><div class="sub">Loading July 10 pass data…</div></div>
     </div>
   </section>
 
@@ -2998,6 +3016,221 @@ window.addEventListener('hashchange', ()=>{ const t = tabFromHash(); if(t) showT
 // ---------- Init ----------
 populateMatchSelects();
 renderMatchList();
+
+// ---------- Diagnose: pass quality -> set choice (July 10 Balltime reception chains) ----------
+// Precomputed by the Balltime export script into data/pass-chains-2026-07-10.json:
+// each Team A reception -> first Team A set -> first Team A attack in the same possession.
+// Coordinates are metres on Team A's side: x across from the left sideline, d = distance from the net.
+const PASS_CHAINS_FILE = 'data/pass-chains-2026-07-10.json';
+const PASS_LEVELS = [
+  { k:'3', label:'Perfect (3)', short:'Perfect', color:'#35d488', cls:'q3' },
+  { k:'2', label:'Good (2)', short:'Good', color:'#ffcc33', cls:'q2' },
+  { k:'1', label:'Poor (1)', short:'Poor', color:'#ff4757', cls:'q0' },
+  { k:'0', label:'Error (0)', short:'Error', color:'#9b1c2c', cls:'q0' },
+  { k:'u', label:'Unrated', short:'Unrated', color:'#a29fae', cls:'' }
+];
+const PASS_LANES = [
+  ['left','Left pin'], ['middle','Middle'], ['right','Right pin'], ['back','Back row'],
+  ['dump','Setter dump'], ['free','Free ball over'], ['none','No set / swing']
+];
+const PASS_LANE_COLORS = { left:'#ff6a00', middle:'#ffab4d', right:'#e8283f', back:'#7ec4ff', dump:'#b78cff', free:'#c9c3d6', none:'#4a4652' };
+let passData = null, passLoading = false, passFilter = 'all';
+
+function passKey(c){ return c.pass==null ? 'u' : String(c.pass); }
+function passLevel(k){ return PASS_LEVELS.find(l=>l.k===k); }
+function passPct(n, d){ return d ? Math.round(100*n/d) + '%' : '—'; }
+function passEff(cs){
+  const sw = cs.filter(c=>['kill','error','in_play'].includes(c.result));
+  const k = sw.filter(c=>c.result==='kill').length, e = sw.filter(c=>c.result==='error').length;
+  return { att: sw.length, k, e, eff: sw.length ? (k-e)/sw.length : null };
+}
+function passFmtEff(x){ return x==null ? '—' : (x<0?'-':'') + Math.abs(x).toFixed(3).replace(/^0/,''); }
+function passMean(arr){ return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+function passSd(arr){ const m = passMean(arr); return arr.length>1 ? Math.sqrt(arr.reduce((s,v)=>s+(v-m)*(v-m),0)/(arr.length-1)) : 0; }
+
+TAB_HOOKS.diagnose = ()=>{ loadPassAnalysis(); };
+async function loadPassAnalysis(){
+  if(passData){ renderPassAnalysis(); return; }
+  if(passLoading) return;
+  passLoading = true;
+  try{
+    const res = await fetch(PASS_CHAINS_FILE, { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if(!data || !Array.isArray(data.chains)) throw new Error('bad file');
+    passData = data;
+  }catch(err){
+    document.getElementById('pass-body').innerHTML = '<div class="sub">Couldn\'t load the July 10 pass data (' + escapeHtml(String(err.message||err)) + ').</div>';
+    passLoading = false; return;
+  }
+  passLoading = false;
+  renderPassAnalysis();
+}
+
+function renderPassFilter(){
+  const box = document.getElementById('pass-filter');
+  const present = new Set(passData.chains.map(passKey));
+  const opts = [{ k:'all', label:'All passes', cls:'' }].concat(PASS_LEVELS.filter(l=>present.has(l.k)));
+  box.innerHTML = opts.map(o=>{
+    const n = o.k==='all' ? passData.chains.length : passData.chains.filter(c=>passKey(c)===o.k).length;
+    return `<button type="button" class="opt-btn ${o.cls}${passFilter===o.k?' selected':''}" data-value="${o.k}">${o.label}<span class="opt-sub">${n} pass${n===1?'':'es'}</span></button>`;
+  }).join('');
+}
+document.getElementById('pass-filter').addEventListener('click', (e)=>{
+  const b = e.target.closest('.opt-btn'); if(!b || !passData) return;
+  passFilter = b.dataset.value; renderPassAnalysis();
+});
+
+function renderPassAnalysis(){
+  if(!passData) return;
+  renderPassFilter();
+  const all = passData.chains;
+  const shown = passFilter==='all' ? all : all.filter(c=>passKey(c)===passFilter);
+  const body = document.getElementById('pass-body');
+  body.innerHTML = `
+    <div class="pass-wrap">
+      <div>
+        <svg class="pass-svg" id="pass-svg" viewBox="0 0 560 470" role="img" aria-label="Team A half court with pass landing spots and set destinations"></svg>
+        <div class="pass-legend">
+          ${PASS_LEVELS.filter(l=>all.some(c=>passKey(c)===l.k)).map(l=>`<span><i style="background:${l.color}"></i>${l.short} pass</span>`).join('')}
+          <span><i class="sq" style="background:#fff"></i>Set hit (white ring = kill, ✕ = error)</span>
+          <span>Dashed oval + cross = that pass level's zone and average spot</span>
+        </div>
+        <div class="pass-legend">${PASS_LANES.slice(0,5).map(([k,l])=>`<span><i class="sq" style="background:${PASS_LANE_COLORS[k]}"></i>${l}</span>`).join('')}</div>
+      </div>
+      <div>
+        <div class="pass-chart-box"><canvas id="chart-pass-lanes"></canvas></div>
+        <div class="pass-tbl-wrap" id="pass-table"></div>
+      </div>
+    </div>
+    <div class="pass-read" id="pass-read"></div>`;
+  drawPassCourt(shown);
+  renderPassTable(all);
+  renderPassChart(all);
+  renderPassReading(all);
+}
+
+function drawPassCourt(cs){
+  const svg = document.getElementById('pass-svg');
+  const S = 40, X0 = 2.5, Y0 = 1.8; // px per metre; metres of margin left / over the net
+  const px = x => ((x + X0) * S).toFixed(1);
+  const py = d => ((Math.max(-1.6, Math.min(9.8, d)) + Y0) * S).toFixed(1);
+  const clampX = x => Math.max(-2.2, Math.min(11.2, x));
+  let h = '';
+  h += `<rect x="${px(-X0)}" y="0" width="560" height="${py(-0.02)}" fill="#0a111a"/>`;
+  h += `<rect x="${px(0)}" y="${py(0)}" width="${9*S}" height="${9*S}" fill="#1c3a63" stroke="#f4f2f0" stroke-width="2"/>`;
+  h += `<rect x="${px(0)}" y="${py(0)}" width="${9*S}" height="${3*S}" fill="#24497a"/>`;
+  h += `<line x1="${px(0)}" y1="${py(3)}" x2="${px(9)}" y2="${py(3)}" stroke="#ff6a00" stroke-width="2"/>`;
+  h += `<line x1="${px(-0.6)}" y1="${py(0)}" x2="${px(9.6)}" y2="${py(0)}" stroke="#f4f2f0" stroke-width="4"/>`;
+  h += `<text x="${px(4.5)}" y="${py(-0.35)}" fill="#a29fae" font-size="11" text-anchor="middle">NET — opponent's side above</text>`;
+  h += `<text x="${px(9.1)}" y="${py(3)-4}" fill="#ff6a00" font-size="10" text-anchor="end">3 m line</text>`;
+  h += `<text x="${px(0.1)}" y="${py(9)+14}" fill="#a29fae" font-size="10">left sideline</text>`;
+  h += `<text x="${px(8.9)}" y="${py(9)+14}" fill="#a29fae" font-size="10" text-anchor="end">right sideline</text>`;
+  // pass-level zones: mean spot +/- 1 SD of where that level's passes landed
+  PASS_LEVELS.forEach(l=>{
+    const pts = cs.filter(c=>passKey(c)===l.k && c.passTo).map(c=>c.passTo);
+    if(pts.length < 2 || l.k==='u') return;
+    const mx = passMean(pts.map(p=>p[0])), md = passMean(pts.map(p=>p[1]));
+    const rx = Math.max(0.5, passSd(pts.map(p=>p[0]))), rd = Math.max(0.5, passSd(pts.map(p=>p[1])));
+    h += `<ellipse cx="${px(mx)}" cy="${py(md)}" rx="${(rx*S).toFixed(1)}" ry="${(rd*S).toFixed(1)}" fill="${l.color}" fill-opacity=".13" stroke="${l.color}" stroke-dasharray="5 4" stroke-width="1.5"><title>${l.short} pass zone: average ${mx.toFixed(1)} m from the left sideline, ${md.toFixed(1)} m off the net (n=${pts.length})</title></ellipse>`;
+    h += `<path d="M${px(mx)-6},${py(md)}h12M${px(mx)},${py(md)-6}v12" stroke="${l.color}" stroke-width="2.5"/>`;
+  });
+  // set lines and contacts
+  cs.forEach(c=>{
+    if(!c.setTo || ['free','none'].includes(c.lane)) return;
+    const from = c.setFrom || c.passTo; if(!from) return;
+    const col = PASS_LANE_COLORS[c.lane] || '#fff';
+    h += `<line x1="${px(clampX(from[0]))}" y1="${py(from[1])}" x2="${px(clampX(c.setTo[0]))}" y2="${py(c.setTo[1])}" stroke="${col}" stroke-width="1.6" stroke-dasharray="4 3" opacity=".8"/>`;
+  });
+  cs.forEach(c=>{
+    if(!c.setTo || ['free','none'].includes(c.lane)) return;
+    const col = PASS_LANE_COLORS[c.lane] || '#fff';
+    const x = px(clampX(c.setTo[0])), y = py(c.setTo[1]);
+    const tip = `Rally ${c.rally} (set ${c.set}): ${passLevel(passKey(c)).short} pass by #${c.passer||'?'} → ${c.setter?'#'+c.setter+' set':'no set'}${c.call?' "'+c.call+'"':''} → ${c.attacker?'#'+c.attacker+' ':''}${c.attackType||''} ${c.result||''}`;
+    h += `<rect x="${(x-5).toFixed(1)}" y="${(y-5).toFixed(1)}" width="10" height="10" rx="2" fill="${col}" stroke="${c.result==='kill'?'#fff':'#0a0a0e'}" stroke-width="${c.result==='kill'?2.2:1}"><title>${escapeHtml(tip)}</title></rect>`;
+    if(c.result==='error') h += `<path d="M${x-4},${y-4}L${+x+4},${+y+4}M${+x+4},${y-4}L${x-4},${+y+4}" stroke="#0a0a0e" stroke-width="2"/>`;
+  });
+  cs.forEach(c=>{
+    if(!c.passTo) return;
+    const l = passLevel(passKey(c));
+    const tip = `Rally ${c.rally} (set ${c.set}): ${l.label} pass by #${c.passer||'?'} landed ${c.passTo[0].toFixed(1)} m from the left sideline, ${c.passTo[1].toFixed(1)} m off the net → ${(PASS_LANES.find(p=>p[0]===c.lane)||['','—'])[1]}${c.call?' ("'+c.call+'")':''}${c.result?', '+c.result.replace('_',' '):''}`;
+    h += `<circle cx="${px(clampX(c.passTo[0]))}" cy="${py(c.passTo[1])}" r="7" fill="${l.color}" stroke="#0a0a0e" stroke-width="1.5"><title>${escapeHtml(tip)}</title></circle>`;
+  });
+  svg.innerHTML = h;
+}
+
+function passLevelRows(all){
+  return PASS_LEVELS.map(l=>{
+    const cs = all.filter(c=>passKey(c)===l.k);
+    if(!cs.length) return null;
+    const lanes = {}; PASS_LANES.forEach(([k])=>lanes[k] = cs.filter(c=>c.lane===k).length);
+    const setCs = cs.filter(c=>c.setter);
+    return { l, cs, n: cs.length, lanes, set: setCs.length, leo: setCs.filter(c=>c.setter==='5').length,
+             eff: passEff(cs), won: cs.filter(c=>c.won).length,
+             calls: Object.entries(cs.reduce((m,c)=>{ if(c.call) m[c.call]=(m[c.call]||0)+1; return m; },{})).sort((a,b)=>b[1]-a[1]) };
+  }).filter(Boolean);
+}
+
+function renderPassTable(all){
+  const rows = passLevelRows(all);
+  const th = PASS_LANES.map(([k,l])=>`<th>${l}</th>`).join('');
+  document.getElementById('pass-table').innerHTML = `<table>
+    <thead><tr><th>Pass</th><th>#</th>${th}<th>K-E / swings</th><th>Eff</th><th>Rally won</th><th>Leo set</th><th>Balltime calls</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td style="color:${r.l.color};font-weight:700">${r.l.label}</td><td>${r.n}</td>
+      ${PASS_LANES.map(([k])=>`<td>${r.lanes[k] ? r.lanes[k] + ' <span style="color:var(--text-dim)">(' + passPct(r.lanes[k], r.n) + ')</span>' : '<span style="color:var(--text-dim)">·</span>'}</td>`).join('')}
+      <td>${r.eff.k}-${r.eff.e} / ${r.eff.att}</td><td>${passFmtEff(r.eff.eff)}</td>
+      <td>${r.won}/${r.n} (${passPct(r.won, r.n)})</td><td>${r.leo}/${r.set}</td>
+      <td>${r.calls.map(([c,n])=>escapeHtml(c)+(n>1?' ×'+n:'')).join(', ') || '—'}</td></tr>`).join('')}</tbody></table>
+    <div class="sub" style="margin-top:6px">Lane = where the set was hit: left/right pin = within 3 m of that sideline, middle = the center 3 m, back row = hit from more than 3 m off the net. Eff = (kills − errors) / swings. Balltime has no block data, so blocked swings count as errors or in-play.</div>`;
+}
+
+function renderPassChart(all){
+  const rows = passLevelRows(all);
+  destroyChart('chart-pass-lanes');
+  const lanes = PASS_LANES.filter(([k])=>rows.some(r=>r.lanes[k]));
+  chartRefs['chart-pass-lanes'] = new Chart(document.getElementById('chart-pass-lanes').getContext('2d'), {
+    type:'bar',
+    data:{ labels: rows.map(r=>`${r.l.short} (${r.n})`),
+           datasets: lanes.map(([k,l])=>({ label:l, backgroundColor:PASS_LANE_COLORS[k], data: rows.map(r=>Math.round(1000*r.lanes[k]/r.n)/10), counts: rows.map(r=>r.lanes[k]) })) },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{ size:11 } } },
+                title:{ display:true, text:'Where the ball went, by pass quality (% of passes)', color:'#f4f2f0' },
+                tooltip:{ callbacks:{ label:(ctx)=>`${ctx.dataset.label}: ${ctx.dataset.counts[ctx.dataIndex]} (${ctx.raw}%)` } } },
+      scales:{ x:{ stacked:true, max:100, ticks:{ color:'#a29fae', callback:v=>v+'%' }, grid:{ color:'#2c2933' } },
+               y:{ stacked:true, ticks:{ color:'#f4f2f0' }, grid:{ display:false } } } }
+  });
+}
+
+function renderPassReading(all){
+  const by = k => all.filter(c=>passKey(c)===k);
+  const rated = all.filter(c=>c.pass!=null);
+  const p3 = by('3'), p2 = by('2'), p1 = by('1'), p0 = by('0'), pu = by('u');
+  const inSys = p3.concat(p2);
+  const lanesOf = cs => PASS_LANES.map(([k,l])=>[l, cs.filter(c=>c.lane===k).length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]);
+  const laneTxt = cs => lanesOf(cs).map(([l,n])=>`${l.toLowerCase()} ${n}`).join(', ');
+  const swings = cs => cs.filter(c=>['left','middle','right','back'].includes(c.lane));
+  const mid = cs => cs.filter(c=>c.lane==='middle').length;
+  const avgD = cs => passMean(cs.filter(c=>c.passTo).map(c=>c.passTo[1]));
+  const avgX = cs => passMean(cs.filter(c=>c.passTo).map(c=>c.passTo[0]));
+  const avg = rated.length ? rated.reduce((s,c)=>s+c.pass,0)/rated.length : null;
+  const e3 = passEff(p3), e2 = passEff(p2), e1 = passEff(p1), eIn = passEff(inSys);
+  const noSwing1 = p1.filter(c=>['free','none'].includes(c.lane)).length;
+  const sw1 = swings(p1), swIn = swings(inSys);
+  const pins = cs => cs.filter(c=>['left','right'].includes(c.lane)).length;
+  const lines = [];
+  lines.push(`<b>Pass spread:</b> ${all.length} Team A serve receptions — ${p3.length} perfect, ${p2.length} good, ${p1.length} poor${p0.length?', '+p0.length+' errors':''}${pu.length?', '+pu.length+' unrated':''} (average ${avg==null?'—':avg.toFixed(2)} on the 0–3 scale).${p1.length>p3.length&&p1.length>p2.length?' Poor passes were the single biggest group.':''}`);
+  if(p3.length) lines.push(`<b>Where passes landed:</b> perfect passes averaged ${avgD(p3).toFixed(1)} m off the net, ${avgX(p3).toFixed(1)} m from the left sideline${avgX(p3)>4.5?' (right of center, toward the setter\'s spot)':''}${p2.length?`; good ${avgD(p2).toFixed(1)} m off`:''}${p1.length?`; poor ${avgD(p1).toFixed(1)} m off, and spread across the whole court`:''}.`);
+  if(p3.length) lines.push(`<b>Off perfect passes</b> ${swings(p3).length===p3.length?'every reception turned into a swing':swings(p3).length+' of '+p3.length+' became swings'}: ${laneTxt(p3)}. The middle got ${mid(p3)} of ${p3.length} (${passPct(mid(p3),p3.length)}); the pins got ${pins(p3)}. Hitting ${passFmtEff(e3.eff)} (${e3.k}-${e3.e} on ${e3.att}).`);
+  if(p2.length) lines.push(`<b>Off good passes:</b> ${laneTxt(p2)} — ${mid(p2)} middle sets and ${p2.filter(c=>c.lane==='back').length} back-row sets. Hitting ${passFmtEff(e2.eff)} (${e2.k}-${e2.e} on ${e2.att}).`);
+  if(p1.length) lines.push(`<b>Off poor passes:</b> ${noSwing1} of ${p1.length} (${passPct(noSwing1,p1.length)}) never became a Team A swing (free ball over or no set tagged). Of the ${sw1.length} swings, ${pins(sw1)} went to a pin and only ${mid(sw1)} to the middle; ${p1.filter(c=>c.call==='4').length} were "4" balls to the left. Hitting ${passFmtEff(e1.eff)} (${e1.k}-${e1.e} on ${e1.att}).`);
+  if(inSys.length && p1.length) lines.push(`<b>Perfect/good vs poor:</b> middle usage falls from ${passPct(mid(swIn),swIn.length)} of swings in system to ${passPct(mid(sw1),sw1.length)} off poor passes, and efficiency from ${passFmtEff(eIn.eff)} to ${passFmtEff(e1.eff)}. Team A still won ${p1.filter(c=>c.won).length} of ${p1.length} rallies after a poor pass${p1.filter(c=>c.won).length>e1.k?' — '+(p1.filter(c=>c.won).length-e1.k)+' of those points came later in the rally, not from the first swing':''}.`);
+  const setAll = all.filter(c=>c.setter), leo = setAll.filter(c=>c.setter==='5');
+  lines.push(`<b>Leo (#5)</b> took the second ball on ${leo.length} of the ${setAll.length} receptions that got a set; teammates set the rest.`);
+  if(p1.length && sw1.length && mid(sw1)/sw1.length < (swIn.length ? mid(swIn)/swIn.length : 0)) lines.push(`<b>What to work on:</b> off poor passes the offense narrows to a high ball to a pin (or nothing), which blockers can read. Turning more of those into a hittable high set — and keeping the middle alive off good passes — is where the next points are.`);
+  lines.push(`<b>Caveat:</b> ${all.length} receptions from one AI-tagged match; confirm the trend over a few more matches.`);
+  document.getElementById('pass-read').innerHTML = `<h3>What the passes are telling you</h3><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`;
+}
 
 populateFilters();
 updateBackupBanner();
