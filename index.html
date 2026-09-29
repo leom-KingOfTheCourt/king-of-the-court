@@ -370,6 +370,18 @@
     padding:10px 8px 0;
   }
   .site-foot .hidden-crow{ position:relative; display:inline-block; vertical-align:-4px; margin:0 6px; }
+
+  /* --- Tendencies tab --- */
+  .td-read{ margin-top:10px; background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; line-height:1.45; font-size:14px; }
+  .td-read h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 6px; font-size:17px; }
+  .td-read ul{ margin:0; padding-left:18px; } .td-read li{ margin:4px 0; }
+  .td-charts{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px; margin-top:10px; }
+  .td-chart{ background:var(--card2); border:1px solid var(--border); border-radius:6px; padding:10px 12px; }
+  .td-chart h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 4px; font-size:17px; }
+  .td-chart .td-box{ position:relative; height:210px; }
+  .td-health-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .td-pill{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; background:rgba(232,93,4,.14); color:var(--orange2); border:1px solid var(--orange); margin-left:8px; vertical-align:middle; }
+  .td-compare{ margin-top:10px; font-size:13px; color:var(--text-dim); }
 </style>
 </head>
 <body>
@@ -409,6 +421,7 @@
     <button data-tab="stats">Match Stats</button>
     <button data-tab="progress">Progress</button>
     <button data-tab="report">Report Card</button>
+    <button data-tab="tendencies">Tendencies</button>
     <button data-tab="court2d">Court Map</button>
     <button data-tab="court3d">3D Court</button>
     <button data-tab="data">All Sets</button>
@@ -738,6 +751,68 @@
       <div id="rc-head" class="pg-note"></div>
     </div>
     <div class="rc-grid" id="rc-grid"></div>
+  </section>
+
+
+  <!-- TENDENCIES -->
+  <section id="tendencies">
+    <div class="card">
+      <span class="hidden-crow crow-perch on-dark" style="right:14px;top:12px;" aria-hidden="true" data-crow="tendencies">
+        <svg class="crow-svg"><use href="#crow-perch"/></svg>
+      </span>
+      <h2>Tendencies <span id="td-exp-pill" class="td-pill" style="display:none;"></span></h2>
+      <div class="sub">How Leo (#5) chose where to set — by pass, system, and origin — plus how that changed across the match. Numbers come from AI-tagged Balltime chains in <code>data/games/</code>. Small samples; read as tendencies, not a verdict. No rotation or live score in the files, so those aren't shown.</div>
+      <div class="row" style="max-width:640px">
+        <div><label>Game</label><select id="td-game"></select></div>
+        <div style="flex:0 0 auto; min-width:auto; padding-bottom:2px;">
+          <label>&nbsp;</label>
+          <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-weight:600;letter-spacing:0;font-size:13.5px;color:var(--text);cursor:pointer;">
+            <input type="checkbox" id="td-both" style="width:auto;margin:0;"> Compare both games (shared slices only)
+          </label>
+        </div>
+      </div>
+      <div id="td-head" class="pg-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Setter decision making</h2>
+      <div class="sub">Who got the ball in each situation, and where it went. Efficiency = (kills − errors) ÷ swings off that slice (swings = kill / error / in-play). Pass ratings and set calls only appear when Balltime tagged them for that game.</div>
+      <div id="td-decision"></div>
+    </div>
+
+    <div class="card">
+      <h2>Match timeline</h2>
+      <div class="sub">How setting changed from the first rally to the last. Rolling efficiency uses a window of 5 swings (or all swings so far if fewer). Distribution is share of destinations by set (or match thirds when there's only one set).</div>
+      <div id="td-timeline"></div>
+    </div>
+
+    <div class="card">
+      <h2>Match-day body</h2>
+      <div class="sub">Manual log for sleep, fatigue, and load on match day. Saved in this browser only (not Apple Health / Garmin — a static Pages site can't OAuth those yet). Log a few match days before looking for patterns; with 0–1 rows we won't invent correlations.</div>
+      <div id="td-health-form" class="td-health-grid"></div>
+      <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
+        <button class="primary" id="td-health-save" type="button">Save match-day body</button>
+        <button class="secondary" id="td-health-clear" type="button">Clear this date</button>
+      </div>
+      <div id="td-health-msg" class="bt-msg" style="margin-top:8px;"></div>
+      <div id="td-health-beside" class="pg-note" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Current experiment</h2>
+      <div class="sub">One focus at a time. Saved in this browser. Report Card and Tendencies show the name when set — no fake weekly results.</div>
+      <div class="td-health-grid">
+        <div style="grid-column:1/-1;"><label>Name</label><input type="text" id="td-exp-name" placeholder="e.g. OOS right-side sets" maxlength="80"></div>
+        <div style="grid-column:1/-1;"><label>Hypothesis</label><input type="text" id="td-exp-hyp" placeholder="e.g. improve OOS right-side sets" maxlength="160"></div>
+        <div><label>Start date</label><input type="date" id="td-exp-start"></div>
+        <div><label>Target metric (optional)</label><input type="text" id="td-exp-metric" placeholder="e.g. OOS eff, assist %" maxlength="60"></div>
+      </div>
+      <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
+        <button class="primary" id="td-exp-save" type="button">Save experiment</button>
+        <button class="secondary" id="td-exp-clear" type="button">Clear experiment</button>
+      </div>
+      <div id="td-exp-msg" class="bt-msg" style="margin-top:8px;"></div>
+    </div>
   </section>
 
 
@@ -1967,9 +2042,15 @@ document.getElementById('backup-banner-btn').addEventListener('click', ()=>{
 
 // ---------- Export / Import / Clear ----------
 document.getElementById('export-json-btn').addEventListener('click', ()=>{
-  downloadFile('setter-stats-backup.json', JSON.stringify(sets, null, 2), 'application/json');
+  const payload = {
+    type: 'kotc-backup', version: 2, exportedAt: new Date().toISOString(),
+    sets, matches,
+    health: (typeof loadHealthLog==='function' ? loadHealthLog() : []),
+    experiment: (typeof loadExperiment==='function' ? loadExperiment() : null)
+  };
+  downloadFile('setter-stats-backup.json', JSON.stringify(payload, null, 2), 'application/json');
   markBackedUp();
-  toast('Backup exported');
+  toast('Backup exported (sets, matches, health, experiment)');
 });
 document.getElementById('export-csv-btn').addEventListener('click', ()=>{
   const header = 'Date,Opponent,PassLevel,Zone,SetType,Quality,Outcome,Notes\n';
@@ -1988,6 +2069,32 @@ document.getElementById('import-json-file').addEventListener('change', (e)=>{
   reader.onload = (ev)=>{
     try{
       const data = JSON.parse(ev.target.result);
+      if(data && data.type==='kotc-backup'){
+        let msg = [];
+        if(Array.isArray(data.sets) && data.sets.length){
+          sets = sets.concat(data.sets.map(d=>({...d, id: d.id||uid()})));
+          saveData(); updateBackupBanner(); msg.push(data.sets.length+' sets');
+        }
+        if(Array.isArray(data.matches) && data.matches.length){
+          let added = 0;
+          data.matches.forEach(m=>{ if(m && m.id && !getMatch(m.id)){ matches.push(m); added++; } });
+          saveMatches(); refreshMatchUi(); if(added) msg.push(added+' matches');
+        }
+        if(Array.isArray(data.health) && typeof saveHealthLog==='function'){
+          const cur = loadHealthLog();
+          const byDate = Object.fromEntries(cur.map(h=>[h.date, h]));
+          data.health.forEach(h=>{ if(h && h.date) byDate[h.date] = h; });
+          saveHealthLog(Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date)));
+          msg.push('health');
+        }
+        if(data.experiment && typeof saveExperiment==='function'){
+          saveExperiment(data.experiment); msg.push('experiment');
+        }
+        if(typeof renderTendencies==='function' && document.getElementById('tendencies')?.classList.contains('active')) renderTendencies();
+        if(typeof renderReportCard==='function' && document.getElementById('report')?.classList.contains('active')) renderReportCard();
+        toast(msg.length ? 'Imported '+msg.join(', ') : 'Backup had nothing new');
+        return;
+      }
       if(data && !Array.isArray(data) && Array.isArray(data.matches)){
         // Balltime matches backup (Export Balltime matches) — merge by id
         let added = 0;
@@ -3826,7 +3933,9 @@ async function renderReportCard(){
   sel.value = [...sel.options].some(o=>o.value===cur) ? cur : games[games.length-1].id;   // default: latest game
   const i = games.findIndex(g=>g.id===sel.value), g = games[i], prev = i>0 ? games[i-1] : null;
   const m = g.metrics;
-  document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
+  const exp = (typeof loadExperiment==='function' && loadExperiment()) || null;
+  const expBit = exp && exp.name ? ` · current experiment: <b style="color:var(--orange2)">${escapeHtml(exp.name)}</b>` : '';
+  document.getElementById('rc-head').innerHTML = `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists${prev?` · compared with ${escapeHtml(prev.date)} (${escapeHtml(prev.name||'')})`:' · first game on file'}${expBit}. ${(g.notes||[]).filter(n=>/No positional|unrated/.test(n)).map(escapeHtml).join(' ')}`;
   const { res, worst } = buildReportCard(g, prev);
   const chipTxt = { strong:'Strong', ok:'OK', work:'Needs work', nodata:'No data' };
   let html = res.map(({cat, r, pr})=>`<div class="rc-cat"><h3>${cat.title} <span class="rc-chip ${r.status}">${chipTxt[r.status]}</span></h3>
@@ -3840,6 +3949,600 @@ async function renderReportCard(){
   document.getElementById('rc-grid').innerHTML = html;
 }
 document.getElementById('rc-game').addEventListener('change', renderReportCard);
+
+// ---------- Tendencies tab: decision making + match timeline + health + experiment ----------
+const HEALTH_KEY = 'kotc-health-v1';
+const EXP_KEY = 'kotc-experiment-v1';
+const TD_SWING = ['kill','error','in_play'];
+const TD_BUCKETS = ['left','middle/quick','right/back-set','back-row','not-attacked','unknown'];
+const TD_BUCKET_LABELS = PG_BUCKET_LABELS;
+const TD_PASS_LABELS = { '0-1':'Pass 0–1', '2':'Pass 2', '3':'Pass 3', unrated:'Unrated pass' };
+const TD_SYS_LABELS = { in:'In system', oos:'Out of system', unknown:'System unknown' };
+const TD_ORIGIN_LABELS = { 'serve-receive':'Serve-receive', dig:'Dig / scramble', free:'Free / overpass' };
+
+function loadHealthLog(){ try{ const a = JSON.parse(localStorage.getItem(HEALTH_KEY)); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+function saveHealthLog(rows){ localStorage.setItem(HEALTH_KEY, JSON.stringify(rows)); }
+function healthForDate(date){ return loadHealthLog().find(h=>h.date===date) || null; }
+function loadExperiment(){ try{ const e = JSON.parse(localStorage.getItem(EXP_KEY)); return e && typeof e==='object' ? e : null; }catch(e){ return null; } }
+function saveExperiment(e){ if(!e) localStorage.removeItem(EXP_KEY); else localStorage.setItem(EXP_KEY, JSON.stringify(e)); }
+
+function tdPassKey(p){ if(p==null || p==='') return 'unrated'; const n = +p; if(n<=1) return '0-1'; if(n===2) return '2'; return '3'; }
+function tdSwings(cs){ return cs.filter(c=>TD_SWING.includes(c.result)); }
+function tdEff(cs){ const s = tdSwings(cs); if(!s.length) return null; return (s.filter(c=>c.result==='kill').length - s.filter(c=>c.result==='error').length)/s.length; }
+function tdAssistPct(cs){ return cs.length ? cs.filter(c=>c.assist).length/cs.length : null; }
+function tdFmtEff(v){ return PG_FMT.eff(v); }
+function tdFmtPct(v){ return PG_FMT.pct(v); }
+function tdCountBy(cs, keyFn){ const m = {}; cs.forEach(c=>{ const k = keyFn(c); m[k]=(m[k]||0)+1; }); return m; }
+function tdBucketCounts(cs){ return tdCountBy(cs, c=>c.bucket||'unknown'); }
+function tdBucketText(cs){
+  const m = tdBucketCounts(cs);
+  return TD_BUCKETS.filter(k=>m[k]).map(k=>`${TD_BUCKET_LABELS[k]||k} ${m[k]}`).join(', ') || 'none';
+}
+
+TAB_HOOKS.tendencies = ()=>{ renderTendencies(); };
+
+async function renderTendencies(){
+  const sel = document.getElementById('td-game');
+  const both = document.getElementById('td-both').checked;
+  let games;
+  try{ games = await loadAllGames(); }
+  catch(err){
+    document.getElementById('td-decision').innerHTML = `<div class="sub">Couldn't load data/games/ (${escapeHtml(String(err.message||err))})</div>`;
+    return;
+  }
+  if(!games.length){
+    document.getElementById('td-head').innerHTML = 'No games yet.';
+    document.getElementById('td-decision').innerHTML = '';
+    document.getElementById('td-timeline').innerHTML = '';
+    return;
+  }
+  const cur = sel.value;
+  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')} (${(g.chains||[]).length} sets)</option>`).join('');
+  sel.value = [...sel.options].some(o=>o.value===cur) ? cur : games[games.length-1].id;
+  const g = games.find(x=>x.id===sel.value) || games[games.length-1];
+  const other = games.find(x=>x.id!==g.id) || null;
+  const m = g.metrics;
+  const avail = g.available || {};
+  document.getElementById('td-head').innerHTML =
+    `<b style="color:var(--text)">${escapeHtml(g.date||'')} · ${escapeHtml(g.name||'')}</b> — ${escapeHtml((g.meta&&g.meta.resultText)||'result n/a')} · ${m.quality.n} sets, ${m.quality.assists} assists, overall eff ${tdFmtEff(m.quality.eff)}. ` +
+    `Pass ratings ${avail.passRatings?'tagged':'not tagged'}; set calls ${avail.setCalls?'tagged':'not tagged'}; destinations ${avail.positional?'tagged':'not tagged'}. ` +
+    `Rotation and live score are not in the JSON — omitted on purpose.`;
+
+  updateTdExperimentPill();
+  renderTdDecision(g, both ? other : null);
+  renderTdTimeline(g);
+  fillTdHealthForm(g.date);
+  renderTdHealthBeside(g);
+  fillTdExperimentForm();
+}
+
+function updateTdExperimentPill(){
+  const pill = document.getElementById('td-exp-pill');
+  const exp = loadExperiment();
+  if(exp && exp.name){ pill.style.display = 'inline-block'; pill.textContent = 'Experiment: '+exp.name; }
+  else { pill.style.display = 'none'; pill.textContent = ''; }
+}
+
+function renderTdDecision(g, other){
+  const box = document.getElementById('td-decision');
+  const cs = g.chains || [];
+  const avail = g.available || {};
+  const parts = [];
+
+  // --- Who he set by pass ---
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:4px 0 8px;">Who he set — by pass rating</h3>');
+  if(!avail.passRatings){
+    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — Balltime left pass ratings untagged (<code>available.passRatings: false</code>). Same pattern as Progress.</div>`);
+  } else {
+    parts.push(tdHitterSituationTable(cs, c=>tdPassKey(c.pass), ['0-1','2','3','unrated'], TD_PASS_LABELS));
+    parts.push(`<div class="pg-def" style="margin-top:6px;">Pass 0–1 / 2 / 3 from Balltime's serve-receive rating; digs and free balls are usually unrated. Efficiency only on swings (kill / error / in-play).</div>`);
+  }
+
+  // --- Who he set by system ---
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Who he set — by in vs out of system</h3>');
+  const sysKeys = ['in','oos','unknown'].filter(k=>cs.some(c=>c.system===k));
+  if(!sysKeys.length){
+    parts.push('<div class="pg-note">No system tags on chains.</div>');
+  } else {
+    parts.push(tdHitterSituationTable(cs, c=>c.system||'unknown', sysKeys, TD_SYS_LABELS));
+    parts.push(`<div class="pg-def" style="margin-top:6px;">In / out of system from the ingest rules (pass 2–3 ≈ in; pass 0–1 or dig/free/overpass ≈ oos). Unrated receives can land in "unknown".</div>`);
+  }
+
+  // --- Destination by pass ---
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Destination by pass quality</h3>');
+  if(!avail.passRatings || !avail.positional){
+    const why = [];
+    if(!avail.passRatings) why.push('pass ratings untagged');
+    if(!avail.positional) why.push('destinations untagged');
+    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — ${why.join(' and ')}.</div>`);
+  } else {
+    parts.push(tdDestTable(cs, c=>tdPassKey(c.pass), ['0-1','2','3','unrated'], TD_PASS_LABELS));
+  }
+
+  // --- Destination by origin ---
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Destination by origin</h3>');
+  if(!avail.positional){
+    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — destinations untagged (<code>available.positional: false</code>). Origins themselves are still counted in Progress metrics.</div>`);
+    const origins = tdCountBy(cs, c=>c.origin||'—');
+    parts.push(`<div class="pg-note">Origin counts only: ${Object.entries(origins).map(([k,n])=>`${TD_ORIGIN_LABELS[k]||k} ${n}`).join(' · ')}.</div>`);
+  } else {
+    const oKeys = ['serve-receive','dig','free'].filter(k=>cs.some(c=>c.origin===k));
+    parts.push(tdDestTable(cs, c=>c.origin||'—', oKeys, TD_ORIGIN_LABELS));
+  }
+
+  // --- Set-call mix ---
+  parts.push('<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Set-call mix</h3>');
+  if(!avail.setCalls){
+    parts.push(`<div class="pg-note">n/a for ${escapeHtml(g.date)} — Balltime did not tag set calls (<code>available.setCalls: false</code>).</div>`);
+  } else {
+    const calls = cs.map(c=>c.call).filter(Boolean);
+    const nullN = cs.length - calls.length;
+    const cnt = {};
+    calls.forEach(c=>cnt[c]=(cnt[c]||0)+1);
+    const ranked = Object.entries(cnt).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
+    parts.push(`<div class="stat-grid" style="margin-bottom:10px;">
+      <div class="stat-box"><div class="val">${new Set(calls).size}</div><div class="lbl">Distinct calls</div></div>
+      <div class="stat-box"><div class="val">${ranked.length?escapeHtml(ranked[0][0]):'—'}</div><div class="lbl">Most common (${ranked.length?ranked[0][1]:0})</div></div>
+      <div class="stat-box"><div class="val">${calls.length}/${cs.length}</div><div class="lbl">Tagged / all sets</div></div>
+    </div>`);
+    parts.push(`<div class="pass-tbl-wrap"><table><thead><tr><th>Call</th><th>n</th><th>Share of tagged</th><th>Eff</th></tr></thead><tbody>
+      ${ranked.map(([call,n])=>{
+        const sub = cs.filter(c=>c.call===call);
+        return `<tr><td>${escapeHtml(call)}</td><td>${n}</td><td>${tdFmtPct(n/calls.length)}</td><td>${tdFmtEff(tdEff(sub))}</td></tr>`;
+      }).join('')}
+      ${nullN?`<tr><td style="color:var(--text-dim)">untagged</td><td>${nullN}</td><td colspan="2" style="color:var(--text-dim)">—</td></tr>`:''}
+    </tbody></table></div>`);
+  }
+
+  // --- Honest read ---
+  parts.push(tdHonestRead(g));
+
+  // --- Cross-game ---
+  if(other){
+    parts.push(tdCrossGame(g, other));
+  } else {
+    parts.push('<div class="td-compare">Tick "Compare both games" to see slices both games share (origins always; pass / destination / calls only when both tagged them).</div>');
+  }
+
+  box.innerHTML = parts.join('');
+}
+
+function tdHitterSituationTable(cs, keyFn, keys, labels){
+  const hitters = [...new Set(cs.map(c=>c.attacker||'—'))].sort((a,b)=>{
+    if(a==='—') return 1; if(b==='—') return -1;
+    return String(a).localeCompare(String(b), undefined, {numeric:true});
+  });
+  let head = '<th>Hitter</th>' + keys.map(k=>`<th>${escapeHtml(labels[k]||k)} n</th><th>Eff</th>`).join('');
+  let rows = hitters.map(h=>{
+    let cells = `<td>${h==='—'?'—':'#'+escapeHtml(h)}</td>`;
+    let any = false;
+    keys.forEach(k=>{
+      const sub = cs.filter(c=>(c.attacker||'—')===h && keyFn(c)===k);
+      if(sub.length) any = true;
+      cells += `<td>${sub.length||'<span class="na">—</span>'}</td><td>${sub.length?tdFmtEff(tdEff(sub)):'<span class="na">—</span>'}</td>`;
+    });
+    return any ? `<tr>${cells}</tr>` : '';
+  }).filter(Boolean).join('');
+  // totals row
+  let tot = '<tr><td><b>All</b></td>';
+  keys.forEach(k=>{
+    const sub = cs.filter(c=>keyFn(c)===k);
+    tot += `<td><b>${sub.length}</b></td><td><b>${tdFmtEff(tdEff(sub))}</b></td>`;
+  });
+  tot += '</tr>';
+  return `<div class="pass-tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table></div>`;
+}
+
+function tdDestTable(cs, keyFn, keys, labels){
+  const buckets = TD_BUCKETS.filter(b=>cs.some(c=>(c.bucket||'unknown')===b) || b==='left' || b==='middle/quick' || b==='right/back-set' || b==='back-row');
+  // Prefer showing the four main + any extras present
+  const cols = TD_BUCKETS.filter(b=>buckets.includes(b));
+  let head = '<th>Situation</th><th>n</th>' + cols.map(b=>`<th>${escapeHtml(TD_BUCKET_LABELS[b]||b)}</th>`).join('') + '<th>Eff</th>';
+  const rows = keys.map(k=>{
+    const sub = cs.filter(c=>keyFn(c)===k);
+    if(!sub.length) return '';
+    const cnt = tdBucketCounts(sub);
+    return `<tr><td>${escapeHtml(labels[k]||k)}</td><td>${sub.length}</td>${cols.map(b=>`<td>${cnt[b]||0}</td>`).join('')}<td>${tdFmtEff(tdEff(sub))}</td></tr>`;
+  }).filter(Boolean).join('');
+  return `<div class="pass-tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="pg-def" style="margin-top:6px;">Buckets from the ingest: left pin · middle/quick · right/back-set · back-row (plus not-attacked / unknown when present).</div>`;
+}
+
+function tdHonestRead(g){
+  const cs = g.chains||[];
+  const avail = g.available||{};
+  const lines = [];
+  lines.push(`Tendencies from AI-tagged Balltime — ${cs.length} of Leo's sets in this game. Small sample.`);
+
+  if(avail.passRatings && avail.positional){
+    const bad = cs.filter(c=>tdPassKey(c.pass)==='0-1');
+    if(bad.length){
+      const cnt = tdBucketCounts(bad);
+      const mid = cnt['middle/quick']||0;
+      lines.push(`On 0–1 passes (n=${bad.length}) you ${mid===0?'never went middle':'went middle '+mid}; ${tdBucketText(bad)}.`);
+    }
+    const p3 = cs.filter(c=>tdPassKey(c.pass)==='3');
+    if(p3.length){
+      lines.push(`On perfect (3) passes (n=${p3.length}): ${tdBucketText(p3)} — eff ${tdFmtEff(tdEff(p3))}.`);
+    }
+  } else if(!avail.passRatings){
+    lines.push(`Pass-based destination reads are n/a — this game has no pass ratings.`);
+  }
+
+  const oos = cs.filter(c=>c.system==='oos');
+  const inn = cs.filter(c=>c.system==='in');
+  if(oos.length || inn.length){
+    lines.push(`System split: in-system ${inn.length} (eff ${tdFmtEff(tdEff(inn))}), out-of-system ${oos.length} (eff ${tdFmtEff(tdEff(oos))}).`);
+  }
+
+  if(avail.positional){
+    const sr = cs.filter(c=>c.origin==='serve-receive');
+    const dig = cs.filter(c=>c.origin==='dig');
+    if(sr.length) lines.push(`Off serve-receive (n=${sr.length}): ${tdBucketText(sr)}.`);
+    if(dig.length) lines.push(`Off digs (n=${dig.length}): ${tdBucketText(dig)}.`);
+  }
+
+  if(avail.setCalls){
+    const calls = cs.map(c=>c.call).filter(Boolean);
+    const cnt = {}; calls.forEach(c=>cnt[c]=(cnt[c]||0)+1);
+    const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    if(top) lines.push(`Call mix: ${new Set(calls).size} distinct calls; most common "${top[0]}" (${top[1]} of ${calls.length} tagged).`);
+  }
+
+  // Busiest hitter
+  const byH = {};
+  cs.forEach(c=>{ const h=c.attacker||'—'; if(h==='—') return; byH[h]=(byH[h]||0)+1; });
+  const topH = Object.entries(byH).sort((a,b)=>b[1]-a[1])[0];
+  if(topH) lines.push(`Busiest hitter: #${topH[0]} on ${topH[1]} of ${cs.length} sets (${tdFmtPct(topH[1]/cs.length)}).`);
+
+  return `<div class="td-read"><h3>Honest read</h3><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+}
+
+function tdCrossGame(a, b){
+  const lines = [];
+  lines.push(`<h3 style="font-family:var(--font-display);letter-spacing:.04em;color:var(--orange2);font-weight:400;margin:18px 0 8px;">Both games — shared slices only</h3>`);
+  lines.push(`<div class="pg-note">Comparing ${escapeHtml(a.date)} (n=${(a.chains||[]).length}) with ${escapeHtml(b.date)} (n=${(b.chains||[]).length}). Only slices both games can support.</div>`);
+
+  // Origins always available
+  const originKeys = ['serve-receive','dig','free'];
+  let oRows = originKeys.map(k=>{
+    const ca = (a.chains||[]).filter(c=>c.origin===k);
+    const cb = (b.chains||[]).filter(c=>c.origin===k);
+    if(!ca.length && !cb.length) return '';
+    return `<tr><td>${TD_ORIGIN_LABELS[k]}</td>
+      <td>${ca.length}</td><td>${tdFmtEff(tdEff(ca))}</td><td>${tdFmtPct(tdAssistPct(ca))}</td>
+      <td>${cb.length}</td><td>${tdFmtEff(tdEff(cb))}</td><td>${tdFmtPct(tdAssistPct(cb))}</td></tr>`;
+  }).filter(Boolean).join('');
+  lines.push(`<div class="pass-tbl-wrap"><table><thead><tr><th>Origin</th><th>${escapeHtml(a.date)} n</th><th>Eff</th><th>Assist%</th><th>${escapeHtml(b.date)} n</th><th>Eff</th><th>Assist%</th></tr></thead><tbody>${oRows}</tbody></table></div>`);
+
+  // System if both have known in/oos
+  const aSys = (a.chains||[]).filter(c=>c.system==='in'||c.system==='oos');
+  const bSys = (b.chains||[]).filter(c=>c.system==='in'||c.system==='oos');
+  if(aSys.length>=3 && bSys.length>=3){
+    let sRows = ['in','oos'].map(k=>{
+      const ca = (a.chains||[]).filter(c=>c.system===k);
+      const cb = (b.chains||[]).filter(c=>c.system===k);
+      return `<tr><td>${TD_SYS_LABELS[k]}</td>
+        <td>${ca.length}</td><td>${tdFmtEff(tdEff(ca))}</td>
+        <td>${cb.length}</td><td>${tdFmtEff(tdEff(cb))}</td></tr>`;
+    }).join('');
+    lines.push(`<div class="pass-tbl-wrap" style="margin-top:10px;"><table><thead><tr><th>System</th><th>${escapeHtml(a.date)} n</th><th>Eff</th><th>${escapeHtml(b.date)} n</th><th>Eff</th></tr></thead><tbody>${sRows}</tbody></table></div>`);
+  } else {
+    lines.push(`<div class="pg-note" style="margin-top:8px;">In/out-of-system comparison limited — one game has mostly unknown system tags.</div>`);
+  }
+
+  const bothPass = a.available?.passRatings && b.available?.passRatings;
+  const bothPos = a.available?.positional && b.available?.positional;
+  const bothCalls = a.available?.setCalls && b.available?.setCalls;
+  if(!bothPass) lines.push(`<div class="pg-note">Pass-rating slices: n/a in comparison — ${!a.available?.passRatings?a.date:'ok'} / ${!b.available?.passRatings?b.date+' missing pass ratings':'ok'}.</div>`);
+  if(!bothPos) lines.push(`<div class="pg-note">Destination slices: n/a in comparison — need positional tags in both games.</div>`);
+  if(!bothCalls) lines.push(`<div class="pg-note">Set-call mix: n/a in comparison — need setCalls in both games.</div>`);
+
+  // Overall quality always
+  lines.push(`<div class="pg-note" style="margin-top:8px;">Overall: ${escapeHtml(a.date)} eff ${tdFmtEff(a.metrics.quality.eff)}, assist ${tdFmtPct(a.metrics.quality.assistPct)} · ${escapeHtml(b.date)} eff ${tdFmtEff(b.metrics.quality.eff)}, assist ${tdFmtPct(b.metrics.quality.assistPct)}.</div>`);
+
+  return lines.join('');
+}
+
+function renderTdTimeline(g){
+  const box = document.getElementById('td-timeline');
+  const cs = (g.chains||[]).slice().sort((a,b)=>(a.set-b.set) || (a.rally-b.rally));
+  if(!cs.length){ box.innerHTML = '<div class="empty">No chains.</div>'; return; }
+
+  const setNums = [...new Set(cs.map(c=>c.set))].sort((a,b)=>a-b);
+  const small = cs.length < 20;
+  const parts = [];
+
+  // Per-set summary
+  parts.push('<div class="stat-grid" style="margin-bottom:12px;">');
+  setNums.forEach(sn=>{
+    const sub = cs.filter(c=>c.set===sn);
+    const e = tdEff(sub);
+    parts.push(`<div class="stat-box"><div class="val">${tdFmtEff(e)}</div><div class="lbl">Set ${sn} eff · n=${sub.length} · assist ${tdFmtPct(tdAssistPct(sub))}</div></div>`);
+  });
+  parts.push(`<div class="stat-box"><div class="val">${tdFmtEff(tdEff(cs))}</div><div class="lbl">Match eff · n=${cs.length}</div></div>`);
+  parts.push('</div>');
+
+  if(setNums.length>1 && g.date==='2026-07-10'){
+    const s1 = tdEff(cs.filter(c=>c.set===1)), s2 = tdEff(cs.filter(c=>c.set===2));
+    const b1 = tdBucketText(cs.filter(c=>c.set===1));
+    const b2 = tdBucketText(cs.filter(c=>c.set===2));
+    parts.push(`<div class="td-read"><h3>Set 1 → set 2</h3><ul>
+      <li>Set 1 hitting eff ${tdFmtEff(s1)} (n=${cs.filter(c=>c.set===1).length}) vs set 2 ${tdFmtEff(s2)} (n=${cs.filter(c=>c.set===2).length}) — Leo got sharper late.</li>
+      <li>Set 1 distribution: ${b1}.</li>
+      <li>Set 2 distribution: ${b2}${g.available?.positional ? ' — fewer middle/quick sets, more back-row and left.' : ''}.</li>
+    </ul></div>`);
+  }
+
+  if(small){
+    parts.push(`<div class="pg-note" style="margin-bottom:10px;">Small sample (n=${cs.length}) — showing each swing as a point, not a smoothed spline.</div>`);
+  }
+
+  parts.push(`<div class="td-charts">
+    <div class="td-chart"><h3>Rolling / per-swing efficiency</h3>
+      <div class="pg-def">${small?'Each point is one swing (kill=+1, error=−1, in-play=0) in rally order, colored by set.':'Rolling window of 5 swings: (kills − errors) ÷ swings in the window. Colored by which set the last swing of the window is in.'}</div>
+      <div class="td-box"><canvas id="td-chart-roll"></canvas></div></div>
+    <div class="td-chart"><h3>Distribution over time</h3>
+      <div class="pg-def">${setNums.length>1?'Share of destinations in each set of the match.':'Share of destinations in early / mid / late thirds of Leo\'s sets (only one set played).'}${!g.available?.positional?' Destinations untagged — chart shows n/a.':''}</div>
+      <div class="td-box"><canvas id="td-chart-dist"></canvas></div></div>
+  </div>`);
+
+  box.innerHTML = parts.join('');
+  drawTdRollChart(cs, small);
+  drawTdDistChart(g, cs, setNums);
+}
+
+function drawTdRollChart(cs, small){
+  destroyChart('td-chart-roll');
+  const canvas = document.getElementById('td-chart-roll');
+  if(!canvas) return;
+  const swings = [];
+  cs.forEach((c,i)=>{
+    if(!TD_SWING.includes(c.result)) return;
+    const v = c.result==='kill' ? 1 : c.result==='error' ? -1 : 0;
+    swings.push({ i:swings.length+1, chainIdx:i, set:c.set, result:c.result, v, rally:c.rally });
+  });
+  if(!swings.length){ canvas.parentElement.innerHTML = '<div class="empty">No swings to chart.</div>'; return; }
+
+  let labels, datasets;
+  if(small){
+    labels = swings.map(s=>`#${s.i}`);
+    const bySet = {};
+    swings.forEach((s,idx)=>{ (bySet[s.set]=bySet[s.set]||[]).push({x:idx, y:s.v, s}); });
+    // Use a single dataset of raw values with point colors — simpler: one line of cumulative? 
+    // Spec: show points. Use scatter-like line with null gaps per set.
+    const colors = {1:'#ff7a18', 2:'#7ec4ff', 3:'#35d488'};
+    datasets = setNumsFrom(swings).map(sn=>({
+      label: 'Set '+sn,
+      data: swings.map(s=>s.set===sn ? s.v : null),
+      borderColor: colors[sn]||'#ff7a18',
+      backgroundColor: colors[sn]||'#ff7a18',
+      pointRadius: 5, pointHoverRadius: 7, showLine: false, spanGaps: false
+    }));
+    // Also add running eff as a thin line
+    const run = [];
+    let k=0,e=0,n=0;
+    swings.forEach(s=>{ n++; if(s.v===1)k++; if(s.v===-1)e++; run.push(n?(k-e)/n:null); });
+    datasets.push({
+      label: 'Running eff', data: run, borderColor:'#b8aea3', backgroundColor:'transparent',
+      pointRadius:0, borderWidth:1.5, borderDash:[4,3], yAxisID:'yEff', spanGaps:true
+    });
+  } else {
+    const win = 5;
+    const pts = swings.map((s,idx)=>{
+      const slice = swings.slice(Math.max(0,idx-win+1), idx+1);
+      const k = slice.filter(x=>x.v===1).length, er = slice.filter(x=>x.v===-1).length;
+      return { y:(k-er)/slice.length, set:s.set, n:slice.length };
+    });
+    labels = swings.map(s=>`#${s.i}`);
+    const colors = {1:'#ff7a18', 2:'#7ec4ff', 3:'#35d488'};
+    datasets = setNumsFrom(swings).map(sn=>({
+      label: 'Set '+sn+' (roll 5)',
+      data: pts.map(p=>p.set===sn ? Math.round(p.y*1000)/1000 : null),
+      borderColor: colors[sn]||'#ff7a18',
+      backgroundColor: colors[sn]||'#ff7a18',
+      pointRadius: 3, spanGaps: false, tension: 0.15
+    }));
+  }
+
+  chartRefs['td-chart-roll'] = new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{size:11} } },
+        tooltip:{ callbacks:{ label:(ctx)=>{
+          if(ctx.dataset.label==='Running eff') return `Running eff: ${tdFmtEff(ctx.raw)}`;
+          if(small){ const map={1:'kill',0:'in-play','-1':'error'}; return `${ctx.dataset.label}: ${ctx.raw===1?'kill':ctx.raw===-1?'error':'in-play'}`; }
+          return `${ctx.dataset.label}: ${tdFmtEff(ctx.raw)}`;
+        } } } },
+      scales: Object.assign({
+        x:{ ticks:{ color:'#a29fae', maxRotation:0, autoSkip:true, maxTicksLimit:12 }, grid:{ color:'#2c2933' } },
+        y:{ min: small?-1.2: -0.5, max: small?1.2: 0.8, ticks:{ color:'#a29fae', callback:v=> small? v : tdFmtEff(v) }, grid:{ color:'#2c2933' } }
+      }, small ? { yEff:{ position:'right', min:-0.2, max:0.8, ticks:{ color:'#a29fae', callback:v=>tdFmtEff(v) }, grid:{ drawOnChartArea:false } } } : {})
+    }
+  });
+}
+function setNumsFrom(swings){ return [...new Set(swings.map(s=>s.set))].sort((a,b)=>a-b); }
+
+function drawTdDistChart(g, cs, setNums){
+  destroyChart('td-chart-dist');
+  const canvas = document.getElementById('td-chart-dist');
+  if(!canvas) return;
+  if(!g.available?.positional){
+    canvas.parentElement.innerHTML = `<div class="empty">Destinations not tagged for ${escapeHtml(g.date)} — distribution chart n/a.</div>`;
+    return;
+  }
+  const mainBuckets = ['left','middle/quick','right/back-set','back-row'];
+  const colors = { 'left':'#ff7a18', 'middle/quick':'#35d488', 'right/back-set':'#7ec4ff', 'back-row':'#ffcc33' };
+  let labels, groups;
+  if(setNums.length>1){
+    labels = setNums.map(s=>'Set '+s);
+    groups = setNums.map(s=>cs.filter(c=>c.set===s));
+  } else {
+    const n = cs.length;
+    const cuts = [0, Math.floor(n/3), Math.floor(2*n/3), n];
+    labels = ['Early','Mid','Late'];
+    groups = [0,1,2].map(i=>cs.slice(cuts[i], cuts[i+1]));
+  }
+  const datasets = mainBuckets.map(b=>({
+    label: TD_BUCKET_LABELS[b],
+    backgroundColor: colors[b],
+    data: groups.map(grp=>{
+      if(!grp.length) return 0;
+      const n = grp.filter(c=>(c.bucket||'')===b).length;
+      return Math.round(1000*n/grp.length)/10;
+    }),
+    counts: groups.map(grp=>grp.filter(c=>(c.bucket||'')===b).length)
+  }));
+  chartRefs['td-chart-dist'] = new Chart(canvas.getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{size:11} } },
+        tooltip:{ callbacks:{ label:(ctx)=>`${ctx.dataset.label}: ${ctx.dataset.counts[ctx.dataIndex]} (${ctx.raw}%)` } } },
+      scales:{
+        x:{ stacked:true, ticks:{ color:'#a29fae' }, grid:{ display:false } },
+        y:{ stacked:true, max:100, ticks:{ color:'#a29fae', callback:v=>v+'%' }, grid:{ color:'#2c2933' } }
+      }
+    }
+  });
+}
+
+// ---- Health form ----
+function fillTdHealthForm(date){
+  const h = healthForDate(date) || { date };
+  const fields = [
+    ['date','Date','date', date],
+    ['sleepHours','Sleep hours','number', h.sleepHours],
+    ['sleepQuality','Sleep quality 1–5','number', h.sleepQuality],
+    ['fatigue','Fatigue 1–5','number', h.fatigue],
+    ['soreness','Soreness 1–5','number', h.soreness],
+    ['stress','Stress 1–5','number', h.stress],
+    ['practiceMin','Practice minutes','number', h.practiceMin],
+    ['hrv','HRV (optional)','number', h.hrv],
+    ['rhr','RHR (optional)','number', h.rhr],
+  ];
+  let html = fields.map(([id,label,type,val])=>{
+    const extra = type==='number' ? ' step="any" min="0"' : '';
+    const v = val==null||val==='' ? '' : String(val);
+    return `<div><label>${label}</label><input type="${type}" id="td-h-${id}" value="${escapeHtml(v)}"${extra}></div>`;
+  }).join('');
+  html += `<div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="td-h-notes" value="${escapeHtml(h.notes||'')}" placeholder="e.g. short sleep after travel"></div>`;
+  document.getElementById('td-health-form').innerHTML = html;
+  // lock date to game date by default but allow edit
+  document.getElementById('td-h-date').value = h.date || date || '';
+  document.getElementById('td-health-msg').textContent = '';
+  document.getElementById('td-health-msg').className = 'bt-msg';
+}
+
+function readTdHealthForm(){
+  const num = id=>{ const el=document.getElementById(id); if(!el||el.value==='') return null; const n=+el.value; return Number.isFinite(n)?n:null; };
+  const clamp15 = v=> v==null?null: Math.max(1, Math.min(5, Math.round(v)));
+  return {
+    date: document.getElementById('td-h-date').value,
+    sleepHours: num('td-h-sleepHours'),
+    sleepQuality: clamp15(num('td-h-sleepQuality')),
+    fatigue: clamp15(num('td-h-fatigue')),
+    soreness: clamp15(num('td-h-soreness')),
+    stress: clamp15(num('td-h-stress')),
+    practiceMin: num('td-h-practiceMin'),
+    hrv: num('td-h-hrv'),
+    rhr: num('td-h-rhr'),
+    notes: (document.getElementById('td-h-notes').value||'').trim(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function renderTdHealthBeside(g){
+  const el = document.getElementById('td-health-beside');
+  const rows = loadHealthLog();
+  const h = healthForDate(g.date);
+  const m = g.metrics;
+  if(!h){
+    el.innerHTML = rows.length
+      ? `No body log for <b>${escapeHtml(g.date)}</b> yet. You have ${rows.length} match-day row${rows.length===1?'':'s'} saved — open those dates to see them beside setting numbers. Log a few match days to see sleep vs setting; we won't invent a correlation from ${rows.length} row${rows.length===1?'':'s'}.`
+      : `No match-day body rows yet. Log sleep / fatigue here after a match; with 0–1 rows we'll only show the numbers side by side — no made-up correlation.`;
+    return;
+  }
+  const bits = [
+    h.sleepHours!=null ? `sleep ${h.sleepHours}h` : null,
+    h.sleepQuality!=null ? `sleep quality ${h.sleepQuality}/5` : null,
+    h.fatigue!=null ? `fatigue ${h.fatigue}/5` : null,
+    h.soreness!=null ? `soreness ${h.soreness}/5` : null,
+    h.stress!=null ? `stress ${h.stress}/5` : null,
+    h.practiceMin!=null ? `practice ${h.practiceMin} min` : null,
+    h.hrv!=null ? `HRV ${h.hrv}` : null,
+    h.rhr!=null ? `RHR ${h.rhr}` : null
+  ].filter(Boolean);
+  el.innerHTML = `<b style="color:var(--text)">Beside ${escapeHtml(g.date)} setting:</b> body — ${bits.join(' · ')||'saved (empty fields)'}${h.notes?` · “${escapeHtml(h.notes)}”`:''}. 
+    Setting — quality eff ${tdFmtEff(m.quality.eff)}, OOS eff ${tdFmtEff(m.system.effOos)}, assist ${tdFmtPct(m.quality.assistPct)} (${m.quality.n} sets).
+    <span style="color:var(--text-dim)">${rows.length<3 ? `Only ${rows.length} match-day row${rows.length===1?'':'s'} on file — log a few more before reading sleep vs setting.` : `${rows.length} match-day rows on file; still treat any pattern as tentative.`}</span>`;
+}
+
+document.getElementById('td-health-save').addEventListener('click', ()=>{
+  const row = readTdHealthForm();
+  const msg = document.getElementById('td-health-msg');
+  if(!row.date){ msg.className='bt-msg err'; msg.textContent='Pick a date.'; return; }
+  const all = loadHealthLog().filter(h=>h.date!==row.date);
+  all.push(row);
+  all.sort((a,b)=>a.date.localeCompare(b.date));
+  saveHealthLog(all);
+  msg.className='bt-msg ok'; msg.textContent='Saved match-day body for '+row.date+' (this browser only).';
+  // refresh beside if game date matches
+  const sel = document.getElementById('td-game');
+  loadAllGames().then(games=>{
+    const g = games.find(x=>x.id===sel.value);
+    if(g) renderTdHealthBeside(g);
+  }).catch(()=>{});
+});
+document.getElementById('td-health-clear').addEventListener('click', ()=>{
+  const date = document.getElementById('td-h-date').value;
+  if(!date) return;
+  saveHealthLog(loadHealthLog().filter(h=>h.date!==date));
+  fillTdHealthForm(date);
+  document.getElementById('td-health-msg').className='bt-msg ok';
+  document.getElementById('td-health-msg').textContent='Cleared body log for '+date+'.';
+  const sel = document.getElementById('td-game');
+  loadAllGames().then(games=>{ const g = games.find(x=>x.id===sel.value); if(g) renderTdHealthBeside(g); }).catch(()=>{});
+});
+
+// ---- Experiment ----
+function fillTdExperimentForm(){
+  const e = loadExperiment() || {};
+  document.getElementById('td-exp-name').value = e.name||'';
+  document.getElementById('td-exp-hyp').value = e.hypothesis||'';
+  document.getElementById('td-exp-start').value = e.startDate||'';
+  document.getElementById('td-exp-metric').value = e.targetMetric||'';
+  document.getElementById('td-exp-msg').textContent = '';
+  document.getElementById('td-exp-msg').className = 'bt-msg';
+  updateTdExperimentPill();
+}
+document.getElementById('td-exp-save').addEventListener('click', ()=>{
+  const name = document.getElementById('td-exp-name').value.trim();
+  const msg = document.getElementById('td-exp-msg');
+  if(!name){ msg.className='bt-msg err'; msg.textContent='Give the experiment a name.'; return; }
+  saveExperiment({
+    name,
+    hypothesis: document.getElementById('td-exp-hyp').value.trim() || 'improve OOS right-side sets',
+    startDate: document.getElementById('td-exp-start').value || new Date().toISOString().slice(0,10),
+    targetMetric: document.getElementById('td-exp-metric').value.trim(),
+    updatedAt: new Date().toISOString()
+  });
+  msg.className='bt-msg ok'; msg.textContent='Experiment saved (this browser only).';
+  updateTdExperimentPill();
+});
+document.getElementById('td-exp-clear').addEventListener('click', ()=>{
+  saveExperiment(null);
+  fillTdExperimentForm();
+  document.getElementById('td-exp-msg').className='bt-msg ok';
+  document.getElementById('td-exp-msg').textContent='Experiment cleared.';
+});
+
+document.getElementById('td-game').addEventListener('change', renderTendencies);
+document.getElementById('td-both').addEventListener('change', renderTendencies);
+
 
 populateFilters();
 updateBackupBanner();
