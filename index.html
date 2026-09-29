@@ -274,15 +274,13 @@
 
 
   <nav>
-    <button class="active" data-tab="entry">+ Log Sets</button>
-    <button data-tab="import">Bulk Import</button>
-    <button data-tab="data">All Sets</button>
-    <button data-tab="dashboard">Dashboard</button>
-    <button data-tab="diagnose">Diagnose</button>
-    <button data-tab="balltime">🎥 Balltime</button>
+    <button class="active" data-tab="balltime">Balltime</button>
     <button data-tab="stats">Match Stats</button>
     <button data-tab="court2d">Court Map</button>
     <button data-tab="court3d">3D Court</button>
+    <button data-tab="data">All Sets</button>
+    <button data-tab="dashboard">Dashboard</button>
+    <button data-tab="diagnose">Diagnose</button>
     <button data-tab="settings">Export / Backup</button>
   </nav>
 
@@ -291,180 +289,6 @@
     <span id="backup-banner-text"></span>
     <button class="secondary" id="backup-banner-btn">Export backup now</button>
   </div>
-
-
-  <!-- ENTRY -->
-  <section id="entry" class="active">
-    <div class="editing-banner" id="editing-banner">
-      <span>Editing an existing set — changes will overwrite it.</span>
-      <button class="secondary" id="cancel-edit-btn">Cancel edit</button>
-    </div>
-    <div class="card" id="voice-card">
-      <h2>Speak a set</h2>
-      <div class="sub">Say it in this order: <b>set type, pass [level], quality [level], outcome</b>. Say "pass" for the pass grade and either "quality" or "the set" for the set grade — the value word can come before or after ("pass perfect" or "perfect pass" both work).</div>
-      <div class="format-box">
-        Example: <i>"Four ball, pass perfect, quality perfect, kill"</i> — or just <i>"Four ball, pass was better, set was clean, kill"</i><br>
-        <b>Pass/Quality words:</b> <code>bad</code>/<code>poor</code>/<code>rough</code>/<code>one</code> = 1, <code>playable</code>/<code>ok</code>/<code>decent</code>/<code>two</code> = 2, <code>perfect</code>/<code>good</code>/<code>better</code>/<code>solid</code>/<code>clean</code>/<code>three</code> = 3 (quality also takes <code>zero</code>/<code>unplayable</code>) — say "not" before any of these to flip it<br>
-        <b>Outcome words:</b> <code>kill</code>, <code>error</code>, <code>in play</code>, <code>no attack</code>
-      </div>
-      <div class="top-actions" style="justify-content:flex-start; align-items:center;">
-        <button class="primary" id="voice-btn">🎤 Speak a set</button>
-      </div>
-      <div class="sub" style="margin-top:6px;">Mic stays on and keeps logging sets — one set is auto-added the moment all 4 fields are heard, then it listens for the next one. Click the button again to stop.</div>
-      <div id="voice-status" class="sub" style="margin-top:10px;">Mic idle. Click "Speak a set" and talk after it says Listening.</div>
-    </div>
-
-
-    <div class="card">
-      <h2 id="entry-title">Log a set</h2>
-      <div class="sub">Add one set at a time. Fields save as you build your history.</div>
-      <div class="row">
-        <div>
-          <label>Date</label>
-          <input type="date" id="f-date">
-        </div>
-        <div>
-          <label>Game / Opponent</label>
-          <input type="text" id="f-opponent" placeholder="e.g. vs Eastside">
-        </div>
-        <div>
-          <label>Balltime match (optional)</label>
-          <select id="f-match" class="match-select" data-empty="— Not tagged —"><option value="">— Not tagged —</option></select>
-        </div>
-      </div>
-
-
-      <div style="margin-top:14px;">
-        <label>Set type</label>
-        <div id="settype-group"></div>
-      </div>
-
-
-      <div id="f-custom-wrap" style="display:none; margin-top:10px;">
-        <label>Custom set name</label>
-        <input type="text" id="f-custom" placeholder="e.g. Slide">
-      </div>
-
-
-      <div style="margin-top:14px;">
-        <label>Pass level</label>
-        <div class="opt-group" id="passlevel-group">
-          <button type="button" class="opt-btn pl1" data-value="1">1 <span class="opt-sub">Not good</span></button>
-          <button type="button" class="opt-btn pl2" data-value="2">2 <span class="opt-sub">Playable</span></button>
-          <button type="button" class="opt-btn pl3" data-value="3">3 <span class="opt-sub">Perfect</span></button>
-        </div>
-      </div>
-
-
-      <div style="margin-top:14px;">
-        <label>Set quality</label>
-        <div class="opt-group" id="quality-group">
-          <button type="button" class="opt-btn q3" data-value="3">3 <span class="opt-sub">Perfect</span></button>
-          <button type="button" class="opt-btn q2" data-value="2">2 <span class="opt-sub">Hittable</span></button>
-          <button type="button" class="opt-btn q1" data-value="1">1 <span class="opt-sub">Poor</span></button>
-          <button type="button" class="opt-btn q0" data-value="0">0 <span class="opt-sub">Unplayable</span></button>
-        </div>
-      </div>
-
-
-      <div style="margin-top:14px;">
-        <label>Outcome</label>
-        <div class="opt-group" id="outcome-group">
-          <button type="button" class="opt-btn oc-kill" data-value="kill">Kill</button>
-          <button type="button" class="opt-btn oc-error" data-value="error">Error</button>
-          <button type="button" class="opt-btn oc-inplay" data-value="inplay">In play</button>
-          <button type="button" class="opt-btn oc-noattack" data-value="noattack">No attack</button>
-        </div>
-      </div>
-
-
-      <div style="margin-top:14px;">
-        <label>Notes (optional)</label>
-        <input type="text" id="f-notes" placeholder="e.g. tight to net, hitter had to reach">
-      </div>
-      <div class="top-actions">
-        <button class="secondary" id="undo-last-btn" style="display:none;">Undo last set</button>
-        <button class="secondary" id="duplicate-btn">Duplicate last set</button>
-        <button class="primary" id="add-set-btn">Add set</button>
-      </div>
-      <div class="shortcut-hint">
-        Shortcuts (when not typing in a field): <kbd>0</kbd>-<kbd>3</kbd> quality &middot; <kbd>K</kbd>/<kbd>E</kbd>/<kbd>I</kbd>/<kbd>N</kbd> outcome &middot; <kbd>Enter</kbd> to add. Set type stays selected between adds so quick back-to-back sets are faster. Pass level isn't on a shortcut (to avoid clashing with the quality keys) — tap it each time.
-      </div>
-    </div>
-    <div class="card">
-      <h2>Recently added</h2>
-      <div id="recent-table"><div class="empty">No sets logged yet.</div></div>
-    </div>
-  </section>
-
-
-  <!-- IMPORT -->
-  <section id="import">
-    <div class="card">
-      <h2>Bulk import</h2>
-      <div class="sub">Paste stats you already have written down (e.g. from reviewing Balltime clips). One set per line.</div>
-
-
-      <div style="margin-bottom:8px;">
-        <label style="display:inline-flex; align-items:center; gap:6px; font-weight:500; text-transform:none;">
-          <input type="checkbox" id="lines-have-date-opponent" style="width:auto;"> Each line already includes its own Date &amp; Opponent columns
-        </label>
-      </div>
-
-
-      <div class="row" id="batch-defaults-row" style="margin-bottom:12px;">
-        <div>
-          <label>Batch date <span class="batch-mode-note">(applied to every line below)</span></label>
-          <input type="date" id="batch-date">
-        </div>
-        <div>
-          <label>Batch opponent <span class="batch-mode-note">(applied to every line below)</span></label>
-          <input type="text" id="batch-opponent" placeholder="e.g. vs Eastside">
-        </div>
-      </div>
-
-
-      <div class="row" style="margin-bottom:12px;">
-        <div>
-          <label>Tag imported sets with a Balltime match <span class="batch-mode-note">(optional)</span></label>
-          <select id="batch-match" class="match-select" data-empty="— Not tagged —"><option value="">— Not tagged —</option></select>
-        </div>
-      </div>
-
-
-      <div class="format-box" id="format-box-short">
-        Simplified format — one line per set, comma or tab separated (no Zone column — it's figured out from the set type):<br>
-        <code>SetType, PassLevel, Quality, Outcome, Notes</code><br><br>
-        <b>SetType:</b> Middle: <code>1</code>, <code>2</code>, <code>back1</code>, <code>push1</code>, <code>31</code>, <code>bic</code> &middot; Left: <code>shoot</code>, <code>4</code>, <code>32</code> &middot; Right: <code>3</code>, <code>5</code>, <code>c</code> — anything else is filed as "Other"<br>
-        <b>PassLevel:</b> <code>1</code>/<code>bad</code>, <code>2</code>/<code>playable</code>, <code>3</code>/<code>perfect</code> — how good the pass you set off of was<br>
-        <b>Quality:</b> <code>0-3</code> — how good your set was<br>
-        <b>Outcome:</b> <code>kill</code>/<code>k</code>, <code>error</code>/<code>e</code>, <code>inplay</code>/<code>ip</code>, <code>noattack</code>/<code>na</code><br><br>
-        Example:<br>
-        <code>4, 3, 3, kill, clean swing</code><br>
-        <code>back1, 1, 2, inplay, bad pass, still ran it</code>
-      </div>
-      <div class="format-box" id="format-box-full" style="display:none;">
-        Full format — one line per set, comma or tab separated (no Zone column — it's figured out from the set type):<br>
-        <code>Date, Opponent, SetType, PassLevel, Quality, Outcome, Notes</code><br><br>
-        Example:<br>
-        <code>2026-08-10, Eastside, 4, 3, 3, kill, clean swing</code><br>
-        <code>2026-08-10, Eastside, back1, 1, 2, inplay, bad pass, still ran it</code>
-      </div>
-
-
-      <textarea id="bulk-text" rows="10" placeholder="Paste your rows here..."></textarea>
-      <div style="margin-top:8px;">
-        <label style="display:inline-flex; align-items:center; gap:6px; font-weight:500; text-transform:none;">
-          <input type="checkbox" id="skip-header" style="width:auto;"> First line is a header row (skip it)
-        </label>
-      </div>
-      <div class="top-actions">
-        <button class="secondary" id="preview-btn">Preview</button>
-        <button class="primary" id="import-btn">Import</button>
-      </div>
-      <div id="import-preview" style="margin-top:12px;"></div>
-    </div>
-  </section>
 
 
   <!-- DATA -->
@@ -594,7 +418,7 @@
 
 
   <!-- BALLTIME -->
-  <section id="balltime">
+  <section id="balltime" class="active">
     <div class="card">
       <h2>Add a Balltime match</h2>
       <div class="sub">Balltime (by Hudl) has no public API, and this site can't talk to Balltime's servers directly — so nothing is pulled automatically. Paste the match's share link here to keep it linked to your sets, then bring the numbers in with Balltime's own CSV export below.</div>
@@ -620,7 +444,7 @@
 
     <div class="card">
       <h2>Saved matches</h2>
-      <div class="sub">Tag sets with a match from the Log Sets form, Bulk Import, or the All Sets tab.</div>
+      <div class="sub">Tag logged sets with a match from the All Sets tab.</div>
       <div class="top-actions" style="justify-content:flex-start; margin-bottom:8px;">
         <button class="secondary" id="bt-load-july10">Load July 10 match (real Balltime data)</button>
       </div>
@@ -866,439 +690,14 @@ function toast(msg){
 }
 
 
-// ---------- Entry form (tap-button option groups) ----------
 // local calendar date (valueAsDate would use UTC and jump a day ahead in the evening)
 function localToday(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
-document.getElementById('f-date').value = localToday();
-
-
-// Zone isn't asked for directly anymore — it's derived from whichever set type is picked,
-// since each type (other than "Other") already belongs to exactly one zone.
+// Zone is derived from the set type (each type other than "Other" belongs to exactly one zone).
 function deriveZoneForType(key){
   const s = SET_TYPE_MAP[key];
   if(!s) return null;
-  return s.zones.length===1 ? s.zones[0] : null; // 'other' has 3 zones -> unknown/null
+  return s.zones.length===1 ? s.zones[0] : null;
 }
-
-
-let curSetType=null, curQuality=null, curOutcome=null, curPassLevel=null;
-
-
-function selectInGroup(groupId, value){
-  const group = document.getElementById(groupId);
-  group.querySelectorAll('.opt-btn').forEach(b=>{
-    b.classList.toggle('selected', value!==null && b.dataset.value===String(value));
-  });
-}
-function setupOptionGroup(groupId, onSelect){
-  document.getElementById(groupId).addEventListener('click', (e)=>{
-    const btn = e.target.closest('.opt-btn');
-    if(!btn) return;
-    selectInGroup(groupId, btn.dataset.value);
-    onSelect(btn.dataset.value);
-  });
-}
-
-
-// All set types shown at once, grouped under small captions purely for scannability —
-// picking one is a single tap, there's no separate zone step first.
-function renderAllSetTypeButtons(){
-  const container = document.getElementById('settype-group');
-  container.innerHTML = '';
-  const groupsInOrder = [
-    { label:'Middle', match:s => s.zones.length===1 && s.zones[0]==='Middle' },
-    { label:'Left', match:s => s.zones.length===1 && s.zones[0]==='Left' },
-    { label:'Right', match:s => s.zones.length===1 && s.zones[0]==='Right' },
-    { label:'Other', match:s => s.zones.length>1 }
-  ];
-  groupsInOrder.forEach(g=>{
-    const types = SET_TYPES.filter(g.match);
-    if(!types.length) return;
-    const cap = document.createElement('div');
-    cap.className = 'settype-caption';
-    cap.textContent = g.label;
-    container.appendChild(cap);
-    const grp = document.createElement('div');
-    grp.className = 'opt-group';
-    types.forEach(s=>{
-      const b=document.createElement('button');
-      b.type='button'; b.className='opt-btn'; b.dataset.value=s.key; b.textContent=s.label;
-      grp.appendChild(b);
-    });
-    container.appendChild(grp);
-  });
-}
-
-
-setupOptionGroup('settype-group', v=>{
-  curSetType=v;
-  document.getElementById('f-custom-wrap').style.display = v==='other' ? 'block' : 'none';
-});
-setupOptionGroup('quality-group', v=>{ curQuality=parseInt(v,10); });
-setupOptionGroup('outcome-group', v=>{ curOutcome=v; });
-setupOptionGroup('passlevel-group', v=>{ curPassLevel=parseInt(v,10); });
-
-
-renderAllSetTypeButtons();
-
-
-let editingId = null;
-
-
-function prefillForm(rec){
-  document.getElementById('f-date').value = rec.date;
-  document.getElementById('f-opponent').value = rec.opponent==='Unlabeled' ? '' : rec.opponent;
-  curSetType = rec.setTypeKey; selectInGroup('settype-group', rec.setTypeKey);
-  document.getElementById('f-custom-wrap').style.display = rec.setTypeKey==='other' ? 'block' : 'none';
-  document.getElementById('f-custom').value = rec.customLabel || '';
-  curQuality = rec.quality; selectInGroup('quality-group', String(rec.quality));
-  curOutcome = rec.outcome; selectInGroup('outcome-group', rec.outcome);
-  curPassLevel = rec.passLevel ?? null; selectInGroup('passlevel-group', rec.passLevel!=null ? String(rec.passLevel) : null);
-  document.getElementById('f-notes').value = rec.notes || '';
-  const fm = document.getElementById('f-match');
-  fm.value = (rec.matchId && [...fm.options].some(o=>o.value===rec.matchId)) ? rec.matchId : '';
-}
-
-
-function enterEditMode(rec){
-  editingId = rec.id;
-  prefillForm(rec);
-  document.getElementById('entry-title').textContent = 'Edit set';
-  document.getElementById('add-set-btn').textContent = 'Save changes';
-  document.getElementById('editing-banner').classList.add('show');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.querySelector('nav button[data-tab="entry"]').classList.add('active');
-  document.getElementById('entry').classList.add('active');
-}
-
-
-function exitEditMode(){
-  editingId = null;
-  document.getElementById('entry-title').textContent = 'Log a set';
-  document.getElementById('add-set-btn').textContent = 'Add set';
-  document.getElementById('editing-banner').classList.remove('show');
-}
-
-
-document.getElementById('cancel-edit-btn').addEventListener('click', exitEditMode);
-
-
-document.getElementById('duplicate-btn').addEventListener('click', ()=>{
-  if(!sets.length){ toast('No sets yet to duplicate'); return; }
-  prefillForm(sets[sets.length-1]);
-  toast('Loaded last set — tweak and hit Add');
-});
-
-
-document.getElementById('add-set-btn').addEventListener('click', ()=>{
-  if(curSetType===null || curQuality===null || curOutcome===null || curPassLevel===null){
-    toast('Pick a set type, pass level, quality, and outcome first');
-    return;
-  }
-  const customLabel = document.getElementById('f-custom').value.trim();
-  const fields = {
-    date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
-    opponent: document.getElementById('f-opponent').value.trim() || 'Unlabeled',
-    zone: deriveZoneForType(curSetType), setTypeKey: curSetType,
-    customLabel: curSetType==='other' ? (customLabel||'Other') : '',
-    passLevel: curPassLevel,
-    quality: curQuality,
-    outcome: curOutcome,
-    notes: document.getElementById('f-notes').value.trim()
-  };
-  const matchId = document.getElementById('f-match').value;
-  if(matchId) fields.matchId = matchId; // optional new field — older sets simply don't have it
-  if(editingId){
-    const idx = sets.findIndex(s=>s.id===editingId);
-    if(idx>-1){ sets[idx] = { ...sets[idx], ...fields }; if(!matchId) delete sets[idx].matchId; }
-    saveData();
-    exitEditMode();
-    renderRecent(); renderFullTable(); toast('Set updated');
-  } else {
-    const rec = { id: uid(), ...fields };
-    sets.push(rec); saveData();
-    lastAddedId = rec.id;
-    updateUndoButton();
-    // sticky: date/opponent/set type stay as-is; pass level/quality/outcome/notes reset for the next rep
-    curQuality=null; curOutcome=null; curPassLevel=null;
-    selectInGroup('quality-group', null); selectInGroup('outcome-group', null); selectInGroup('passlevel-group', null);
-    document.getElementById('f-notes').value='';
-    renderRecent(); toast('Set added');
-  }
-  updateBackupBanner();
-});
-
-
-// Undo the most recently added set — a quick fix for a misclick or misheard
-// voice entry, without having to go find and delete it in the Data tab.
-let lastAddedId = null;
-function updateUndoButton(){
-  const btn = document.getElementById('undo-last-btn');
-  btn.style.display = (lastAddedId && sets.some(s=>s.id===lastAddedId)) ? 'inline-block' : 'none';
-}
-document.getElementById('undo-last-btn').addEventListener('click', ()=>{
-  if(!lastAddedId) return;
-  const idx = sets.findIndex(s=>s.id===lastAddedId);
-  if(idx===-1){ updateUndoButton(); return; }
-  const removed = sets[idx];
-  sets.splice(idx,1); saveData();
-  lastAddedId = null;
-  updateUndoButton();
-  renderRecent();
-  updateBackupBanner();
-  toast(`Undid: ${tempoLabel(removed)}, ${removed.outcome}`);
-});
-
-
-// Keyboard shortcuts: 0-3 quality, K/E/I/N outcome, Enter to submit.
-// Disabled while typing in a text/date field or textarea so normal typing isn't hijacked.
-document.addEventListener('keydown', (e)=>{
-  if(!document.getElementById('entry').classList.contains('active')) return;
-  const active = document.activeElement;
-  const isTyping = active && (active.tagName==='TEXTAREA' || (active.tagName==='INPUT' && ['text','date'].includes(active.type)));
-  if(e.key==='Enter' && !e.shiftKey){
-    e.preventDefault();
-    document.getElementById('add-set-btn').click();
-    return;
-  }
-  if(isTyping) return;
-  const k = e.key.toLowerCase();
-  if(['0','1','2','3'].includes(k)){ curQuality=parseInt(k,10); selectInGroup('quality-group', k); }
-  else if(k==='k'){ curOutcome='kill'; selectInGroup('outcome-group','kill'); }
-  else if(k==='e'){ curOutcome='error'; selectInGroup('outcome-group','error'); }
-  else if(k==='i'){ curOutcome='inplay'; selectInGroup('outcome-group','inplay'); }
-  else if(k==='n'){ curOutcome='noattack'; selectInGroup('outcome-group','noattack'); }
-});
-
-
-// ---------- Voice entry ----------
-// Parses a spoken phrase like "four ball, pass perfect, quality perfect, kill"
-// into {setTypeKey, passLevel, quality, outcome}. Zone isn't parsed separately —
-// it's derived from the set type afterwards. Any field it can't confidently
-// match is left null so it doesn't overwrite what's already selected.
-function parseVoiceTranscript(rawTranscript){
-  const lower = (rawTranscript||'').toLowerCase();
-  // Commas are kept (for now) as clause boundaries — dictation naturally inserts
-  // them at pauses, and it's the format our own examples use — so "pass bad,
-  // quality perfect" can't leak "bad" into the quality match. Other punctuation
-  // is just noise and gets stripped along with everything else.
-  const withoutSentencePunct = lower.replace(/[.!?;:]/g, ' ').replace(/\s+/g, ' ').trim();
-  const t = withoutSentencePunct.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
-  const clauses = withoutSentencePunct.split(',').map(c=>c.trim()).filter(Boolean);
-  if(!clauses.length) clauses.push(t);
-
-
-  function findTempo(){
-    // longest/most specific phrases first so "four ball" wins over a bare "four"
-    const phrases = [
-      ['back one','back1'],['back 1','back1'],
-      ['push one','push1'],['push 1','push1'],
-      ['four ball','4'],['4 ball','4'],
-      ['five ball','5'],['5 ball','5'],
-      ['two ball','2'],['2 ball','2'],
-      ['one ball','1'],['1 ball','1'],
-      ['three ball','3'],['3 ball','3'],
-      ['thirty one','31'],['31','31'],
-      ['thirty two','32'],['32','32'],
-      ['c ball','c'],['see ball','c'],
-      ['bic','bic'],
-      ['shoot','shoot']
-    ];
-    for(const [phrase,key] of phrases){
-      if(t.includes(phrase)) return key;
-    }
-    return null;
-  }
-
-
-  // Finds the value word for a field (e.g. "pass"/"quality"). Accepts a list of
-  // trigger words (e.g. quality can be said as "quality" or just "the set") and
-  // uses whichever one actually shows up, preferring the first (most explicit)
-  // one that's present. People say "pass perfect" as often as "perfect pass" or
-  // just "3 pass", so this checks both sides of the trigger word and picks
-  // whichever match sits closest to it. It searches within whichever comma-
-  // delimited clause contains the trigger first — so another field's word can't
-  // leak in — falling back to a search across the whole transcript if that
-  // clause alone doesn't have a match (e.g. no comma was heard). Also catches
-  // simple negation ("not good", "wasn't good") and flips the value, since "the
-  // pass was not good" should score low.
-  function findValue(triggerWords, valueMap, negatedMap){
-    function searchTokens(tokens, triggerWord){
-      const triggerIdx = tokens.indexOf(triggerWord);
-      if(triggerIdx===-1) return null;
-      let best = null, bestDist = Infinity;
-      for(let i=0;i<tokens.length;i++){
-        if(i===triggerIdx) continue;
-        const tok = tokens[i];
-        if(valueMap[tok]===undefined) continue;
-        const dist = Math.abs(i-triggerIdx);
-        if(dist < bestDist){
-          const prev = tokens[i-1], prev2 = tokens[i-2];
-          const negated = prev==='not' || prev2==='not' || (prev && prev.endsWith("n't"));
-          bestDist = dist;
-          best = (negated && negatedMap[tok]!==undefined) ? negatedMap[tok] : valueMap[tok];
-        }
-      }
-      return best;
-    }
-    for(const triggerWord of triggerWords){
-      for(const clause of clauses){
-        const result = searchTokens(clause.split(/\s+/).filter(Boolean), triggerWord);
-        if(result!==null) return result;
-      }
-      const flat = searchTokens(t.split(/\s+/).filter(Boolean), triggerWord);
-      if(flat!==null) return flat;
-    }
-    return null;
-  }
-
-
-  // Value vocabulary is intentionally generous — "perfect"/"better"/"clean" etc.
-  // all count as good, so it doesn't only work with one exact phrasing.
-  const passLevel = findValue(['pass'], {
-    'bad':1,'poor':1,'rough':1,'terrible':1,'awful':1,'worse':1,'one':1,'1':1,
-    'playable':2,'ok':2,'okay':2,'medium':2,'decent':2,'two':2,'2':2,
-    'perfect':3,'good':3,'great':3,'better':3,'solid':3,'clean':3,'nice':3,'awesome':3,'three':3,'3':3
-  }, {
-    'bad':3,'poor':3,'rough':3,'terrible':3,'awful':3,'worse':3,
-    'good':1,'great':1,'perfect':1,'better':1,'solid':1,'clean':1,'nice':1,'awesome':1
-  });
-
-
-  const quality = findValue(['quality','set'], {
-    'unplayable':0,'zero':0,'0':0,
-    'bad':1,'poor':1,'rough':1,'terrible':1,'awful':1,'worse':1,'one':1,'1':1,
-    'hittable':2,'decent':2,'ok':2,'okay':2,'two':2,'2':2,
-    'perfect':3,'good':3,'great':3,'better':3,'solid':3,'clean':3,'nice':3,'awesome':3,'three':3,'3':3
-  }, {
-    'unplayable':3,'bad':3,'poor':3,'terrible':3,'awful':3,'worse':3,
-    'good':1,'great':1,'perfect':1,'better':1,'solid':1,'clean':1,'nice':1,'awesome':1
-  });
-
-
-  let outcome = null;
-  if(/\bkill\b/.test(t)) outcome='kill';
-  else if(/\berror\b/.test(t)) outcome='error';
-  else if(/\bin\s*play\b/.test(t)) outcome='inplay';
-  else if(/\bno\s*attack\b|\bfree\s*ball\b/.test(t)) outcome='noattack';
-
-
-  return { setTypeKey: findTempo(), passLevel, quality, outcome };
-}
-
-
-function tempoLabelForKey(key){
-  const s = SET_TYPE_MAP[key];
-  return s ? s.label : key;
-}
-
-
-const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-let voiceRecognition = null;
-let voiceListening = false; // true while the user wants the mic on (toggled by the button, not by browser auto-end)
-
-
-function setVoiceButtonState(listening){
-  const btn = document.getElementById('voice-btn');
-  btn.textContent = listening ? '⏹ Stop listening' : '🎤 Speak a set';
-}
-
-
-if(SpeechRecognitionAPI){
-  voiceRecognition = new SpeechRecognitionAPI();
-  voiceRecognition.lang = 'en-US';
-  voiceRecognition.continuous = true;
-  voiceRecognition.interimResults = false;
-  voiceRecognition.maxAlternatives = 1;
-
-
-  voiceRecognition.onresult = (e)=>{
-    for(let i=e.resultIndex; i<e.results.length; i++){
-      if(e.results[i].isFinal){
-        applyVoiceParse(e.results[i][0].transcript);
-      }
-    }
-  };
-  voiceRecognition.onerror = (e)=>{
-    document.getElementById('voice-status').textContent = `Voice error: ${e.error}. Check mic permission, or this may not work over a local file:// page in your browser — try again or ask me about alternatives.`;
-    if(e.error==='not-allowed' || e.error==='audio-capture' || e.error==='service-not-allowed'){
-      voiceListening = false;
-      setVoiceButtonState(false);
-    }
-  };
-  voiceRecognition.onend = ()=>{
-    if(voiceListening){
-      // Browsers can end a "continuous" session on their own (e.g. after a long
-      // pause) — restart automatically so it keeps going until the user stops it.
-      setTimeout(()=>{ try{ voiceRecognition.start(); }catch(err){} }, 300);
-    } else {
-      setVoiceButtonState(false);
-      document.getElementById('voice-status').textContent = 'Mic idle. Click "Speak a set" and talk after it says Listening.';
-    }
-  };
-} else {
-  document.getElementById('voice-status').textContent = 'Voice input isn\'t supported in this browser. Try Chrome, Edge, or Safari.';
-}
-
-
-function applyVoiceParse(transcript){
-  const parsed = parseVoiceTranscript(transcript);
-  const filled = [];
-
-
-  if(parsed.setTypeKey){
-    curSetType = parsed.setTypeKey;
-    selectInGroup('settype-group', parsed.setTypeKey);
-    document.getElementById('f-custom-wrap').style.display = parsed.setTypeKey==='other' ? 'block' : 'none';
-    filled.push('type: ' + tempoLabelForKey(parsed.setTypeKey));
-  }
-  if(parsed.passLevel!==null){
-    curPassLevel = parsed.passLevel;
-    selectInGroup('passlevel-group', String(parsed.passLevel));
-    filled.push('pass: ' + parsed.passLevel);
-  }
-  if(parsed.quality!==null){
-    curQuality = parsed.quality;
-    selectInGroup('quality-group', String(parsed.quality));
-    filled.push('quality: ' + parsed.quality);
-  }
-  if(parsed.outcome){
-    curOutcome = parsed.outcome;
-    selectInGroup('outcome-group', parsed.outcome);
-    filled.push('outcome: ' + parsed.outcome);
-  }
-
-
-  const complete = curQuality!==null && curOutcome!==null && curPassLevel!==null && curSetType!==null;
-
-
-  document.getElementById('voice-status').textContent = filled.length
-    ? `Heard: "${transcript}" → set ${filled.join(', ')}.${complete ? ' Added — listening for the next one…' : ' Still listening for the rest…'}`
-    : `Heard: "${transcript}" → couldn't match any fields, try the example phrasing. Still listening…`;
-
-
-  if(complete){
-    document.getElementById('add-set-btn').click();
-  }
-}
-
-
-document.getElementById('voice-btn').addEventListener('click', ()=>{
-  if(!voiceRecognition){
-    toast('Voice input isn\'t supported in this browser');
-    return;
-  }
-  if(voiceListening){
-    voiceListening = false;
-    try{ voiceRecognition.stop(); }catch(err){}
-    return;
-  }
-  voiceListening = true;
-  setVoiceButtonState(true);
-  document.getElementById('voice-status').textContent = 'Listening… (click "Stop listening" when done)';
-  try{ voiceRecognition.start(); }catch(err){ /* already running */ }
-});
 
 
 function tempoLabel(rec){
@@ -1330,18 +729,10 @@ function rowHtml(rec, withActions){
     <td class="quality-${rec.quality}">${rec.quality}</td>
     <td>${outcomeLabel(rec.outcome)}</td>
     <td>${escapeHtml(rec.notes||'')}</td>
-    ${withActions ? `<td><button class="edit-btn" data-id="${rec.id}" title="Edit">✎</button><button class="del-btn" data-id="${rec.id}" title="Delete">✕</button></td>` : ''}
+    ${withActions ? `<td><button class="del-btn" data-id="${rec.id}" title="Delete">✕</button></td>` : ''}
   </tr>`;
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-
-
-function renderRecent(){
-  const el = document.getElementById('recent-table');
-  const recent = [...sets].slice(-8).reverse();
-  if(!recent.length){ el.innerHTML='<div class="empty">No sets logged yet.</div>'; return; }
-  el.innerHTML = `<table><thead><tr><th>Date</th><th>Game</th><th>Pass</th><th>Zone</th><th>Type</th><th>Q</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${recent.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
-}
 
 
 // ---------- Full data table + filters ----------
@@ -1387,151 +778,11 @@ function renderFullTable(){
   el.querySelectorAll('.del-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       sets = sets.filter(s=>s.id!==btn.dataset.id);
-      saveData(); renderFullTable(); renderRecent(); updateBackupBanner();
+      saveData(); renderFullTable(); updateBackupBanner();
       toast('Deleted');
     });
   });
-  el.querySelectorAll('.edit-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const rec = sets.find(s=>s.id===btn.dataset.id);
-      if(rec) enterEditMode(rec);
-    });
-  });
 }
-
-
-// ---------- Bulk import ----------
-function parsePassLevel(raw){
-  const r = (raw||'').toString().trim().toLowerCase().replace(/\s+/g,'');
-  if(r==='') return null;
-  if(['1','bad','notgood','poor','no'].includes(r)) return 1;
-  if(['2','playable','ok','okay','medium'].includes(r)) return 2;
-  if(['3','perfect','good','great'].includes(r)) return 3;
-  const n = parseInt(r,10);
-  if(!isNaN(n)) return Math.max(1, Math.min(3, n));
-  return null;
-}
-
-
-function buildRecord({dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes}){
-  const tl = (typeRaw||'').toLowerCase().replace(/[\s_-]/g,'');
-  let setTypeKey='other', customLabel=typeRaw;
-  const typeAliases = {
-    '1':'1','one':'1','1ball':'1',
-    '2':'2','two':'2','2ball':'2','twoball':'2',
-    'back1':'back1','b1':'back1','backone':'back1',
-    'push1':'push1','p1':'push1','pushone':'push1',
-    '31':'31','thirtyone':'31',
-    '32':'32','thirtytwo':'32',
-    'bic':'bic',
-    '3':'3','three':'3','3ball':'3',
-    'shoot':'shoot','sh':'shoot',
-    '4':'4','four':'4','4ball':'4','fourball':'4',
-    '5':'5','five':'5','5ball':'5','fiveball':'5',
-    'c':'c','cball':'c'
-  };
-  if(typeAliases[tl]){ setTypeKey = typeAliases[tl]; customLabel=''; }
-
-
-  let quality = parseInt(qualityRaw,10);
-  if(isNaN(quality)) quality=2;
-  quality = Math.max(0, Math.min(3, quality));
-
-
-  const ol=(outcomeRaw||'').toLowerCase();
-  let outcome='inplay';
-  if(ol.startsWith('k')) outcome='kill';
-  else if(ol.startsWith('e')) outcome='error';
-  else if(ol.startsWith('ip')||ol.startsWith('in')) outcome='inplay';
-  else if(ol.startsWith('na')||ol.startsWith('no')) outcome='noattack';
-
-
-  let date = dateRaw;
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
-    const d = new Date(dateRaw);
-    date = isNaN(d) ? new Date().toISOString().slice(0,10) : d.toISOString().slice(0,10);
-  }
-
-
-  const passLevel = parsePassLevel(passLevelRaw);
-  const zone = deriveZoneForType(setTypeKey); // zone isn't a column anymore — derived from the set type
-
-
-  return {
-    id: uid(), date,
-    opponent: opponentRaw || 'Unlabeled',
-    zone, setTypeKey, customLabel,
-    passLevel,
-    quality, outcome,
-    notes: (notes||'').trim()
-  };
-}
-
-
-function parseLineFull(line){
-  if(!line.trim()) return null;
-  const parts = line.includes('\t') ? line.split('\t') : line.split(',');
-  const [dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, ...rest] = parts.map(p=>(p||'').trim());
-  if(!typeRaw) return null;
-  return buildRecord({ dateRaw, opponentRaw, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes: rest.join(', ') });
-}
-
-
-function parseLineShort(line, batchDate, batchOpponent){
-  if(!line.trim()) return null;
-  const parts = line.includes('\t') ? line.split('\t') : line.split(',');
-  const [typeRaw, passLevelRaw, qualityRaw, outcomeRaw, ...rest] = parts.map(p=>(p||'').trim());
-  if(!typeRaw) return null;
-  return buildRecord({ dateRaw: batchDate, opponentRaw: batchOpponent, typeRaw, passLevelRaw, qualityRaw, outcomeRaw, notes: rest.join(', ') });
-}
-
-
-function parseBulk(){
-  const batchMatch = document.getElementById('batch-match').value;
-  const out = parseBulkLines();
-  if(batchMatch) out.forEach(r=>{ r.matchId = batchMatch; });
-  return out;
-}
-function parseBulkLines(){
-  let lines = document.getElementById('bulk-text').value.split('\n');
-  if(document.getElementById('skip-header').checked) lines = lines.slice(1);
-  if(document.getElementById('lines-have-date-opponent').checked){
-    return lines.map(parseLineFull).filter(Boolean);
-  }
-  const batchDate = document.getElementById('batch-date').value || new Date().toISOString().slice(0,10);
-  const batchOpponent = document.getElementById('batch-opponent').value.trim() || 'Unlabeled';
-  return lines.map(l=>parseLineShort(l, batchDate, batchOpponent)).filter(Boolean);
-}
-
-
-document.getElementById('lines-have-date-opponent').addEventListener('change', (e)=>{
-  const full = e.target.checked;
-  document.getElementById('batch-defaults-row').style.display = full ? 'none' : 'flex';
-  document.getElementById('format-box-full').style.display = full ? 'block' : 'none';
-  document.getElementById('format-box-short').style.display = full ? 'none' : 'block';
-});
-document.getElementById('batch-date').value = localToday();
-
-
-document.getElementById('preview-btn').addEventListener('click', ()=>{
-  const parsed = parseBulk();
-  const el = document.getElementById('import-preview');
-  if(!parsed.length){ el.innerHTML='<div class="empty">Nothing parsed yet — check your format.</div>'; return; }
-  el.innerHTML = `<div class="sub">${parsed.length} set(s) ready to import:</div><table><thead><tr><th>Date</th><th>Game</th><th>Pass</th><th>Zone</th><th>Type</th><th>Q</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${parsed.map(r=>rowHtml(r,false)).join('')}</tbody></table>`;
-});
-
-
-document.getElementById('import-btn').addEventListener('click', ()=>{
-  const parsed = parseBulk();
-  if(!parsed.length){ toast('Nothing to import'); return; }
-  sets = sets.concat(parsed);
-  saveData();
-  document.getElementById('bulk-text').value='';
-  document.getElementById('import-preview').innerHTML='';
-  renderRecent();
-  updateBackupBanner();
-  toast(`Imported ${parsed.length} sets`);
-});
 
 
 // ---------- Dashboard / analytics ----------
@@ -2537,7 +1788,7 @@ document.getElementById('import-json-file').addEventListener('change', (e)=>{
       }
       if(Array.isArray(data)){
         sets = sets.concat(data.map(d=>({...d, id: d.id||uid()})));
-        saveData(); renderRecent(); updateBackupBanner(); toast(`Imported ${data.length} sets from backup`);
+        saveData(); updateBackupBanner(); toast(`Imported ${data.length} sets from backup`);
       }
     }catch(err){ toast('Invalid backup file'); }
   };
@@ -2603,7 +1854,7 @@ slideHandle.addEventListener('pointerup', (e)=>{
   if(!slideDragging) return;
   slideDragging = false;
   if(slideArmed){
-    sets = []; saveData(); renderRecent(); renderFullTable();
+    sets = []; saveData(); renderFullTable();
     localStorage.removeItem(LAST_EXPORT_KEY);
     updateBackupBanner();
     document.getElementById('clear-all-confirm').style.display = 'none';
@@ -3044,13 +2295,6 @@ document.getElementById('bt-attach-btn').addEventListener('click', ()=>{
   toast(`Attached ${res.rows.length} rows to "${m.name}"`);
 });
 
-// Picking a match in the Log Sets form pre-fills its date (and opponent if blank).
-document.getElementById('f-match').addEventListener('change', (e)=>{
-  const m = getMatch(e.target.value); if(!m) return;
-  if(m.date) document.getElementById('f-date').value = m.date;
-  const opp = document.getElementById('f-opponent');
-  if(m.opponent && !opp.value.trim()) opp.value = m.opponent;
-});
 
 // All Sets tab: tag / untag everything the current filters show.
 document.getElementById('bulk-tag-btn').addEventListener('click', ()=>{
@@ -3061,7 +2305,7 @@ document.getElementById('bulk-tag-btn').addEventListener('click', ()=>{
   if(!confirm(`Tag ${shown.length} shown set(s) with "${m.name}"?`)) return;
   const ids = new Set(shown.map(s=>s.id));
   sets.forEach(s=>{ if(ids.has(s.id)) s.matchId = m.id; });
-  saveData(); renderFullTable(); renderRecent(); renderMatchList();
+  saveData(); renderFullTable(); renderMatchList();
   toast(`Tagged ${shown.length} set(s)`);
 });
 document.getElementById('bulk-untag-btn').addEventListener('click', ()=>{
@@ -3070,7 +2314,7 @@ document.getElementById('bulk-untag-btn').addEventListener('click', ()=>{
   if(!confirm(`Remove the match tag from ${shown.length} shown set(s)?`)) return;
   const ids = new Set(shown.map(s=>s.id));
   sets.forEach(s=>{ if(ids.has(s.id)) delete s.matchId; });
-  saveData(); renderFullTable(); renderRecent(); renderMatchList();
+  saveData(); renderFullTable(); renderMatchList();
   toast(`Untagged ${shown.length} set(s)`);
 });
 
@@ -3083,7 +2327,7 @@ function refreshMatchUi(){
   populateMatchSelects();
   renderMatchList();
   if(document.getElementById('data').classList.contains('active')) renderFullTable();
-  renderRecent();
+ 
 }
 
 
@@ -3278,7 +2522,7 @@ function renderMatchSetLog(matchVal){
   const ov = document.getElementById('stats-setlog-overview');
   ['chart-stats-types','chart-stats-types-q'].forEach(destroyChart);
   if(!list.length){
-    ov.innerHTML = `<div class="empty">No logged sets ${matchVal ? 'tagged with this match' : 'yet'}. Tag sets from Log Sets, Bulk Import, or All Sets.</div>`;
+    ov.innerHTML = `<div class="empty">No logged sets ${matchVal ? 'tagged with this match' : 'yet'}. Tag sets from the All Sets tab.</div>`;
     document.getElementById('stats-type-table').innerHTML = '<div class="empty">No sets for this match yet.</div>';
     ['chart-stats-types','chart-stats-types-q'].forEach(id=>{ const c=document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height); });
     return;
@@ -3754,7 +2998,7 @@ window.addEventListener('hashchange', ()=>{ const t = tabFromHash(); if(t) showT
 // ---------- Init ----------
 populateMatchSelects();
 renderMatchList();
-renderRecent();
+
 populateFilters();
 updateBackupBanner();
 renderCoachingLibrary();
