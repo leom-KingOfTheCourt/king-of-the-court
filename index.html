@@ -279,9 +279,10 @@
   .c3d-hud b{ color:var(--orange2); }
   .c3d-fallback{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--text-dim); }
   #c3d-types .opt-btn .legend-dot{ margin-right:5px; vertical-align:-1px; }
-  .pass-wrap{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:16px; align-items:start; }
-  @media (max-width:820px){ .pass-wrap{ grid-template-columns:1fr; } }
-  .pass-svg{ width:100%; height:auto; display:block; background:#0d1520; border:1px solid var(--border); border-radius:10px; }
+  .pass-wrap{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:16px; align-items:start; width:100%; max-width:100%; }
+  .pass-wrap > *{ min-width:0; max-width:100%; }
+  @media (max-width:820px){ .pass-wrap{ grid-template-columns:minmax(0,1fr); } }
+  .pass-svg{ width:100%; max-width:100%; height:auto; display:block; background:#0d1520; border:1px solid var(--border); border-radius:10px; }
   .pass-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-dim); margin-top:8px; }
   .pass-legend i{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
   .pass-legend i.sq{ border-radius:2px; }
@@ -289,8 +290,10 @@
   .pass-read h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 6px; font-size:17px; }
   .pass-read ul{ margin:0; padding-left:18px; }
   .pass-read li{ margin:4px 0; line-height:1.4; }
-  .pass-tbl-wrap{ overflow-x:auto; }
-  .pass-chart-box{ position:relative; height:220px; margin-top:6px; }
+  #pass-card, #pass-body{ max-width:100%; }
+  .pass-tbl-wrap{ overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; }
+  .pass-tbl-wrap table{ width:max-content; min-width:100%; }
+  .pass-chart-box{ position:relative; height:220px; margin-top:6px; width:100%; max-width:100%; }
   .pg-games{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:12px; }
   .pg-game{ background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; cursor:pointer; display:block; }
   .pg-game.off{ opacity:.55; border-left-color:var(--border); }
@@ -454,7 +457,22 @@
     .td-health-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .td-health-grid > div[style*="grid-column"]{ grid-column:1 / -1 !important; }
     .chart-box, .td-box, .pg-box, .pass-chart-box{ height:200px !important; max-height:220px; }
-    .two-col, .court2d-layout, .pass-wrap{ grid-template-columns:1fr !important; }
+    .two-col, .court2d-layout, .pass-wrap{ grid-template-columns:minmax(0,1fr) !important; }
+    .pass-wrap > *{ min-width:0; max-width:100%; }
+    #pass-card{ overflow-x:hidden; }
+    #pass-body{ overflow-x:hidden; max-width:100%; }
+    .pass-svg{ width:100% !important; max-width:100% !important; height:auto !important; }
+    .pass-legend{ font-size:11px; gap:4px 10px; }
+    .pass-chart-box{ width:100%; max-width:100%; }
+    .pass-tbl-wrap{
+      overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;
+      border:1px solid var(--border); border-radius:6px; margin-top:8px;
+      /* scroll hint so wide tables stay usable without page pan */
+      background:linear-gradient(90deg, var(--card) 96%, rgba(232,93,4,.12));
+    }
+    .pass-tbl-wrap table{ font-size:12px; }
+    .pass-tbl-wrap th, .pass-tbl-wrap td{ padding:6px 7px; }
+    #pass-filter .opt-btn{ min-height:44px; }
     .table-scroll, .pass-tbl-wrap, .td-health-list{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
     .row{ flex-direction:column; align-items:stretch; }
     .row > div{ min-width:0; width:100%; }
@@ -3141,7 +3159,7 @@ function renderPassAnalysis(){
   body.innerHTML = `
     <div class="pass-wrap">
       <div>
-        <svg class="pass-svg" id="pass-svg" viewBox="0 0 560 470" role="img" aria-label="Team A half court with pass landing spots and set destinations"></svg>
+        <svg class="pass-svg" id="pass-svg" viewBox="0 0 560 470" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Team A half court with pass landing spots and set destinations"></svg>
         <div class="pass-legend">
           ${PASS_LEVELS.filter(l=>all.some(c=>passKey(c)===l.k)).map(l=>`<span><i style="background:${l.color}"></i>${l.short} pass</span>`).join('')}
           <span><i class="sq" style="background:#fff"></i>Set hit (white ring = kill, ✕ = error)</span>
@@ -3224,16 +3242,22 @@ function passLevelRows(all){
 
 function renderPassTable(all){
   const rows = passLevelRows(all);
-  const th = PASS_LANES.map(([k,l])=>`<th>${l}</th>`).join('');
+  const short = { left:'L pin', middle:'Mid', right:'R pin', back:'Back', dump:'Dump', free:'Free', none:'None' };
+  const th = PASS_LANES.map(([k,l])=>`<th title="${l}">${short[k]||l}</th>`).join('');
   document.getElementById('pass-table').innerHTML = `<table>
-    <thead><tr><th>Pass</th><th>#</th>${th}<th>K-E / swings</th><th>Eff</th><th>Rally won</th><th>Leo set</th><th>Balltime calls</th></tr></thead>
+    <thead><tr><th>Pass</th><th>#</th>${th}<th title="Kills-Errors / swings">K-E/sw</th><th>Eff</th><th title="Rally won">Won</th><th title="Leo set">Leo</th><th title="Balltime calls">Calls</th></tr></thead>
     <tbody>${rows.map(r=>`<tr>
       <td style="color:${r.l.color};font-weight:700">${r.l.label}</td><td>${r.n}</td>
       ${PASS_LANES.map(([k])=>`<td>${r.lanes[k] ? r.lanes[k] + ' <span style="color:var(--text-dim)">(' + passPct(r.lanes[k], r.n) + ')</span>' : '<span style="color:var(--text-dim)">·</span>'}</td>`).join('')}
       <td>${r.eff.k}-${r.eff.e} / ${r.eff.att}</td><td>${passFmtEff(r.eff.eff)}</td>
       <td>${r.won}/${r.n} (${passPct(r.won, r.n)})</td><td>${r.leo}/${r.set}</td>
-      <td>${r.calls.map(([c,n])=>escapeHtml(c)+(n>1?' ×'+n:'')).join(', ') || '—'}</td></tr>`).join('')}</tbody></table>
-    <div class="sub" style="margin-top:6px">Lane = where the set was hit: left/right pin = within 3 m of that sideline, middle = the center 3 m, back row = hit from more than 3 m off the net. Eff = (kills − errors) / swings. Balltime has no block data, so blocked swings count as errors or in-play.</div>`;
+      <td>${r.calls.map(([c,n])=>escapeHtml(c)+(n>1?' ×'+n:'')).join(', ') || '—'}</td></tr>`).join('')}</tbody></table>`;
+  // Footnote outside the scroll wrap so it stays page-width on phones
+  const note = document.createElement('div');
+  note.className = 'sub';
+  note.style.marginTop = '6px';
+  note.textContent = 'Lane = where the set was hit: left/right pin = within 3 m of that sideline, middle = the center 3 m, back row = hit from more than 3 m off the net. Eff = (kills − errors) / swings. Balltime has no block data, so blocked swings count as errors or in-play.';
+  document.getElementById('pass-table').after(note);
 }
 
 function renderPassChart(all){
@@ -3245,11 +3269,11 @@ function renderPassChart(all){
     data:{ labels: rows.map(r=>`${r.l.short} (${r.n})`),
            datasets: lanes.map(([k,l])=>({ label:l, backgroundColor:PASS_LANE_COLORS[k], data: rows.map(r=>Math.round(1000*r.lanes[k]/r.n)/10), counts: rows.map(r=>r.lanes[k]) })) },
     options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{ size:11 } } },
-                title:{ display:true, text:'Where the ball went, by pass quality (% of passes)', color:'#f4f2f0' },
+      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{ size:11 }, padding:8 } },
+                title:{ display:true, text: window.matchMedia('(max-width:480px)').matches ? 'Set destination by pass (%)' : 'Where the ball went, by pass quality (% of passes)', color:'#f4f2f0', font:{ size: window.matchMedia('(max-width:480px)').matches ? 12 : 14 } },
                 tooltip:{ callbacks:{ label:(ctx)=>`${ctx.dataset.label}: ${ctx.dataset.counts[ctx.dataIndex]} (${ctx.raw}%)` } } },
-      scales:{ x:{ stacked:true, max:100, ticks:{ color:'#a29fae', callback:v=>v+'%' }, grid:{ color:'#2c2933' } },
-               y:{ stacked:true, ticks:{ color:'#f4f2f0' }, grid:{ display:false } } } }
+      scales:{ x:{ stacked:true, max:100, ticks:{ color:'#a29fae', callback:v=>v+'%', font:{ size:11 } }, grid:{ color:'#2c2933' } },
+               y:{ stacked:true, ticks:{ color:'#f4f2f0', font:{ size:11 } }, grid:{ display:false } } } }
   });
 }
 
