@@ -486,6 +486,12 @@
     body.print-tonight section:not(#stats), body.print-tonight #stats > :not(.tonight-card){ display:none !important; }
     body.print-tonight .tonight-card{ display:block !important; }
   }
+
+  .rc-radar-wrap{ max-width:520px; margin:0 auto; }
+  .rc-radar-box{ position:relative; height:340px; max-height:340px; }
+  @media (max-width:768px){
+    .rc-radar-box{ height:280px; max-height:280px; }
+  }
 </style>
 </head>
 <body>
@@ -860,6 +866,12 @@
       <div class="row" style="max-width:520px"><div><label>Game</label><select id="rc-game"></select></div></div>
       <div id="rc-confidence" class="data-conf"></div>
       <div id="rc-head" class="pg-note"></div>
+    </div>
+    <div class="card">
+      <h2>Strength diagram</h2>
+      <div class="sub">Outer = stronger. Dashed = last game (when both have that axis).</div>
+      <div class="rc-radar-wrap"><div class="rc-radar-box"><canvas id="rc-radar"></canvas></div></div>
+      <div id="rc-radar-empty" class="empty" style="display:none;">Not enough scored categories for a radar yet.</div>
     </div>
     <div class="rc-grid" id="rc-grid"></div>
   </section>
@@ -4192,6 +4204,79 @@ async function renderReportCard(){
     ${worst.length ? `<ul class="rc-note" style="padding-left:18px;margin-bottom:0">${worst.map(({cat, r})=>`<li><b>${cat.title}</b> (${chipTxt[r.status]}, ${r.nums.slice(0,2).map(n=>escapeHtml(n[0]+' '+n[1])).join(', ')}) — cue: <span class="rc-cue">"${escapeHtml(cat.cue)}"</span></li>`).join('')}</ul>` : '<div class="rc-note">Not enough data to pick focus areas.</div>'}
     <div class="rc-info">ⓘ The two lowest-scoring categories this game (each category gets a 0–100 rule score behind its chip; best connection isn't counted). Cues reuse Leo's current focus where they fit ("neutral spine, push with thumbs/wrists", "beat the ball, jump straight up"); "press straight over, seal the seam" is a blocking cue, so it doesn't apply to setting categories.</div></div>`;
   document.getElementById('rc-grid').innerHTML = html;
+  drawReportRadar(res, g, prev);
+}
+const RC_RADAR_LABELS = {
+  accuracy:'Accuracy', tempo:'Tempo', consistency:'Consistency', distribution:'Distribution',
+  oos:'OOS', diversity:'Diversity', hitters:'Hitters', connection:'Connection'
+};
+function drawReportRadar(res, g, prev){
+  destroyChart('rc-radar');
+  const canvas = document.getElementById('rc-radar');
+  const empty = document.getElementById('rc-radar-empty');
+  if(!canvas) return;
+  const axes = res.filter(x=>x.r.status!=='nodata' && x.r.score!=null);
+  if(axes.length < 3){
+    canvas.style.display = 'none';
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if(empty) empty.style.display = 'none';
+  const labels = axes.map(x=>RC_RADAR_LABELS[x.cat.key] || x.cat.title);
+  const curData = axes.map(x=>Math.max(0, Math.min(100, Math.round(x.r.score))));
+  const datasets = [{
+    label: g.date || 'This game',
+    data: curData,
+    backgroundColor: 'rgba(232,93,4,0.28)',
+    borderColor: '#e85d04',
+    borderWidth: 2,
+    pointBackgroundColor: '#ff7a18',
+    pointBorderColor: '#f7f1e8',
+    pointRadius: 3,
+    pointHoverRadius: 5
+  }];
+  const prevData = axes.map(x=>{
+    if(!x.pr || x.pr.status==='nodata' || x.pr.score==null) return null;
+    return Math.max(0, Math.min(100, Math.round(x.pr.score)));
+  });
+  if(prev && prevData.some(v=>v!=null)){
+    datasets.push({
+      label: prev.date || 'Last game',
+      data: prevData,
+      backgroundColor: 'rgba(126,196,255,0.08)',
+      borderColor: '#7ec4ff',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointBackgroundColor: '#7ec4ff',
+      pointBorderColor: '#f7f1e8',
+      pointRadius: 2,
+      pointHoverRadius: 4,
+      spanGaps: true
+    });
+  }
+  chartRefs['rc-radar'] = new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { labels: { color: '#b8aea3', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (ctx)=> `${ctx.dataset.label}: ${ctx.raw==null?'n/a':ctx.raw}` } }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 20, color: '#8a8078', backdropColor: 'transparent', font: { size: 10 } },
+          grid: { color: 'rgba(247,241,232,0.12)' },
+          angleLines: { color: 'rgba(247,241,232,0.12)' },
+          pointLabels: { color: '#f7f1e8', font: { size: 12, family: "'Rajdhani',sans-serif", weight: '700' } }
+        }
+      }
+    }
+  });
 }
 document.getElementById('rc-game').addEventListener('change', renderReportCard);
 
