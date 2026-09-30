@@ -594,60 +594,58 @@
   <section id="dashboard">
     <div class="card">
       <h2>Overview</h2>
-      <div class="stat-grid" id="overview-stats"></div>
+      <div class="sub">From Balltime games in data/games — same source as Progress / Report / Tendencies.</div>
+      <div class="row" style="max-width:420px;margin-top:8px;"><div><label>Game</label><select id="dash-game"></select></div></div>
+      <div id="dash-head" class="pg-note" style="margin-top:8px;"></div>
+      <div class="stat-grid" id="overview-stats" style="margin-top:12px;"></div>
     </div>
     <div class="card">
       <h2>Set trajectory map</h2>
-      <div class="sub">Stylized view of every call you run, setting from the right side like you actually do. Arc height = tempo (higher = slower, higher ball — 4/5 ball peak highest, quicks stay flat and close to the setter). Line thickness = how often you run it. Color = average set quality (red → yellow → green). "Other" custom sets aren't shown since their court position isn't tracked.</div>
+      <div class="sub">Stylized arcs from Balltime set calls (when tagged). Thickness = volume. Color = assist rate (red → green). Needs set-call tags.</div>
       <div id="trajectory-chart"></div>
     </div>
     <div class="two-col">
       <div class="card">
         <h2>Sets by zone</h2>
-        <div class="sub">How your set distribution splits across left / middle / right.</div>
+        <div class="sub">Distribution of Leo’s sets (Balltime destination).</div>
         <div class="chart-box"><canvas id="chart-zone"></canvas></div>
       </div>
       <div class="card">
-        <h2>Avg quality by zone</h2>
-        <div class="sub">Which side you're setting most accurately.</div>
+        <h2>Assist % by zone</h2>
+        <div class="sub">Kills led by your set ÷ sets to that zone.</div>
         <div class="chart-box"><canvas id="chart-zone-quality"></canvas></div>
       </div>
     </div>
     <div class="two-col">
       <div class="card">
-        <h2>Sets by tempo</h2>
-        <div class="sub">Volume of each set type you're running.</div>
+        <h2>Sets by call / tempo</h2>
+        <div class="sub">Balltime set-call mix when available.</div>
         <div class="chart-box"><canvas id="chart-tempo"></canvas></div>
       </div>
       <div class="card">
-        <h2>Avg quality by tempo</h2>
-        <div class="sub">Consistency within each tempo — tight bars in the same tempo group mean consistent timing/height.</div>
+        <h2>Assist % by call</h2>
+        <div class="sub">Which calls convert. Blank if no set calls.</div>
         <div class="chart-box"><canvas id="chart-tempo-quality"></canvas></div>
       </div>
     </div>
     <div class="card">
-      <h2>Zone × Tempo breakdown</h2>
-      <div class="sub">Count of sets, average quality, and hitting % for each zone/tempo combo.</div>
-      <div id="matrix-table"><div class="empty">No sets logged yet.</div></div>
+      <h2>Zone × call breakdown</h2>
+      <div class="sub">Count, assist %, eff for each zone/call with data.</div>
+      <div id="matrix-table"><div class="empty">Loading…</div></div>
     </div>
     <div class="card">
-      <h2>Speed-group consistency</h2>
-      <div class="sub">Sets are grouped by tempo speed (Quick / Fast / Slow). If sets in the same speed group have very different quality scores, that's a sign of inconsistent timing or height within that tempo.</div>
-      <div id="speed-table"><div class="empty">No sets logged yet.</div></div>
-    </div>
-    <div class="card">
-      <h2>In system vs. out of system</h2>
-      <div class="sub">How your set quality and hitting % hold up depending on how good the pass was. A setter who's just as good off a bad pass as a perfect one is the real test.</div>
-      <div id="passlevel-table"><div class="empty">No sets logged yet.</div></div>
+      <h2>In system vs out of system</h2>
+      <div class="sub">From Balltime pass / system tags when present.</div>
+      <div id="passlevel-table"><div class="empty">Loading…</div></div>
     </div>
     <div class="card">
       <h2>Coaching tips</h2>
-      <div class="sub">Rule-based suggestions from your own numbers, matched to a hand-picked set of coach/pro setting videos — not a live search, so treat it as a starting point rather than a personalized breakdown.</div>
+      <div class="sub">Short reads from this game’s Balltime numbers + curated videos.</div>
       <div id="coaching-tips"></div>
     </div>
     <div class="card">
       <h2>Browse by topic</h2>
-      <div class="sub">Same video library, organized by topic in case you want to browse instead of waiting for a suggestion.</div>
+      <div class="sub">Same video library by topic.</div>
       <div id="coaching-library"></div>
     </div>
   </section>
@@ -655,29 +653,12 @@
 
   <!-- DIAGNOSE -->
   <section id="diagnose">
-    <div class="card">
+    <div class="card" id="pass-card">
       <span class="hidden-crow crow-side on-dark" style="right:12px;top:12px;" aria-hidden="true" data-crow="diagnose">
         <svg class="crow-svg"><use href="#crow-side"/></svg>
       </span>
-      <h2>Diagnose your sets</h2>
-      <div class="sub">Drag the setter along the net (2D), or walk them around the court yourself (3D — arrow keys / WASD once you click the court). Tap a set type below to send them there and see the target. The arc is colored by that type's real average quality — gray/dashed means you haven't logged any yet. The panel underneath breaks down what's actually happening with your numbers.</div>
-      <div class="top-actions" style="justify-content:flex-start; margin-bottom:12px;">
-        <button class="primary" id="diag-view-2d-btn">2D</button>
-        <button class="secondary" id="diag-view-3d-btn">3D — walk the court</button>
-      </div>
-      <div class="diagnose-court" id="diagnose-court">
-        <svg viewBox="0 0 680 405" id="diagnose-svg" class="traj-svg"></svg>
-      </div>
-      <div class="diagnose-court-3d" id="diagnose-court-3d" style="display:none;">
-        <div id="diagnose-3d-canvas-wrap"></div>
-        <div class="diag-3d-hint">Click the court, then use arrow keys or WASD: left/right moves along the net, up/down steps toward or away from it. The orange line on the floor is the 10-foot attack line — bic and C ball are back-row attacks, so a legal hit on either has to take off from behind it.</div>
-      </div>
-      <div class="opt-group" id="diagnose-type-group" style="margin-top:14px;"></div>
-      <div id="diagnose-panel" style="margin-top:16px;"></div>
-    </div>
-    <div class="card" id="pass-card">
       <h2>Pass → set: what happens off each pass</h2>
-      <div class="sub">Real serve-receive chains from the July 10 Balltime match (VID_20260710_104227_373): each Team A reception, the set that followed it and the attack off that set. Dots are where the pass landed (colored by Balltime's 0–3 pass rating); dashed lines run from where the set was taken to where it was hit. Shaded ovals are each pass level's zone (average spot ± spread). Balltime share-page data, AI-tagged — a small sample, so read it as a trend, not a verdict.</div>
+      <div class="sub">July 10 Balltime serve-receive chains (pass rating → set destination → result). Dots = pass landing by 0–3 rating; dashed lines = set to hit. July 8 has no pass ratings — n/a. AI-tagged, small sample.</div>
       <div class="opt-group" id="pass-filter" style="margin:12px 0 4px;"></div>
       <div id="pass-body"><div class="sub">Loading July 10 pass data…</div></div>
     </div>
@@ -1131,7 +1112,6 @@ function showTab(tab, updateHash=true){
   const hopCrow = document.querySelector('[data-crow="nav"]');
   if(hopCrow){ hopCrow.classList.remove('hop'); void hopCrow.offsetWidth; hopCrow.classList.add('hop'); }
   if(tab==='dashboard') renderDashboard();
-  if(tab==='diagnose') renderDiagnose();
   if(tab==='data') renderFullTable();
   if(tab==='balltime'){ populateMatchSelects(); renderMatchList(); }
   if(typeof TAB_HOOKS!=='undefined' && TAB_HOOKS[tab]) TAB_HOOKS[tab]();
@@ -1259,95 +1239,217 @@ function computeAgg(list){
 }
 
 
-function renderDashboard(){
-  const agg = computeAgg(sets);
-  const ov = document.getElementById('overview-stats');
-  if(!sets.length){
-    ov.innerHTML = '<div class="empty">Log or import sets to see your dashboard.</div>';
-    ['chart-zone','chart-zone-quality','chart-tempo','chart-tempo-quality'].forEach(id=>{
-      const c=document.getElementById(id); const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
-    });
-    document.getElementById('matrix-table').innerHTML='<div class="empty">No sets logged yet.</div>';
-    document.getElementById('speed-table').innerHTML='<div class="empty">No sets logged yet.</div>';
-    document.getElementById('passlevel-table').innerHTML='<div class="empty">No sets logged yet.</div>';
-    renderTrajectoryChart();
-    renderCoachingTips();
-    return;
-  }
-  ov.innerHTML = `
-    <div class="stat-box"><div class="val">${agg.total}</div><div class="lbl">Total sets</div></div>
-    <div class="stat-box"><div class="val">${agg.avgQ.toFixed(2)}</div><div class="lbl">Avg quality (0-3)</div></div>
-    <div class="stat-box"><div class="val">${(agg.hittingPct*100).toFixed(1)}%</div><div class="lbl">Hitting % off your sets</div></div>
-    <div class="stat-box"><div class="val">${(agg.assistRate*100).toFixed(1)}%</div><div class="lbl">Assist rate (kills / total sets)</div></div>
-    <div class="stat-box"><div class="val">${agg.kills}</div><div class="lbl">Kills</div></div>
-    <div class="stat-box"><div class="val">${agg.errors}</div><div class="lbl">Hitting errors</div></div>
-  `;
+let dashSelected = null; // game id or 'all'
 
-
-  drawBar('chart-zone', ZONES, ZONES.map(z=>sets.filter(s=>s.zone===z).length), '#ff7a1a', 'Sets');
-  drawBar('chart-zone-quality', ZONES, ZONES.map(z=>{
-    const l=sets.filter(s=>s.zone===z); return l.length? (l.reduce((a,s)=>a+s.quality,0)/l.length) : 0;
-  }), '#3ecf8e', 'Avg quality', 3);
-
-
-  const usedTypes = SET_TYPES.filter(t=>sets.some(s=>s.setTypeKey===t.key));
-  drawBar('chart-tempo', usedTypes.map(t=>t.label), usedTypes.map(t=>sets.filter(s=>s.setTypeKey===t.key).length), '#7ec4ff', 'Sets');
-  drawBar('chart-tempo-quality', usedTypes.map(t=>t.label), usedTypes.map(t=>{
-    const l=sets.filter(s=>s.setTypeKey===t.key); return l.length? (l.reduce((a,s)=>a+s.quality,0)/l.length) : 0;
-  }), '#ffcd4d', 'Avg quality', 3);
-
-
-  // Zone x Tempo matrix
-  let matrixRows='';
-  ZONES.forEach(z=>{
-    usedTypes.forEach(t=>{
-      const l = sets.filter(s=>s.zone===z && s.setTypeKey===t.key);
-      if(!l.length) return;
-      const a = computeAgg(l);
-      matrixRows += `<tr><td>${z}</td><td>${t.label}</td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
-    });
-  });
-  document.getElementById('matrix-table').innerHTML = matrixRows
-    ? `<table><thead><tr><th>Zone</th><th>Tempo</th><th>Count</th><th>Avg Quality</th><th>Hitting %</th></tr></thead><tbody>${matrixRows}</tbody></table>`
-    : '<div class="empty">No sets logged yet.</div>';
-
-
-  // Speed-group consistency
-  const groups = ['Quick','Fast','Slow','Other'];
-  let speedRows='';
-  groups.forEach(g=>{
-    const l = sets.filter(s=>tempoGroup(s)===g);
-    if(!l.length) return;
-    const a = computeAgg(l);
-    const qualities = l.map(s=>s.quality);
-    const variance = qualities.length>1 ? (qualities.reduce((acc,q)=>acc+Math.pow(q-a.avgQ,2),0)/qualities.length) : 0;
-    const stdev = Math.sqrt(variance);
-    speedRows += `<tr><td><span class="badge-group g-${g}">${g}</span></td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${stdev.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td></tr>`;
-  });
-  document.getElementById('speed-table').innerHTML = speedRows
-    ? `<table><thead><tr><th>Speed group</th><th>Count</th><th>Avg Quality</th><th>Std Dev (lower = more consistent)</th><th>Hitting %</th></tr></thead><tbody>${speedRows}</tbody></table>`
-    : '<div class="empty">No sets logged yet.</div>';
-
-
-  // Pass level breakdown (in system vs. out of system)
-  let passRows='';
-  [1,2,3].forEach(pl=>{
-    const l = sets.filter(s=>s.passLevel===pl);
-    if(!l.length) return;
-    const a = computeAgg(l);
-    passRows += `<tr><td class="pass-${pl}">${passLevelLabel(pl)}</td><td>${passLevelSystem(pl)}</td><td>${l.length}</td><td class="quality-${Math.round(a.avgQ)}">${a.avgQ.toFixed(2)}</td><td>${(a.hittingPct*100).toFixed(1)}%</td><td>${(a.assistRate*100).toFixed(1)}%</td></tr>`;
-  });
-  const untagged = sets.filter(s=>s.passLevel==null).length;
-  document.getElementById('passlevel-table').innerHTML = passRows
-    ? `<table><thead><tr><th>Pass level</th><th>System</th><th>Count</th><th>Avg Set Quality</th><th>Hitting %</th><th>Assist Rate</th></tr></thead><tbody>${passRows}</tbody></table>` +
-      (untagged ? `<div class="sub" style="margin-top:8px;">${untagged} older set(s) have no pass level recorded and aren't included above.</div>` : '')
-    : '<div class="empty">No sets with a pass level logged yet.</div>';
-
-
-  renderTrajectoryChart();
-  renderCoachingTips();
+function dashFmtPct(x){ return x==null || isNaN(x) ? '—' : (Math.round(x*1000)/10).toFixed(1).replace(/\.0$/,'') + '%'; }
+function dashFmtEff(x){ return x==null || isNaN(x) ? '—' : (x<0?'−':'') + Math.abs(x).toFixed(3).replace(/^0(?=\.)/,''); }
+function dashChainEff(cs){
+  const sw = cs.filter(c=>c.result==='kill'||c.result==='error'||c.result==='in_play');
+  if(!sw.length) return null;
+  const k = sw.filter(c=>c.result==='kill').length, e = sw.filter(c=>c.result==='error').length;
+  return (k-e)/sw.length;
+}
+function dashAssistPct(cs){ return cs.length ? cs.filter(c=>c.assist || c.result==='kill').length/cs.length : null; }
+// Prefer Balltime assist flag when present; else kill-as-assist fallback only if any assist flags exist in the pool
+function dashAssistPctSmart(cs){
+  if(!cs.length) return null;
+  const hasFlag = cs.some(c=>c.assist===true || c.assist===false);
+  if(hasFlag) return cs.filter(c=>c.assist).length/cs.length;
+  return cs.filter(c=>c.result==='kill').length/cs.length;
+}
+function dashZoneLabel(z){
+  if(!z || z==='unknown') return null;
+  const map = { left:'Left', middle:'Middle', right:'Right', 'back-row':'Back row', 'behind-setter':'Behind setter' };
+  return map[z] || (z.charAt(0).toUpperCase()+z.slice(1));
+}
+function dashBucketZone(c){
+  const z = dashZoneLabel(c.zone);
+  if(z) return z;
+  const b = c.bucket || '';
+  if(b.startsWith('left')) return 'Left';
+  if(b.startsWith('middle')) return 'Middle';
+  if(b.startsWith('right') || b==='right/back-set') return 'Right';
+  if(b.startsWith('back')) return 'Back row';
+  return null;
+}
+// Map Balltime set-call tags onto trajectory SET_TYPES keys when we can
+const DASH_CALL_TO_TYPE = {
+  '1':'1', '3':'3', '4':'4', '5':'5',
+  'pipe':'bic', 'go':'shoot', 'hut':'31', 'push':'push1', 'x':'32',
+  'red':'2', 'blue':'back1', 'rip':'c', 'd_ball':'other'
+};
+function dashCallKey(c){ return (c.call==null || c.call==='') ? null : String(c.call).toLowerCase(); }
+function dashTempoGroupFromAir(air){
+  if(air==null || isNaN(air)) return null;
+  if(air < 0.75) return 'Quick';
+  if(air < 1.25) return 'Fast';
+  return 'Slow';
 }
 
+async function renderDashboard(){
+  const ov = document.getElementById('overview-stats');
+  const head = document.getElementById('dash-head');
+  const sel = document.getElementById('dash-game');
+  if(!ov || !sel) return;
+  let games = [];
+  try{ games = await loadAllGames(); }catch(e){ games = []; }
+  if(!games.length){
+    ov.innerHTML = '<div class="empty">No Balltime games in data/games yet.</div>';
+    if(head) head.textContent = '';
+    ['chart-zone','chart-zone-quality','chart-tempo','chart-tempo-quality'].forEach(id=>{
+      const c=document.getElementById(id); if(!c) return; try{ destroyChart(id); }catch(e){}
+      const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+    });
+    document.getElementById('matrix-table').innerHTML='<div class="empty">No games loaded.</div>';
+    document.getElementById('passlevel-table').innerHTML='<div class="empty">No games loaded.</div>';
+    document.getElementById('trajectory-chart').innerHTML='<div class="empty">No games loaded.</div>';
+    renderDashCoaching(null);
+    return;
+  }
+  // Default to latest game (loadAllGames sorts oldest→newest)
+  const latest = games[games.length-1];
+  const cur = dashSelected || latest.id;
+  dashSelected = (cur==='all' || games.some(g=>g.id===cur)) ? cur : latest.id;
+  const gamesNewestFirst = games.slice().reverse();
+  sel.innerHTML = gamesNewestFirst.map(g=>`<option value="${g.id}">${escapeHtml(g.date||g.name||g.id)}</option>`).join('') +
+    `<option value="all">All games (set-weighted)</option>`;
+  sel.value = dashSelected;
+
+  const picked = dashSelected==='all' ? games : games.filter(g=>g.id===dashSelected);
+  const primary = picked[0];
+  const chains = picked.flatMap(g=>g.chains||[]);
+  // Aggregate quality metrics (set-weighted)
+  let n=0, assists=0, kills=0, errors=0, swings=0, attacked=0;
+  picked.forEach(g=>{
+    const q = (g.metrics&&g.metrics.quality)||{};
+    n += q.n||0; assists += q.assists||0; kills += q.kills||0; errors += q.errors||0;
+    swings += q.swings||0; attacked += q.attacked||0;
+  });
+  const assistPct = n ? assists/n : null;
+  const eff = swings ? (kills-errors)/swings : null;
+  const killPct = swings ? kills/swings : null;
+  const attackedPct = n ? attacked/n : null;
+  const avail = {
+    pass: picked.some(g=>g.available&&g.available.passRatings),
+    calls: picked.some(g=>g.available&&g.available.setCalls),
+    pos: picked.some(g=>g.available&&g.available.positional)
+  };
+  if(head){
+    const names = picked.map(g=>g.date||g.name).join(' · ');
+    const miss = [];
+    if(!avail.pass) miss.push('pass ratings');
+    if(!avail.calls) miss.push('set calls');
+    if(!avail.pos) miss.push('ball tracking');
+    head.innerHTML = `<b>${escapeHtml(names)}</b> · ${n} Leo sets` +
+      (miss.length && dashSelected!=='all' ? ` · missing: ${miss.join(', ')}` : '') +
+      (dashSelected==='all' ? ' · weighted by set count' : '');
+  }
+  ov.innerHTML = `
+    <div class="stat-box"><div class="val">${n}</div><div class="lbl">Leo sets</div></div>
+    <div class="stat-box"><div class="val">${dashFmtPct(assistPct)}</div><div class="lbl">Assist %</div></div>
+    <div class="stat-box"><div class="val">${dashFmtEff(eff)}</div><div class="lbl">Hitting eff off sets</div></div>
+    <div class="stat-box"><div class="val">${dashFmtPct(killPct)}</div><div class="lbl">Kill % (swings)</div></div>
+    <div class="stat-box"><div class="val">${kills}</div><div class="lbl">Kills / assists</div></div>
+    <div class="stat-box"><div class="val">${errors}</div><div class="lbl">Attack errors</div></div>
+  `;
+
+  // Zones
+  const zoneOrder = ['Left','Middle','Right','Back row','Behind setter'];
+  const byZone = {};
+  chains.forEach(c=>{
+    const z = dashBucketZone(c); if(!z) return;
+    (byZone[z]=byZone[z]||[]).push(c);
+  });
+  const zonesUsed = zoneOrder.filter(z=>byZone[z]&&byZone[z].length);
+  if(zonesUsed.length){
+    drawBar('chart-zone', zonesUsed, zonesUsed.map(z=>byZone[z].length), '#ff7a1a', 'Sets');
+    drawBar('chart-zone-quality', zonesUsed, zonesUsed.map(z=>+(100*(dashAssistPctSmart(byZone[z])||0)).toFixed(1)), '#3ecf8e', 'Assist %', 100);
+  } else {
+    destroyChart('chart-zone'); destroyChart('chart-zone-quality');
+    document.getElementById('chart-zone').parentElement.insertAdjacentHTML('beforeend','');
+    ['chart-zone','chart-zone-quality'].forEach(id=>{
+      const c=document.getElementById(id); const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+    });
+    // show empty via overlay note in matrix instead
+  }
+
+  // Calls / tempo
+  const byCall = {};
+  chains.forEach(c=>{
+    const k = dashCallKey(c); if(!k) return;
+    (byCall[k]=byCall[k]||[]).push(c);
+  });
+  const callsUsed = Object.keys(byCall).sort((a,b)=>byCall[b].length-byCall[a].length);
+  if(callsUsed.length){
+    drawBar('chart-tempo', callsUsed.map(k=>k), callsUsed.map(k=>byCall[k].length), '#7ec4ff', 'Sets');
+    drawBar('chart-tempo-quality', callsUsed.map(k=>k), callsUsed.map(k=>+(100*(dashAssistPctSmart(byCall[k])||0)).toFixed(1)), '#ffcd4d', 'Assist %', 100);
+  } else {
+    destroyChart('chart-tempo'); destroyChart('chart-tempo-quality');
+    ['chart-tempo','chart-tempo-quality'].forEach(id=>{
+      const c=document.getElementById(id); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+    });
+  }
+
+  // Zone × call matrix
+  let matrixRows='';
+  zonesUsed.forEach(z=>{
+    const callKeys = callsUsed.length ? callsUsed : ['—'];
+    callKeys.forEach(ck=>{
+      const l = (byZone[z]||[]).filter(c=> callsUsed.length ? dashCallKey(c)===ck : true);
+      if(callsUsed.length && !l.length) return;
+      if(!callsUsed.length && !(byZone[z]||[]).length) return;
+      const list = callsUsed.length ? l : byZone[z];
+      if(!list.length) return;
+      const aPct = dashAssistPctSmart(list);
+      const e = dashChainEff(list);
+      matrixRows += `<tr><td>${z}</td><td>${callsUsed.length?escapeHtml(ck):'—'}</td><td>${list.length}</td><td>${dashFmtPct(aPct)}</td><td>${dashFmtEff(e)}</td></tr>`;
+    });
+  });
+  if(!zonesUsed.length && !callsUsed.length){
+    document.getElementById('matrix-table').innerHTML = '<div class="empty">No zone or set-call tags on this game (July 8 is mostly untagged).</div>';
+  } else {
+    document.getElementById('matrix-table').innerHTML = matrixRows
+      ? `<table><thead><tr><th>Zone</th><th>Call</th><th>Count</th><th>Assist %</th><th>Eff</th></tr></thead><tbody>${matrixRows}</tbody></table>`
+      : '<div class="empty">Not enough tagged sets for a breakdown.</div>';
+  }
+
+  // Pass / system table
+  let passRows='';
+  const passLevels = [3,2,1,0];
+  passLevels.forEach(pl=>{
+    const l = chains.filter(c=>c.pass===pl);
+    if(!l.length) return;
+    const aPct = dashAssistPctSmart(l);
+    const e = dashChainEff(l);
+    const sys = pl>=2 ? 'In system' : (pl===1 ? 'Out of system' : 'Error / free');
+    passRows += `<tr><td class="pass-${pl||1}">${pl} · ${pl===3?'Perfect':pl===2?'Good':pl===1?'Poor':'Error'}</td><td>${sys}</td><td>${l.length}</td><td>${dashFmtPct(aPct)}</td><td>${dashFmtEff(e)}</td></tr>`;
+  });
+  // Also system in/oos when pass ratings missing
+  let sysExtra='';
+  const inCs = chains.filter(c=>c.system==='in');
+  const oosCs = chains.filter(c=>c.system==='oos');
+  if(!passRows && (inCs.length || oosCs.length)){
+    [[inCs,'In system'],[oosCs,'Out of system']].forEach(([l,lab])=>{
+      if(!l.length) return;
+      passRows += `<tr><td>${lab}</td><td>${lab}</td><td>${l.length}</td><td>${dashFmtPct(dashAssistPctSmart(l))}</td><td>${dashFmtEff(dashChainEff(l))}</td></tr>`;
+    });
+  }
+  if(passRows){
+    document.getElementById('passlevel-table').innerHTML =
+      `<table><thead><tr><th>Pass / system</th><th>Context</th><th>Count</th><th>Assist %</th><th>Eff</th></tr></thead><tbody>${passRows}</tbody></table>` +
+      (!avail.pass ? `<div class="sub" style="margin-top:8px;">Pass ratings not tagged on every selected game — using system flags where needed.</div>` : '');
+  } else {
+    document.getElementById('passlevel-table').innerHTML = '<div class="empty">No pass ratings or system tags on this selection (July 8: mostly n/a).</div>';
+  }
+
+  renderTrajectoryChart(chains, avail.calls);
+  renderDashCoaching(picked, { n, assistPct, eff, byZone, byCall, avail });
+}
+
+document.getElementById('dash-game').addEventListener('change', (e)=>{
+  dashSelected = e.target.value;
+  renderDashboard();
+});
 
 // ---------- Set trajectory map (stylized, not physics-accurate) ----------
 // Setters set out of the right side of the court, not the middle — so the setter
@@ -1455,40 +1557,43 @@ function peakForType(key){
 }
 
 
-function renderTrajectoryChart(){
+function renderTrajectoryChart(chains, hasCalls){
   const container = document.getElementById('trajectory-chart');
   if(!container) return;
-  const trackable = SET_TYPES.filter(t => t.key !== 'other' && TRAJECTORY_X[t.key] !== undefined);
-  const rows = trackable.map(t=>{
-    const list = sets.filter(s=>s.setTypeKey===t.key);
-    if(!list.length) return null;
-    const avgQ = list.reduce((a,s)=>a+s.quality,0)/list.length;
-    return { type:t, count:list.length, avgQ };
-  }).filter(Boolean);
-
-
-  if(!rows.length){
-    container.innerHTML = '<div class="empty">Log sets with a real set type (not "Other") to see the trajectory map.</div>';
+  chains = chains || [];
+  if(!hasCalls){
+    container.innerHTML = '<div class="empty">No set-call tags on this game — trajectory needs Balltime set calls (July 10 has them; July 8 does not).</div>';
     return;
   }
+  const trackable = SET_TYPES.filter(t => t.key !== 'other' && TRAJECTORY_X[t.key] !== undefined);
+  const rows = trackable.map(t=>{
+    const list = chains.filter(c=>{
+      const ck = dashCallKey(c); if(!ck) return false;
+      return (DASH_CALL_TO_TYPE[ck] || (SET_TYPE_MAP[ck] ? ck : null)) === t.key;
+    });
+    if(!list.length) return null;
+    const aPct = dashAssistPctSmart(list) || 0;
+    return { type:t, count:list.length, avgQ: aPct * 3 }; // reuse qualityColor 0–3 scale via assist%
+  }).filter(Boolean);
 
+  if(!rows.length){
+    container.innerHTML = '<div class="empty">Set calls present, but none mapped to a court track (check call names).</div>';
+    return;
+  }
 
   const { W, H, netY, contactRise } = COURT;
   const setterX = W*SETTER_X_FRAC, setterY = netY-contactRise;
   const maxCount = Math.max(...rows.map(r=>r.count));
 
-
-  // No text labels under each arc — the landing position and arc height already
-  // tell you which set is which. A hover tooltip still gives the detail on demand.
   let arcs='';
   rows.forEach((r)=>{
     const x2 = W*trajXFrac(r.type.key, SETTER_X_FRAC), y2 = netY;
     const strokeWidth = 2 + (r.count/maxCount)*7;
     const color = qualityColor(r.avgQ);
     const d = buildArcPath(setterX, setterY, x2, y2, peakForType(r.type.key));
-    arcs += `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeWidth.toFixed(1)}" stroke-linecap="round" opacity="0.9"><title>${r.type.label}: ${r.count} set(s), avg quality ${r.avgQ.toFixed(2)}</title></path>`;
+    const aPct = (r.avgQ/3);
+    arcs += `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeWidth.toFixed(1)}" stroke-linecap="round" opacity="0.9"><title>${r.type.label}: ${r.count} set(s), assist ${dashFmtPct(aPct)}</title></path>`;
   });
-
 
   const zoneLabels = `
     <text x="${W*0.14}" y="20" text-anchor="middle" class="traj-zone-label">LEFT</text>
@@ -1497,502 +1602,11 @@ function renderTrajectoryChart(){
   `;
   const setterMarker = `<circle cx="${setterX}" cy="${setterY}" r="7" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/><text x="${setterX}" y="${setterY-14}" text-anchor="middle" class="traj-zone-label" style="opacity:.7;font-size:11px;">SETTER</text>`;
 
-
   container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="traj-svg">${zoneLabels}${buildNetSVG()}${arcs}${setterMarker}</svg>`;
 }
 
 
-// ---------- Diagnose tab: net + a movable setter/ball, plus a target for whichever ----------
-// set type you pick. Dragging the setter re-draws the flight path live without a
-// full re-render (so the drag doesn't lose pointer capture mid-gesture); picking
-// a set type or releasing the drag is what triggers a full redraw + panel update.
-let diagSetterFrac = SETTER_X_FRAC;
-let diagSelectedType = null;
-
-
-function diagZoneForFrac(frac){
-  if(frac < 0.33) return 'Left';
-  if(frac < 0.66) return 'Middle';
-  return 'Right';
-}
-
-
-function renderDiagnose(){
-  const svg = document.getElementById('diagnose-svg');
-  if(!svg) return;
-  const { W, H, netY, contactRise } = COURT;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  const setterX = W*diagSetterFrac, setterY = netY-contactRise;
-
-
-  let targetAndArc = '';
-  if(diagSelectedType){
-    const x2 = W*trajXFrac(diagSelectedType, diagSetterFrac), y2 = netY;
-    const list = sets.filter(s=>s.setTypeKey===diagSelectedType);
-    const avgQ = list.length ? list.reduce((a,s)=>a+s.quality,0)/list.length : null;
-    const color = avgQ!==null ? qualityColor(avgQ) : '#5a6478';
-    const dash = avgQ!==null ? '' : 'stroke-dasharray="6,6"';
-    const d = buildArcPath(setterX, setterY, x2, y2, peakForType(diagSelectedType));
-    targetAndArc = `<path id="diag-arc" d="${d}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" opacity="0.9" ${dash}/>`
-      + `<circle id="diag-target" cx="${x2}" cy="${y2}" r="10" fill="none" stroke="#ff7a1a" stroke-width="3"/>`
-      + `<circle id="diag-target-dot" cx="${x2}" cy="${y2}" r="3" fill="#ff7a1a"/>`;
-  }
-
-
-  const zoneLabels = `
-    <text x="${W*0.14}" y="20" text-anchor="middle" class="traj-zone-label">LEFT</text>
-    <text x="${W*0.5}" y="20" text-anchor="middle" class="traj-zone-label">MIDDLE</text>
-    <text x="${W*0.88}" y="20" text-anchor="middle" class="traj-zone-label">RIGHT</text>
-  `;
-  const ball = `<text id="diag-ball" x="${setterX}" y="${setterY-16}" text-anchor="middle" font-size="22">🏐</text>`;
-  const setterCircle = `<circle id="diag-setter" cx="${setterX}" cy="${setterY}" r="12" fill="#ff7a1a" stroke="#1a2233" stroke-width="2"/>`;
-
-
-  svg.innerHTML = `${zoneLabels}${buildNetSVG()}${targetAndArc}${setterCircle}${ball}`;
-
-
-  attachDiagDrag();
-  renderDiagnoseTypeButtons();
-  renderDiagnosePanel();
-}
-
-
-function attachDiagDrag(){
-  const svg = document.getElementById('diagnose-svg');
-  const setterEl = document.getElementById('diag-setter');
-  const ballEl = document.getElementById('diag-ball');
-  let dragging = false;
-
-
-  function xFromClientX(clientX){
-    const rect = svg.getBoundingClientRect();
-    const relX = (clientX - rect.left) / rect.width;
-    return Math.max(14, Math.min(COURT.W-14, relX * COURT.W));
-  }
-  function onDown(e){ dragging = true; try{ e.target.setPointerCapture(e.pointerId); }catch(err){} }
-  function onMove(e){
-    if(!dragging) return;
-    const x = xFromClientX(e.clientX);
-    diagSetterFrac = x / COURT.W;
-    const setterY = COURT.netY - COURT.contactRise;
-    setterEl.setAttribute('cx', x);
-    ballEl.setAttribute('x', x);
-    if(diagSelectedType){
-      const arcEl = document.getElementById('diag-arc');
-      const x2 = COURT.W*trajXFrac(diagSelectedType, diagSetterFrac);
-      arcEl.setAttribute('d', buildArcPath(x, setterY, x2, COURT.netY, peakForType(diagSelectedType)));
-      if(RELATIVE_TO_SETTER.includes(diagSelectedType)){
-        // target itself moves too for the setter-relative types
-        document.getElementById('diag-target').setAttribute('cx', x2);
-        document.getElementById('diag-target-dot').setAttribute('cx', x2);
-      }
-    }
-  }
-  function onUp(e){
-    if(!dragging) return;
-    dragging = false;
-    try{ e.target.releasePointerCapture(e.pointerId); }catch(err){}
-    if(!diagSelectedType) renderDiagnosePanel(); // zone-based panel depends on where the setter landed
-  }
-  [setterEl, ballEl].forEach(el=>{
-    el.addEventListener('pointerdown', onDown);
-    el.addEventListener('pointermove', onMove);
-    el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointercancel', onUp);
-  });
-}
-
-
-function renderDiagnoseTypeButtons(){
-  const container = document.getElementById('diagnose-type-group');
-  container.innerHTML = '';
-  SET_TYPES.filter(t=>t.key!=='other').forEach(t=>{
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'opt-btn' + (diagSelectedType===t.key ? ' selected' : '');
-    b.dataset.value = t.key;
-    b.textContent = t.label;
-    container.appendChild(b);
-  });
-}
-document.getElementById('diagnose-type-group').addEventListener('click', (e)=>{
-  const btn = e.target.closest('.opt-btn');
-  if(!btn) return;
-  diagSelectedType = (diagSelectedType===btn.dataset.value) ? null : btn.dataset.value; // tap again to deselect
-  renderDiagnose(); // updates the 2D view + panel
-  if(diag3D) updateDiag3DArc(); // keep the 3D view in sync even if it's not the active one right now
-});
-
-
-function diagStatBoxes(agg, count){
-  return `<div class="diag-stat-grid">
-    <div class="diag-stat-box"><div class="val">${count}</div><div class="lbl">Sets logged</div></div>
-    <div class="diag-stat-box"><div class="val">${agg.avgQ.toFixed(2)}</div><div class="lbl">Avg quality</div></div>
-    <div class="diag-stat-box"><div class="val">${(agg.hittingPct*100).toFixed(0)}%</div><div class="lbl">Hitting %</div></div>
-    <div class="diag-stat-box"><div class="val">${(agg.assistRate*100).toFixed(0)}%</div><div class="lbl">Assist rate</div></div>
-  </div>`;
-}
-function diagHeading(text){
-  return `<h3 style="margin:0 0 10px; font-family:var(--font-display); font-weight:400; letter-spacing:.02em; color:var(--orange2); font-size:18px;">${text}</h3>`;
-}
-
-
-function renderDiagnosePanel(){
-  const panel = document.getElementById('diagnose-panel');
-  if(diagSelectedType) renderDiagnosePanelForType(diagSelectedType, panel);
-  else renderDiagnosePanelForZone(diagZoneForFrac(diagSetterFrac), panel);
-}
-
-
-function renderDiagnosePanelForType(key, panel){
-  const type = SET_TYPE_MAP[key];
-  const list = sets.filter(s=>s.setTypeKey===key);
-  if(list.length < 3){
-    panel.innerHTML = diagHeading(type.label) + `<div class="empty">Log at least 3 "${type.label}" sets to get a diagnosis (${list.length} so far).</div>`;
-    return;
-  }
-  const agg = computeAgg(list);
-  const qualities = list.map(s=>s.quality);
-  const stdev = Math.sqrt(qualities.reduce((a,q)=>a+Math.pow(q-agg.avgQ,2),0)/qualities.length);
-
-
-  let issue = null;
-  if(agg.avgQ < 1.8){
-    issue = { text:`Your ${type.label} sets average ${agg.avgQ.toFixed(2)}/3 quality — that's the headline issue here.`, category:'offNet' };
-  } else if(agg.attempts>=3 && agg.hittingPct < 0.2){
-    issue = { text:`Your ${type.label} sets look accurate (avg ${agg.avgQ.toFixed(2)}) but hitting % is only ${(agg.hittingPct*100).toFixed(0)}% — might be getting read early.`, category:'disguise' };
-  } else if(stdev > 0.85){
-    const cat = type.group==='Quick' ? 'quick' : type.group==='Fast' ? 'fasttempo' : 'highball';
-    issue = { text:`Your ${type.label} sets are inconsistent — quality swings by about ±${stdev.toFixed(2)} rep to rep.`, category: cat };
-  }
-
-
-  const passGood = list.filter(s=>s.passLevel===3);
-  const passBad = list.filter(s=>s.passLevel===1);
-  if(!issue && passGood.length>=2 && passBad.length>=2){
-    const goodAvg = passGood.reduce((a,s)=>a+s.quality,0)/passGood.length;
-    const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
-    if(goodAvg-badAvg >= 1){
-      issue = { text:`Your ${type.label} sets fall off a lot on bad passes (${goodAvg.toFixed(2)} → ${badAvg.toFixed(2)} avg quality).`, category:'outofsystem' };
-    }
-  }
-
-
-  panel.innerHTML = diagHeading(type.label) + diagStatBoxes(agg, list.length) +
-    (issue ? `<div class="tip-block"><div class="tip-issue">${escapeHtml(issue.text)}</div>${renderVideoCategory(issue.category)}</div>`
-           : `<div class="empty">No clear issue detected on this one — it's solid. Keep it up.</div>`);
-}
-
-
-function renderDiagnosePanelForZone(zone, panel){
-  const list = sets.filter(s=>s.zone===zone);
-  if(list.length < 3){
-    panel.innerHTML = diagHeading(zone+' zone') + `<div class="empty">Drag the setter over a zone, or tap a set type above for a sharper read. (${zone}: only ${list.length} set(s) logged so far.)</div>`;
-    return;
-  }
-  const agg = computeAgg(list);
-  const zoneTypes = SET_TYPES.filter(t=>t.zones.length===1 && t.zones[0]===zone);
-  const dominant = zoneTypes[0];
-  const cat = !dominant ? 'general' : dominant.group==='Quick' ? 'quick' : dominant.group==='Fast' ? 'fasttempo' : 'highball';
-  let issueText = null;
-  if(agg.avgQ < 1.8) issueText = `Your ${zone} sets overall average ${agg.avgQ.toFixed(2)}/3 quality.`;
-  else if(agg.attempts>=3 && agg.hittingPct < 0.25) issueText = `Your ${zone} sets look accurate (avg ${agg.avgQ.toFixed(2)}) but only converting ${(agg.hittingPct*100).toFixed(0)}% of the time.`;
-
-
-  panel.innerHTML = diagHeading(zone+' zone (overall)') + diagStatBoxes(agg, list.length) +
-    (issueText ? `<div class="tip-block"><div class="tip-issue">${escapeHtml(issueText)}</div>${renderVideoCategory(cat)}</div>`
-               : `<div class="empty">No clear zone-wide issue — tap a specific set type above for a sharper read.</div>`);
-}
-
-
-// ---------- Diagnose tab, 3D mode: a real player you walk around the court ----------
-// Loaded lazily (only once you switch to 3D) since it needs Three.js from the CDN.
-// Shares diagSetterFrac/diagSelectedType with the 2D view so switching back and
-// forth keeps you in the same spot. Movement is keyboard-only and stays inside
-// the 3D canvas — it never touches the app's other keyboard shortcuts.
-// Real dimensions: a half-court is roughly 30x30 feet, so 1 world unit = 1 foot.
-const COURT3D_WIDTH = 30, COURT3D_DEPTH = 30, NET3D_HEIGHT = 7.8;
-const NET3D_FABRIC_H = 3.3; // real net fabric is ~3.3ft tall, hanging well clear of the floor
-const ATTACK_LINE_Z = 10; // the 10-foot line — bic/c-ball are back-row attacks, so the hitter has to take off from behind this
-// Back-row attacks: the hitter takes off from behind the 10-foot line, but
-// jumps up and forward, so contact happens a bit in front of the line, not behind it.
-const TRAJECTORY_Z3D = { bic: 9, c: 9 };
-const CONTACT_Y = 5.0;    // setter's ball-contact height
-const LANDING_Y = 6.4;    // where the target ring / arc endpoint sits near the net
-const RISE3D = 12.5;      // extra arc rise per unit of peak
-let diagDepthFrac = 0.28; // 0 = at the net, 1 = back line
-let diag3D = null;
-let diag3DActive = false;
-
-
-function fracToX3D(frac){ return (frac-0.5)*COURT3D_WIDTH; }
-function x3DToFrac(x){ return x/COURT3D_WIDTH + 0.5; }
-
-
-function initDiagnose3D(){
-  if(diag3D || typeof THREE==='undefined') return;
-  const wrap = document.getElementById('diagnose-3d-canvas-wrap');
-  const width = wrap.clientWidth || 680, height = wrap.clientHeight || Math.round(width*420/680);
-
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0d1520);
-  const camera = new THREE.PerspectiveCamera(50, width/height, 0.1, 150);
-  camera.position.set(0, 15, 42); // pulled back further so the whole court fits in frame
-  camera.lookAt(0, 5, 10);
-  const renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setSize(width, height);
-  wrap.innerHTML = ''; wrap.appendChild(renderer.domElement);
-
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-  dirLight.position.set(3,10,6);
-  scene.add(dirLight);
-
-
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(COURT3D_WIDTH+2, COURT3D_DEPTH+2),
-    new THREE.MeshStandardMaterial({ color:0x2b3a2e, roughness:0.9 })
-  );
-  floor.rotation.x = -Math.PI/2;
-  floor.position.set(0,0,COURT3D_DEPTH/2);
-  scene.add(floor);
-
-
-  const lineMat = new THREE.LineBasicMaterial({ color:0xffffff, opacity:0.5, transparent:true });
-  function addLine(x1,z1,x2,z2){
-    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,0.01,z1), new THREE.Vector3(x2,0.01,z2)]);
-    scene.add(new THREE.Line(geo, lineMat));
-  }
-  const hw = COURT3D_WIDTH/2;
-  addLine(-hw,0,-hw,COURT3D_DEPTH); addLine(hw,0,hw,COURT3D_DEPTH); addLine(-hw,COURT3D_DEPTH,hw,COURT3D_DEPTH);
-
-
-  // The 10-foot attack line — bic and c-ball are back-row attacks, so a legal
-  // hit on either has to take off from behind this line, not in front of it.
-  const attackLineMat = new THREE.LineBasicMaterial({ color:0xff7a1a, opacity:0.85, transparent:true });
-  const attackLineGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-hw, 0.015, ATTACK_LINE_Z), new THREE.Vector3(hw, 0.015, ATTACK_LINE_Z)
-  ]);
-  scene.add(new THREE.Line(attackLineGeo, attackLineMat));
-
-
-  // Net: a fine wireframe grid (real mesh look, not just a plane outline) plus
-  // top tape and a bottom cable. Fabric is only ~3.3ft tall in real life, so it
-  // hangs well clear of the floor rather than reaching down to it.
-  const netBottomY = NET3D_HEIGHT - NET3D_FABRIC_H;
-  const net = new THREE.Mesh(
-    new THREE.PlaneGeometry(COURT3D_WIDTH, NET3D_FABRIC_H, 32, 6),
-    new THREE.MeshStandardMaterial({ color:0xaeb9cc, transparent:true, opacity:0.6, side:THREE.DoubleSide, wireframe:true })
-  );
-  net.position.set(0, netBottomY + NET3D_FABRIC_H/2, 0);
-  scene.add(net);
-  const tape = new THREE.Mesh(new THREE.BoxGeometry(COURT3D_WIDTH, 0.25, 0.15), new THREE.MeshStandardMaterial({ color:0xeef2f8 }));
-  tape.position.set(0, NET3D_HEIGHT, 0);
-  scene.add(tape);
-  const bottomCable = new THREE.Mesh(new THREE.BoxGeometry(COURT3D_WIDTH, 0.1, 0.1), new THREE.MeshStandardMaterial({ color:0xd8dee8 }));
-  bottomCable.position.set(0, netBottomY, 0);
-  scene.add(bottomCable);
-
-
-  // Support poles — a big pole from the floor partway up, then a thinner pole
-  // out of the top of that to actually reach the net/antenna, like a real
-  // telescoping net post — so the net looks held up rather than floating.
-  const poleMat = new THREE.MeshStandardMaterial({ color:0x555f6e });
-  const bigPoleH = NET3D_HEIGHT*0.62;
-  const thinPoleH = NET3D_HEIGHT - bigPoleH;
-  [-hw, hw].forEach(x=>{
-    const bigPole = new THREE.Mesh(new THREE.CylinderGeometry(1,1,bigPoleH,16), poleMat);
-    bigPole.position.set(x, bigPoleH/2, 0);
-    scene.add(bigPole);
-    const thinPole = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,thinPoleH,12), poleMat);
-    thinPole.position.set(x, bigPoleH + thinPoleH/2, 0);
-    scene.add(thinPole);
-  });
-
-
-  // Antennas: real ones alternate red/white stripes along their length.
-  function buildStripedAntenna(height, segments){
-    const group = new THREE.Group();
-    const segH = height/segments;
-    for(let i=0;i<segments;i++){
-      const color = i%2===0 ? 0xe8283f : 0xffffff;
-      const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,segH,10), new THREE.MeshStandardMaterial({ color }));
-      seg.position.y = -height/2 + segH*(i+0.5);
-      group.add(seg);
-    }
-    return group;
-  }
-  [-hw, hw].forEach(x=>{
-    const ant = buildStripedAntenna(2.5, 8);
-    ant.position.set(x, NET3D_HEIGHT+1.25, 0);
-    scene.add(ant);
-  });
-
-
-  const playerMat = new THREE.MeshStandardMaterial({ color:0xffffff });
-  const player = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.62,5.0,12), playerMat);
-  body.position.y = 2.5;
-  player.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.65,12,12), playerMat);
-  head.position.y = 5.25;
-  player.add(head);
-  scene.add(player);
-
-
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.35,16,16), new THREE.MeshStandardMaterial({ color:0xffffff }));
-  scene.add(ball);
-
-
-  const targetMesh = new THREE.Mesh(new THREE.TorusGeometry(1.2,0.15,8,24), new THREE.MeshStandardMaterial({ color:0xff7a1a }));
-  targetMesh.visible = false;
-  targetMesh.rotation.x = Math.PI/2;
-  scene.add(targetMesh);
-
-
-  // Landing zones: a lighter patch on the floor under every set type's target,
-  // always visible, so you can see roughly where every call should land at once.
-  // Skips the setter-relative types (1/push1/back1/2) since they don't have a
-  // single fixed spot — their live target ring is the marker for those instead.
-  const landingMat = new THREE.MeshStandardMaterial({ color:0x5c8a63, transparent:true, opacity:0.65 });
-  Object.keys(TRAJECTORY_X).filter(key=>!RELATIVE_TO_SETTER.includes(key)).forEach(key=>{
-    const patch = new THREE.Mesh(new THREE.CircleGeometry(1.4, 20), landingMat);
-    patch.rotation.x = -Math.PI/2;
-    patch.position.set(fracToX3D(TRAJECTORY_X[key]), 0.02, TRAJECTORY_Z3D[key] ?? 0);
-    scene.add(patch);
-  });
-
-
-  diag3D = { scene, camera, renderer, player, ball, targetMesh, arcMesh:null, wrap, keys:{}, animId:null };
-  positionDiag3DPlayer();
-  attachDiag3DControls();
-  window.addEventListener('resize', resizeDiag3D);
-  startDiag3DLoop();
-}
-
-
-function positionDiag3DPlayer(){
-  const x = fracToX3D(diagSetterFrac), z = diagDepthFrac*COURT3D_DEPTH;
-  diag3D.player.position.set(x, 0, z);
-  diag3D.ball.position.set(x, CONTACT_Y, z);
-  updateDiag3DArc();
-}
-
-
-function updateDiag3DArc(){
-  if(!diag3D) return;
-  if(diag3D.arcMesh){ diag3D.scene.remove(diag3D.arcMesh); diag3D.arcMesh.geometry.dispose(); diag3D.arcMesh.material.dispose(); diag3D.arcMesh=null; }
-  if(!diagSelectedType){ diag3D.targetMesh.visible=false; return; }
-  const x2 = fracToX3D(trajXFrac(diagSelectedType, diagSetterFrac));
-  const z2 = TRAJECTORY_Z3D[diagSelectedType] ?? 0; // back-row attacks land further from the net
-  const list = sets.filter(s=>s.setTypeKey===diagSelectedType);
-  const avgQ = list.length ? list.reduce((a,s)=>a+s.quality,0)/list.length : null;
-  const colorStr = avgQ!==null ? qualityColor(avgQ) : 'rgb(90,100,120)';
-
-
-  diag3D.targetMesh.visible = true;
-  diag3D.targetMesh.position.set(x2, LANDING_Y, z2);
-  diag3D.targetMesh.material.color.set(colorStr);
-
-
-  const startX = diag3D.player.position.x, startZ = diag3D.player.position.z;
-  const peak = peakForType(diagSelectedType);
-  const peakY = CONTACT_Y + peak*RISE3D;
-  const midX = startX + (x2-startX)*COURT.peakXFrac;
-  const midZ = startZ + (z2-startZ)*COURT.peakXFrac;
-  const curve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(startX, CONTACT_Y, startZ),
-    new THREE.Vector3(midX, peakY, midZ),
-    new THREE.Vector3(x2, LANDING_Y, z2)
-  );
-  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.15, 8, false), new THREE.MeshStandardMaterial({ color: colorStr }));
-  diag3D.scene.add(mesh);
-  diag3D.arcMesh = mesh;
-}
-
-
-function attachDiag3DControls(){
-  const wrap = diag3D.wrap;
-  wrap.tabIndex = 0;
-  wrap.addEventListener('click', ()=>wrap.focus());
-  wrap.addEventListener('keydown', (e)=>{
-    const k = e.key.toLowerCase();
-    diag3D.keys[k] = true;
-    if(['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
-  });
-  wrap.addEventListener('keyup', (e)=>{ diag3D.keys[e.key.toLowerCase()] = false; });
-}
-
-
-function resizeDiag3D(){
-  if(!diag3D) return;
-  const wrap = diag3D.wrap;
-  const width = wrap.clientWidth, height = wrap.clientHeight;
-  if(!width || !height) return;
-  diag3D.camera.aspect = width/height;
-  diag3D.camera.updateProjectionMatrix();
-  diag3D.renderer.setSize(width, height);
-}
-
-
-let diag3DPanelThrottle = 0;
-function startDiag3DLoop(){
-  let last = performance.now();
-  function tick(now){
-    if(!diag3D) return;
-    diag3D.animId = requestAnimationFrame(tick);
-    const dt = Math.min(0.05, (now-last)/1000); last = now;
-    if(!diag3DActive) return;
-    const speed = 14; // feet/sec
-    let dx=0, dz=0;
-    const k = diag3D.keys;
-    if(k['arrowleft']||k['a']) dx -= 1;
-    if(k['arrowright']||k['d']) dx += 1;
-    if(k['arrowup']||k['w']) dz -= 1;
-    if(k['arrowdown']||k['s']) dz += 1;
-    if(dx!==0 || dz!==0){
-      const hw = COURT3D_WIDTH/2 - 1;
-      const x = Math.max(-hw, Math.min(hw, diag3D.player.position.x + dx*speed*dt));
-      const z = Math.max(1.2, Math.min(COURT3D_DEPTH-1.2, diag3D.player.position.z + dz*speed*dt));
-      diag3D.player.position.set(x,0,z);
-      diag3D.ball.position.set(x,CONTACT_Y,z);
-      diagSetterFrac = x3DToFrac(x);
-      diagDepthFrac = z/COURT3D_DEPTH;
-      updateDiag3DArc();
-      diag3DPanelThrottle += dt;
-      if(diag3DPanelThrottle > 0.25){
-        diag3DPanelThrottle = 0;
-        if(!diagSelectedType) renderDiagnosePanel();
-      }
-    }
-    diag3D.renderer.render(diag3D.scene, diag3D.camera);
-  }
-  diag3D.animId = requestAnimationFrame(tick);
-}
-
-
-document.getElementById('diag-view-2d-btn').addEventListener('click', ()=>{
-  diag3DActive = false;
-  document.getElementById('diag-view-2d-btn').className = 'primary';
-  document.getElementById('diag-view-3d-btn').className = 'secondary';
-  document.getElementById('diagnose-court').style.display = 'block';
-  document.getElementById('diagnose-court-3d').style.display = 'none';
-  renderDiagnose();
-});
-document.getElementById('diag-view-3d-btn').addEventListener('click', ()=>{
-  if(typeof THREE==='undefined'){ toast('3D view needs an internet connection to load (couldn\'t reach the 3D library)'); return; }
-  diag3DActive = true;
-  document.getElementById('diag-view-3d-btn').className = 'primary';
-  document.getElementById('diag-view-2d-btn').className = 'secondary';
-  document.getElementById('diagnose-court').style.display = 'none';
-  document.getElementById('diagnose-court-3d').style.display = 'block';
-  initDiagnose3D();
-  positionDiag3DPlayer();
-  resizeDiag3D();
-  renderDiagnosePanel();
-});
+// (Hand-entry Diagnose UI removed — pass card lives under // Diagnose: pass quality below.)
 
 
 // ---------- Coaching tips (curated videos, matched by rule-based detection) ----------
@@ -2077,91 +1691,44 @@ function renderCoachingLibrary(){
 }
 
 
-function renderCoachingTips(){
+function renderDashCoaching(picked, ctx){
   const el = document.getElementById('coaching-tips');
-  if(sets.length < 5){
-    el.innerHTML = '<div class="empty">Log at least 5 sets to get suggestions tailored to your weak spots.</div>';
+  if(!el) return;
+  if(!picked || !picked.length || !ctx || !ctx.n){
+    el.innerHTML = '<div class="empty">Load a Balltime game to see tips.</div>';
     return;
   }
   const suggestions = [];
-
-
-  // Weakest zone by average quality (needs a decent sample)
-  const zoneStats = ZONES.map(z=>{
-    const l = sets.filter(s=>s.zone===z);
-    return { zone: z, count: l.length, avgQ: computeAgg(l).avgQ };
-  }).filter(z=>z.count>=3);
-  if(zoneStats.length){
-    const worstZone = zoneStats.reduce((a,b)=> a.avgQ<=b.avgQ ? a : b);
-    if(worstZone.avgQ < 2){
-      suggestions.push({
-        text: `Your ${worstZone.zone} sets average ${worstZone.avgQ.toFixed(2)}/3 quality — your weakest zone (${worstZone.count} sets logged).`,
-        category: 'offNet'
-      });
+  const { byZone, byCall, assistPct, eff, avail } = ctx;
+  // Weakest zone by assist % (n>=3)
+  const zoneStats = Object.entries(byZone||{}).map(([z,l])=>({ zone:z, count:l.length, a:dashAssistPctSmart(l) })).filter(z=>z.count>=3 && z.a!=null);
+  if(zoneStats.length>=2){
+    const worst = zoneStats.reduce((a,b)=> a.a<=b.a ? a : b);
+    const best = zoneStats.reduce((a,b)=> a.a>=b.a ? a : b);
+    if(worst.a < best.a - 0.1){
+      suggestions.push({ text: `${worst.zone} assist ${dashFmtPct(worst.a)} (n=${worst.count}) — your softest zone vs ${best.zone} at ${dashFmtPct(best.a)}.`, category: 'offNet' });
     }
   }
-
-
-  // Most inconsistent tempo speed-group (highest spread in quality)
-  const groupStats = ['Quick','Fast','Slow'].map(g=>{
-    const l = sets.filter(s=>tempoGroup(s)===g);
-    if(l.length<3) return null;
-    const avgQ = l.reduce((a,s)=>a+s.quality,0)/l.length;
-    const variance = l.reduce((a,s)=>a+Math.pow(s.quality-avgQ,2),0)/l.length;
-    return { group: g, count: l.length, avgQ, stdev: Math.sqrt(variance) };
-  }).filter(Boolean);
-  if(groupStats.length){
-    const mostInconsistent = groupStats.reduce((a,b)=> a.stdev>=b.stdev ? a : b);
-    if(mostInconsistent.stdev > 0.8){
-      const cat = mostInconsistent.group==='Quick' ? 'quick' : mostInconsistent.group==='Fast' ? 'fasttempo' : 'highball';
-      suggestions.push({
-        text: `Your ${mostInconsistent.group} tempo sets are the least consistent — quality std dev of ${mostInconsistent.stdev.toFixed(2)} within the same speed group (${mostInconsistent.count} sets).`,
-        category: cat
-      });
+  // Low middle share when in-system exists
+  const mid = (byZone['Middle']||[]).length;
+  if(ctx.n>=10 && mid/ctx.n < 0.15 && avail && avail.pos){
+    suggestions.push({ text: `Middle only ${dashFmtPct(mid/ctx.n)} of sets — look at quick/middle usage on in-system balls.`, category: 'quick' });
+  }
+  // Call with volume but low assist
+  const callStats = Object.entries(byCall||{}).map(([k,l])=>({ k, count:l.length, a:dashAssistPctSmart(l) })).filter(c=>c.count>=3 && c.a!=null);
+  if(callStats.length){
+    const weak = callStats.reduce((a,b)=> a.a<=b.a ? a : b);
+    if(weak.a < 0.3){
+      suggestions.push({ text: `"${weak.k}" call assist ${dashFmtPct(weak.a)} on ${weak.count} sets — check tempo/location consistency.`, category: 'fasttempo' });
     }
   }
-
-
-  // Zone/tempo combos that look accurate but aren't converting — possible blocking/read issue
-  const comboStats = [];
-  ZONES.forEach(z=>{
-    SET_TYPES.forEach(t=>{
-      const l = sets.filter(s=>s.zone===z && s.setTypeKey===t.key);
-      if(l.length<3) return;
-      const a = computeAgg(l);
-      comboStats.push({ zone: z, tempo: t.label, count: l.length, avgQ: a.avgQ, hittingPct: a.hittingPct, attempts: a.attempts });
-    });
-  });
-  const blockedCandidate = comboStats.find(c=>c.avgQ>=2.2 && c.attempts>=3 && c.hittingPct<0.15);
-  if(blockedCandidate){
-    suggestions.push({
-      text: `${blockedCandidate.tempo} sets to ${blockedCandidate.zone} look accurate (avg ${blockedCandidate.avgQ.toFixed(2)}) but hitting % is only ${(blockedCandidate.hittingPct*100).toFixed(0)}% — might be getting read early by blockers.`,
-      category: 'disguise'
-    });
+  if(eff!=null && eff < 0.2 && ctx.n>=10){
+    suggestions.push({ text: `Overall hitting eff ${dashFmtEff(eff)} on ${ctx.n} sets — fundamentals + out-of-system high balls.`, category: 'outofsystem' });
   }
-
-
-  // Big drop-off in set quality on bad passes vs. perfect passes
-  const passGood = sets.filter(s=>s.passLevel===3);
-  const passBad = sets.filter(s=>s.passLevel===1);
-  if(passGood.length>=3 && passBad.length>=3){
-    const goodAvg = passGood.reduce((a,s)=>a+s.quality,0)/passGood.length;
-    const badAvg = passBad.reduce((a,s)=>a+s.quality,0)/passBad.length;
-    if(goodAvg - badAvg >= 1){
-      suggestions.push({
-        text: `Your set quality drops from ${goodAvg.toFixed(2)}/3 on perfect passes to ${badAvg.toFixed(2)}/3 on bad ones (${passBad.length} out-of-system reps logged) — a bigger gap than most of your other splits.`,
-        category: 'outofsystem'
-      });
-    }
-  }
-
-
   if(!suggestions.length){
-    el.innerHTML = '<div class="empty">No clear weak spot detected yet — keep logging across zones and tempos. Here are general fundamentals in the meantime:</div>' + renderVideoCategory('general');
+    el.innerHTML = `<div class="empty">No glaring weak spot on this sample (assist ${dashFmtPct(assistPct)}, eff ${dashFmtEff(eff)}). Browse topics below.</div>` + renderVideoCategory('general');
     return;
   }
-
-
   el.innerHTML = suggestions.slice(0,3).map(s => `
     <div class="tip-block">
       <div class="tip-issue">${escapeHtml(s.text)}</div>
@@ -2169,6 +1736,7 @@ function renderCoachingTips(){
     </div>
   `).join('');
 }
+function renderCoachingTips(){ /* legacy hand-log path retired — Dashboard uses renderDashCoaching */ }
 
 
 let chartRefs = {};
