@@ -625,12 +625,12 @@
     <div class="two-col">
       <div class="card">
         <h2>Sets by zone</h2>
-        <div class="sub">Distribution of Leo’s sets (Balltime destination).</div>
+        <div class="sub">Distribution of Leo’s sets (Balltime destination). Right includes behind-setter.</div>
         <div class="chart-box"><canvas id="chart-zone"></canvas></div>
       </div>
       <div class="card">
         <h2>Assist % by zone</h2>
-        <div class="sub">Kills led by your set ÷ sets to that zone.</div>
+        <div class="sub">Kills led by your set ÷ sets to that zone. Right includes behind-setter.</div>
         <div class="chart-box"><canvas id="chart-zone-quality"></canvas></div>
       </div>
     </div>
@@ -1277,7 +1277,8 @@ function dashAssistPctSmart(cs){
 }
 function dashZoneLabel(z){
   if(!z || z==='unknown') return null;
-  const map = { left:'Left', middle:'Middle', right:'Right', 'back-row':'Back row', 'behind-setter':'Behind setter' };
+  // Display merge: Balltime "right" + "behind-setter" → one category (matches bucket() right/back-set)
+  const map = { left:'Left', middle:'Middle', right:'Right / behind', 'behind-setter':'Right / behind', 'back-row':'Back row' };
   return map[z] || (z.charAt(0).toUpperCase()+z.slice(1));
 }
 function dashBucketZone(c){
@@ -1286,7 +1287,7 @@ function dashBucketZone(c){
   const b = c.bucket || '';
   if(b.startsWith('left')) return 'Left';
   if(b.startsWith('middle')) return 'Middle';
-  if(b.startsWith('right') || b==='right/back-set') return 'Right';
+  if(b.startsWith('right') || b==='right/back-set') return 'Right / behind';
   if(b.startsWith('back')) return 'Back row';
   return null;
 }
@@ -1372,7 +1373,7 @@ async function renderDashboard(){
   `;
 
   // Zones
-  const zoneOrder = ['Left','Middle','Right','Back row','Behind setter'];
+  const zoneOrder = ['Left','Middle','Right / behind','Back row'];
   const byZone = {};
   chains.forEach(c=>{
     const z = dashBucketZone(c); if(!z) return;
