@@ -869,7 +869,7 @@
     </div>
     <div class="card">
       <h2>Strength diagram</h2>
-      <div class="sub">Outer = stronger. Dashed = last game (when both have that axis).</div>
+      <div class="sub">Average across your games (weighted by Leo’s sets). Outer = stronger. Cards below stay per selected game.</div>
       <div class="rc-radar-wrap"><div class="rc-radar-box"><canvas id="rc-radar"></canvas></div></div>
       <div id="rc-radar-empty" class="empty" style="display:none;">Not enough scored categories for a radar yet.</div>
     </div>
@@ -4204,18 +4204,38 @@ async function renderReportCard(){
     ${worst.length ? `<ul class="rc-note" style="padding-left:18px;margin-bottom:0">${worst.map(({cat, r})=>`<li><b>${cat.title}</b> (${chipTxt[r.status]}, ${r.nums.slice(0,2).map(n=>escapeHtml(n[0]+' '+n[1])).join(', ')}) — cue: <span class="rc-cue">"${escapeHtml(cat.cue)}"</span></li>`).join('')}</ul>` : '<div class="rc-note">Not enough data to pick focus areas.</div>'}
     <div class="rc-info">ⓘ The two lowest-scoring categories this game (each category gets a 0–100 rule score behind its chip; best connection isn't counted). Cues reuse Leo's current focus where they fit ("neutral spine, push with thumbs/wrists", "beat the ball, jump straight up"); "press straight over, seal the seam" is a blocking cue, so it doesn't apply to setting categories.</div></div>`;
   document.getElementById('rc-grid').innerHTML = html;
-  drawReportRadar(res, g, prev);
+  drawReportRadar(games);
 }
 const RC_RADAR_LABELS = {
   accuracy:'Accuracy', tempo:'Tempo', consistency:'Consistency', distribution:'Distribution',
   oos:'OOS', diversity:'Diversity', hitters:'Hitters', connection:'Connection'
 };
-function drawReportRadar(res, g, prev){
+function drawReportRadar(games){
   destroyChart('rc-radar');
   const canvas = document.getElementById('rc-radar');
   const empty = document.getElementById('rc-radar-empty');
   if(!canvas) return;
-  const axes = res.filter(x=>x.r.status!=='nodata' && x.r.score!=null);
+  const list = games || [];
+  // For each Report Card category, set-weighted mean of scores across games that have that axis
+  const axes = [];
+  RC_CATS.forEach(cat=>{
+    let wSum = 0, sSum = 0, nGames = 0;
+    list.forEach(g=>{
+      const r = cat.calc(g);
+      if(!r || r.status==='nodata' || r.score==null) return;
+      const w = Math.max(1, (g.metrics && g.metrics.quality && g.metrics.quality.n) || (g.chains||[]).length || 1);
+      wSum += w;
+      sSum += r.score * w;
+      nGames++;
+    });
+    if(nGames===0) return;
+    axes.push({
+      key: cat.key,
+      label: RC_RADAR_LABELS[cat.key] || cat.title,
+      score: Math.max(0, Math.min(100, Math.round(sSum / wSum))),
+      nGames
+    });
+  });
   if(axes.length < 3){
     canvas.style.display = 'none';
     if(empty) empty.style.display = 'block';
@@ -4223,48 +4243,38 @@ function drawReportRadar(res, g, prev){
   }
   canvas.style.display = 'block';
   if(empty) empty.style.display = 'none';
-  const labels = axes.map(x=>RC_RADAR_LABELS[x.cat.key] || x.cat.title);
-  const curData = axes.map(x=>Math.max(0, Math.min(100, Math.round(x.r.score))));
-  const datasets = [{
-    label: g.date || 'This game',
-    data: curData,
-    backgroundColor: 'rgba(232,93,4,0.28)',
-    borderColor: '#e85d04',
-    borderWidth: 2,
-    pointBackgroundColor: '#ff7a18',
-    pointBorderColor: '#f7f1e8',
-    pointRadius: 3,
-    pointHoverRadius: 5
-  }];
-  const prevData = axes.map(x=>{
-    if(!x.pr || x.pr.status==='nodata' || x.pr.score==null) return null;
-    return Math.max(0, Math.min(100, Math.round(x.pr.score)));
-  });
-  if(prev && prevData.some(v=>v!=null)){
-    datasets.push({
-      label: prev.date || 'Last game',
-      data: prevData,
-      backgroundColor: 'rgba(126,196,255,0.08)',
-      borderColor: '#7ec4ff',
-      borderWidth: 2,
-      borderDash: [6, 4],
-      pointBackgroundColor: '#7ec4ff',
-      pointBorderColor: '#f7f1e8',
-      pointRadius: 2,
-      pointHoverRadius: 4,
-      spanGaps: true
-    });
-  }
+  const labels = axes.map(a=>a.label);
+  const data = axes.map(a=>a.score);
   chartRefs['rc-radar'] = new Chart(canvas.getContext('2d'), {
     type: 'radar',
-    data: { labels, datasets },
+    data: {
+      labels,
+      datasets: [{
+        label: 'Your average',
+        data,
+        backgroundColor: 'rgba(232,93,4,0.28)',
+        borderColor: '#e85d04',
+        borderWidth: 2,
+        pointBackgroundColor: '#ff7a18',
+        pointBorderColor: '#f7f1e8',
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
       plugins: {
-        legend: { labels: { color: '#b8aea3', boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: (ctx)=> `${ctx.dataset.label}: ${ctx.raw==null?'n/a':ctx.raw}` } }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx)=>{
+              const ax = axes[ctx.dataIndex];
+              return `${ctx.raw} · ${ax.nGames} game${ax.nGames===1?'':'s'}`;
+            }
+          }
+        }
       },
       scales: {
         r: {
