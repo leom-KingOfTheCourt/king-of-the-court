@@ -278,7 +278,22 @@
   .c3d-hud{ position:absolute; left:10px; top:8px; font-size:12px; color:var(--text-dim); pointer-events:none; font-weight:600; text-shadow:0 1px 2px #000; }
   .c3d-hud b{ color:var(--orange2); }
   .c3d-fallback{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--text-dim); }
+  #court3d-wrap.dragging-blocker{ cursor:ew-resize; }
   #c3d-types .opt-btn .legend-dot{ margin-right:5px; vertical-align:-1px; }
+  #c3d-types .opt-btn.best-pick{ box-shadow:0 0 0 2px #ffcc33, 0 0 12px rgba(255,204,51,.45); }
+  #c3d-types .opt-btn.best-pick::after{ content:' BEST'; font-size:10px; letter-spacing:.04em; color:#ffcc33; font-weight:700; }
+  #c3d-types .opt-btn.best-pick.selected::after{ color:#111; }
+  #c3d-best-tip{ margin-top:10px; padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-left:3px solid #ffcc33; border-radius:6px; font-size:13px; line-height:1.45; color:var(--text); display:none; }
+  #c3d-best-tip.show{ display:block; }
+  #c3d-best-tip b{ color:#ffcc33; }
+  #iq3d-wrap{ position:relative; width:100%; aspect-ratio:16/9; min-height:240px; max-height:420px; background:#0a0a0e; border:1px solid var(--border); border-radius:10px; overflow:hidden; touch-action:none; }
+  #iq3d-wrap canvas{ display:block; width:100%; height:100%; }
+  .iq-hud{ position:absolute; left:10px; top:8px; font-size:12px; color:var(--text-dim); pointer-events:none; font-weight:600; text-shadow:0 1px 2px #000; }
+  .iq-hud b{ color:var(--orange2); }
+  #iq-result{ margin-top:10px; padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-radius:6px; font-size:13px; line-height:1.45; min-height:1.4em; }
+  #iq-result.ok{ border-left:3px solid var(--good); }
+  #iq-result.bad{ border-left:3px solid var(--bad); }
+  #iq-score{ font-weight:700; color:var(--orange2); }
   .pass-wrap{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:16px; align-items:start; width:100%; max-width:100%; }
   .pass-wrap > *{ min-width:0; max-width:100%; }
   @media (max-width:820px){ .pass-wrap{ grid-template-columns:minmax(0,1fr); } }
@@ -482,7 +497,7 @@
     }
     .hidden-crow{ pointer-events:none; max-width:18px; max-height:18px; opacity:.1 !important; }
     .site-foot .hidden-crow{ display:inline-block; }
-    #court3d-wrap, #diagnose-3d-canvas-wrap{ min-height:240px; max-height:360px; }
+    #court3d-wrap, #iq3d-wrap, #diagnose-3d-canvas-wrap{ min-height:240px; max-height:360px; }
     .tonight-card .tonight-row{ flex-direction:column; }
   }
   @media (max-width:480px){
@@ -1027,20 +1042,38 @@
   <section id="court3d">
     <div class="card">
       <h2>3D court — set trajectories</h2>
-      <div class="sub">Drag the baby-blue setter around your side of the court, or use W/A/S/D or the arrow keys. Drag anywhere else to orbit, scroll or pinch to zoom. No sets are drawn until you tap a set type below; tap more to add them, tap again to hide. Each one draws an arc from the setter's hands to where the hitter meets it: quicks stay low, shoot and C ball are medium-fast, and 4 and 5 ball go highest. The 1 ball, 2 ball, push 1, and back 1 move with the setter. Court is 18 × 9 m with a 2.43 m net.</div>
+      <div class="sub">Drag the baby-blue setter around your side of the court, or use W/A/S/D or the arrow keys. Orange blockers stand on the other side of the net and follow the setter across by default — drag a blocker along the net to pin it, or tap <b>Blockers follow setter</b> to free them again. Drag anywhere else to orbit, scroll or pinch to zoom. No sets are drawn until you tap a set type below; tap more to add them, tap again to hide. <b>Best set</b> highlights a textbook call for the current setter + block. Court is 18 × 9 m with a 2.43 m net.</div>
       <label>Set types <span class="batch-mode-note">(tap to toggle — pick as many as you like)</span></label>
       <div class="opt-group" id="c3d-types"></div>
-      <div class="top-actions" style="justify-content:flex-start; margin:10px 0 12px;">
+      <div class="top-actions" style="justify-content:flex-start; margin:10px 0 12px; flex-wrap:wrap;">
+        <button class="primary" id="c3d-best" title="Highlight a textbook set for the current setter and block">Best set</button>
         <button class="secondary" id="c3d-all">All</button>
         <button class="secondary" id="c3d-none">None</button>
-        <button class="secondary" id="c3d-reset-setter" title="Setter back to the usual spot, all trajectories hidden">Reset</button>
+        <button class="secondary" id="c3d-reset-setter" title="Setter + blockers back to defaults, all trajectories hidden">Reset</button>
+        <button class="secondary" id="c3d-blockers-follow" title="Clear pinned blockers so they track the setter again">Blockers follow setter</button>
         <button class="secondary" id="c3d-reset-view">Reset view</button>
       </div>
-      <div id="court3d-wrap" tabindex="0" aria-label="3D volleyball court. Arrow keys move the setter.">
+      <div id="court3d-wrap" tabindex="0" aria-label="3D volleyball court. Arrow keys move the setter. Drag blockers along the net.">
         <div class="c3d-hud" id="c3d-hud"></div>
       </div>
-      <div class="diag-3d-hint">Mouse: drag the setter to move them · drag elsewhere to rotate · scroll to zoom. Touch: drag the setter · one finger elsewhere rotates · pinch zooms. Keyboard: W/A/S/D or arrow keys move the setter (Shift for bigger steps) — ignored while you're typing in a field.</div>
+      <div id="c3d-best-tip" aria-live="polite"></div>
+      <div class="diag-3d-hint">Mouse: drag the setter or a blocker · drag elsewhere to rotate · scroll to zoom. Touch: drag the setter/blocker · one finger elsewhere rotates · pinch zooms. Keyboard: W/A/S/D or arrow keys move the setter (Shift for bigger steps) — ignored while you're typing in a field.</div>
       <div id="c3d-table" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card" id="iq-card">
+      <h2>Setter IQ test</h2>
+      <div class="sub">Read the random setter + block, then pick the set you would run. Scoring uses the same textbook engine as <b>Best set</b> on the court above. No login — just practice.</div>
+      <div id="iq3d-wrap" aria-label="IQ test mini court">
+        <div class="iq-hud" id="iq-hud">Loading…</div>
+      </div>
+      <label style="margin-top:12px;">Your call</label>
+      <div class="opt-group" id="iq-types"></div>
+      <div class="top-actions" style="justify-content:flex-start; margin:10px 0 0; flex-wrap:wrap;">
+        <button class="primary" id="iq-next">Next situation</button>
+        <span id="iq-score">Score: 0 / 0</span>
+      </div>
+      <div id="iq-result">Tap a set type to answer, or Next situation for a new look.</div>
     </div>
   </section>
 
@@ -2655,7 +2688,7 @@ const SET_TARGETS_M = {
   c:      { x:7.92, d:2.74, apex:1.92, contact:3.0, color:'#4de0d0', note:'back-row attack on the right, ~2.7 m off the net' },
   '31':   { x:3.3,  d:0.8, apex:0.9, contact:2.9, color:'#ff9d6b', note:'quick in front of zone 3' },
   '32':   { x:2.0,  d:0.9, apex:1.4, contact:2.9, color:'#6bdba3', note:'between the 31 and the 4' },
-  bic:    { x:5.4,  d:3.2, apex:1.2, contact:3.0, color:'#c9c3d6', note:'back-row quick near the setter' }
+  bic:    { x:4.5,  d:2.74, apex:1.92, contact:3.0, color:'#c9c3d6', note:'middle-court C-ball equivalent — back-row attack at mid-court, ~2.7 m off the net' }
 };
 function setTargetM(key, setter){
   const t = SET_TARGETS_M[key]; if(!t) return null;
@@ -2784,17 +2817,26 @@ function renderCourt2D(){
 // World units are meters. x runs across the net (-4.5 = your left sideline,
 // +4.5 = your right), y is up, z is distance from the net (your side is z > 0).
 // Landing points come from SET_TARGETS_M, the same table the 2D court map uses.
-const C3D_TYPE_ORDER = ['1','2','push1','back1','4','shoot','3','5','c'];
-const C3D = { NET_H:2.43, RELEASE_Y:2.4, G:9.81 };
+const C3D_TYPE_ORDER = ['1','2','push1','back1','4','shoot','3','5','c','bic'];
+const C3D = { NET_H:2.43, RELEASE_Y:2.4, G:9.81, BLOCKER_Z:-0.45, BLOCKER_SPREAD:1.15 };
 let c3dSelected = new Set(); // nothing drawn until a set-type button is tapped
+let c3dBestKeys = new Set(); // highlighted by Best set / cleared on None/Reset
 let c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d };
+// Blockers live on the opponent side of the net (z < 0). Default: follow setter x as a pack.
+let c3dBlockersFollow = true;
+let c3dBlockers = [
+  { id:'B1', offset:-C3D.BLOCKER_SPREAD, x:0, pinned:false },
+  { id:'B2', offset:0,                   x:0, pinned:false },
+  { id:'B3', offset: C3D.BLOCKER_SPREAD, x:0, pinned:false }
+];
 let c3d = null;
-TAB_HOOKS.court3d = ()=>{ renderC3DTypeButtons(); initCourt3D(); if(c3d){ resizeCourt3D(); updateC3DTrajectories(); startC3DLoop(); } };
+TAB_HOOKS.court3d = ()=>{ renderC3DTypeButtons(); initCourt3D(); if(c3d){ resizeCourt3D(); updateC3DTrajectories(); updateC3DBlockers(true); startC3DLoop(); } initIq3D(); };
 
 function renderC3DTypeButtons(){
   document.getElementById('c3d-types').innerHTML = C3D_TYPE_ORDER.map(k=>{
     const t = SET_TYPE_MAP[k];
-    return `<button type="button" class="opt-btn${c3dSelected.has(k) ? ' selected' : ''}" data-value="${k}" aria-pressed="${c3dSelected.has(k)}"><span class="legend-dot" style="background:${SET_TARGETS_M[k].color}"></span>${t.label}</button>`;
+    const best = c3dBestKeys.has(k) ? ' best-pick' : '';
+    return `<button type="button" class="opt-btn${c3dSelected.has(k) ? ' selected' : ''}${best}" data-value="${k}" aria-pressed="${c3dSelected.has(k)}"><span class="legend-dot" style="background:${SET_TARGETS_M[k].color}"></span>${t.label}</button>`;
   }).join('');
 }
 document.getElementById('c3d-types').addEventListener('click', e=>{
@@ -2803,10 +2845,104 @@ document.getElementById('c3d-types').addEventListener('click', e=>{
   c3dSelected.has(k) ? c3dSelected.delete(k) : c3dSelected.add(k);
   renderC3DTypeButtons(); updateC3DTrajectories();
 });
-document.getElementById('c3d-all').addEventListener('click', ()=>{ c3dSelected = new Set(C3D_TYPE_ORDER); renderC3DTypeButtons(); updateC3DTrajectories(); });
-document.getElementById('c3d-none').addEventListener('click', ()=>{ c3dSelected = new Set(); renderC3DTypeButtons(); updateC3DTrajectories(); });
-document.getElementById('c3d-reset-setter').addEventListener('click', ()=>{ c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d }; c3dSelected = new Set(); renderC3DTypeButtons(); placeC3DSetter(); });
+document.getElementById('c3d-all').addEventListener('click', ()=>{ c3dSelected = new Set(C3D_TYPE_ORDER); c3dBestKeys = new Set(); hideC3DBestTip(); renderC3DTypeButtons(); updateC3DTrajectories(); });
+document.getElementById('c3d-none').addEventListener('click', ()=>{ c3dSelected = new Set(); c3dBestKeys = new Set(); hideC3DBestTip(); renderC3DTypeButtons(); updateC3DTrajectories(); });
+document.getElementById('c3d-reset-setter').addEventListener('click', ()=>{
+  c3dSetter = { x: SETTER_HOME_M.x - COURT_M.W/2, z: SETTER_HOME_M.d };
+  c3dSelected = new Set(); c3dBestKeys = new Set(); hideC3DBestTip();
+  resetC3DBlockersFollow();
+  renderC3DTypeButtons(); placeC3DSetter();
+});
 document.getElementById('c3d-reset-view').addEventListener('click', ()=>{ if(c3d){ Object.assign(c3d.orbit, C3D_DEFAULT_ORBIT); applyC3DCamera(); } });
+document.getElementById('c3d-blockers-follow').addEventListener('click', ()=>{ resetC3DBlockersFollow(); updateC3DBlockers(true); updateC3DHud(); });
+document.getElementById('c3d-best').addEventListener('click', applyC3DBestSet);
+
+function hideC3DBestTip(){
+  const tip = document.getElementById('c3d-best-tip');
+  if(tip){ tip.classList.remove('show'); tip.innerHTML = ''; }
+}
+function resetC3DBlockersFollow(){
+  c3dBlockersFollow = true;
+  c3dBlockers.forEach(b=>{ b.pinned = false; });
+}
+
+// ---- Shared textbook recommendation (Best set + IQ test) ----
+// Simple, readable rules of thumb for a front-row block read:
+//  1) Setter on the left  → prefer spreading right (5 / 3 / C / back1) so the block must chase.
+//  2) Right side covered  → prefer a high ball (4 or 5) so the hitter can tool / go around.
+//  3) Pin lightly covered or blockers bunched → prefer a fast ball (shoot / 3 / quick / bic).
+function recommendSets(setterWorldX, blockerWorldXs){
+  const half = COURT_M.W / 2;
+  const sx = setterWorldX + half; // 0..9 from left sideline
+  const bxs = (blockerWorldXs && blockerWorldXs.length)
+    ? blockerWorldXs.map(x => x + half)
+    : [sx];
+  const avgB = bxs.reduce((a,b)=>a+b, 0) / bxs.length;
+  const spread = Math.max(...bxs) - Math.min(...bxs);
+  const bunched = spread < 3.2;
+  const nearLeft = bxs.filter(x => x < 3.0).length;
+  const nearRight = bxs.filter(x => x > 6.0).length;
+  const setterLeft = sx < 4.0;
+  const setterRight = sx > 5.0;
+
+  // Right mass covered → high set so the attack has time to work around / tool.
+  if(nearRight >= 2 || (avgB > 6.0 && nearRight >= 1)){
+    if(setterLeft || sx <= 4.5){
+      return { keys:['4'], tip:'Right side is stacked — run a high 4 so your left-side can tool or go around the block.' };
+    }
+    return { keys:['5','4'], tip:'Block mass is on the right — go high (5 or 4) and give the hitter time to work around it.' };
+  }
+  if(nearLeft >= 2 || (avgB < 3.0 && nearLeft >= 1)){
+    if(setterRight || sx >= 4.5){
+      return { keys:['5'], tip:'Left pin is covered — spread high to the right (5) and make the block travel again.' };
+    }
+    return { keys:['5','3'], tip:'Left is loaded — swing the attack right with a 5 or a fast 3.' };
+  }
+
+  // Setter on the left → spread right so blockers must move.
+  if(setterLeft){
+    if(bunched || nearRight === 0){
+      return { keys:['3','c'], tip:'You\'re on the left and the block is bunched or light on the right — beat them with a fast 3 or C ball.' };
+    }
+    return { keys:['5','c'], tip:'Setter on the left — spread right (5 / C) so the blockers have to chase across.' };
+  }
+
+  // Setter on the right → spread left.
+  if(setterRight){
+    if(bunched || nearLeft === 0){
+      return { keys:['shoot','4'], tip:'You\'re on the right and the left pin is open or the pack is tight — shoot or high-ball left to pull them.' };
+    }
+    return { keys:['4','shoot'], tip:'Setter on the right — spread left (4 / shoot) and force the block to move.' };
+  }
+
+  // Middle setter
+  if(bunched){
+    const openRight = nearRight <= nearLeft;
+    if(openRight){
+      return { keys:['3','shoot'], tip:'Blockers are bunched in the middle — go around with a fast 3 or a shoot.' };
+    }
+    return { keys:['shoot','1'], tip:'Blockers are bunched — beat them with a shoot or a quick 1 before they can split.' };
+  }
+  if(avgB > 5.2){
+    return { keys:['4','bic'], tip:'Block leans right — high 4 left, or bic middle to keep the pipes involved.' };
+  }
+  if(avgB < 3.8){
+    return { keys:['5','c'], tip:'Block leans left — high 5 or C on the right while they recover.' };
+  }
+  return { keys:['2','shoot'], tip:'Balanced look from middle — a 2 keeps the middle honest, or shoot the left pin to stress the end.' };
+}
+
+function applyC3DBestSet(){
+  const rec = recommendSets(c3dSetter.x, c3dBlockers.map(b=>b.x));
+  c3dBestKeys = new Set(rec.keys);
+  c3dSelected = new Set(rec.keys);
+  renderC3DTypeButtons();
+  updateC3DTrajectories();
+  const tip = document.getElementById('c3d-best-tip');
+  const labels = rec.keys.map(k => SET_TYPE_MAP[k].label).join(' / ');
+  tip.innerHTML = `<b>Best set: ${labels}</b> — ${rec.tip}`;
+  tip.classList.add('show');
+}
 
 const C3D_DEFAULT_ORBIT = { theta: 0.38, phi: 1.08, radius: 13 };
 
@@ -2843,6 +2979,24 @@ function c3dLabelSprite(text, color){
   const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest:false, transparent:true }));
   spr.scale.set(1.5, 0.375, 1); spr.renderOrder = 10;
   return spr;
+}
+
+function makeC3DPlayerMesh(colorHex, label, labelColor){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,1.45,20), new THREE.MeshStandardMaterial({ color:colorHex, roughness:0.5, emissive:colorHex, emissiveIntensity:0.12 }));
+  body.position.y = 0.725; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15,20,16), new THREE.MeshStandardMaterial({ color:colorHex, roughness:0.5, emissive:colorHex, emissiveIntensity:0.12 }));
+  head.position.y = 1.62; g.add(head);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.38,0.48,40), new THREE.MeshBasicMaterial({ color:colorHex, side:THREE.DoubleSide, transparent:true, opacity:0.85 }));
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.012; g.add(ring);
+  const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,2.6,12), new THREE.MeshBasicMaterial({ visible:false }));
+  hit.position.y = 1.3; g.add(hit);
+  g.userData.hit = hit;
+  if(label){
+    const spr = c3dLabelSprite(label, labelColor || '#ff9a3d');
+    spr.position.y = 2.0; spr.scale.set(0.95, 0.24, 1); g.add(spr);
+  }
+  return g;
 }
 
 function initCourt3D(){
@@ -2902,17 +3056,30 @@ function initCourt3D(){
   const sLabel = c3dLabelSprite('SETTER', '#89cff0'); sLabel.position.y = 2.05; sLabel.scale.set(1.1,0.275,1); setter.add(sLabel);
   scene.add(setter);
 
+  // Opponent blockers (orange) at the net — distinct from baby-blue setter
+  const BLOCKER_COLOR = 0xe85d04;
+  const blockerMeshes = c3dBlockers.map(b=>{
+    const m = makeC3DPlayerMesh(BLOCKER_COLOR, b.id, '#ff9a3d');
+    m.userData.blockerId = b.id;
+    scene.add(m);
+    return m;
+  });
+
   const trajGroup = new THREE.Group(); scene.add(trajGroup);
   const orbit = { ...C3D_DEFAULT_ORBIT, target: new THREE.Vector3(0, 1.4, 1.6) };
-  c3d = { wrap, renderer, scene, camera, setter, setterHit: hit, trajGroup, orbit, flights:[], movers:[], raf:null, t0:performance.now() };
+  c3d = { wrap, renderer, scene, camera, setter, setterHit: hit, blockerMeshes, trajGroup, orbit, flights:[], movers:[], raf:null, t0:performance.now(), bestPulse:0 };
   c3d.floorPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+  c3d.netPlane = new THREE.Plane(new THREE.Vector3(0,0,1), -C3D.BLOCKER_Z); // drag blockers along z≈BLOCKER_Z
   c3d.raycaster = new THREE.Raycaster();
   applyC3DCamera();
   attachC3DControls();
   if(window.ResizeObserver) new ResizeObserver(()=>resizeCourt3D()).observe(wrap);
   else window.addEventListener('resize', resizeCourt3D);
   resizeCourt3D();
+  // Seed blocker x from setter, then place
+  c3dBlockers.forEach(b=>{ b.x = c3dSetter.x + b.offset; });
   placeC3DSetter();
+  updateC3DBlockers(true);
 }
 
 function applyC3DCamera(){
@@ -2937,7 +3104,36 @@ function placeC3DSetter(){
   c3dSetter.z = Math.max(0.25, Math.min(COURT_M.L/2-0.2, c3dSetter.z));
   if(!c3d) return;
   c3d.setter.position.set(c3dSetter.x, 0, c3dSetter.z);
+  updateC3DBlockers(false);
   updateC3DTrajectories();
+}
+
+function desiredBlockerX(b){
+  // Pack center tracks setter x; each blocker keeps its lateral offset unless pinned.
+  const raw = c3dSetter.x + b.offset;
+  return Math.max(-COURT_M.W/2+0.3, Math.min(COURT_M.W/2-0.3, raw));
+}
+function updateC3DBlockers(snap){
+  if(!c3d) return;
+  c3dBlockers.forEach((b,i)=>{
+    if(!b.pinned){
+      const target = desiredBlockerX(b);
+      if(snap) b.x = target;
+      else b.x += (target - b.x) * 0.18; // smooth lerp while following
+    }
+    b.x = Math.max(-COURT_M.W/2+0.3, Math.min(COURT_M.W/2-0.3, b.x));
+    const m = c3d.blockerMeshes[i];
+    if(m) m.position.set(b.x, 0, C3D.BLOCKER_Z);
+  });
+  c3d.needsRender = true;
+}
+function updateC3DHud(){
+  const hud = document.getElementById('c3d-hud');
+  if(!hud) return;
+  const pinned = c3dBlockers.filter(b=>b.pinned).map(b=>b.id);
+  const follow = pinned.length ? `pinned ${pinned.join(',')}` : 'blockers follow setter';
+  const n = c3d ? c3d.flights.length : 0;
+  hud.innerHTML = `Setter: <b>${(c3dSetter.x+COURT_M.W/2).toFixed(1)} m</b> from left · <b>${c3dSetter.z.toFixed(1)} m</b> off net · ${n} set(s) · ${follow}`;
 }
 
 function disposeC3DGroup(g){
@@ -2947,7 +3143,7 @@ function disposeC3DGroup(g){
   }
 }
 function updateC3DTrajectories(){
-  if(!c3d){ renderC3DTable([]); return; }
+  if(!c3d){ renderC3DTable([]); updateC3DHud(); return; }
   disposeC3DGroup(c3d.trajGroup);
   c3d.movers = [];
   const flights = C3D_TYPE_ORDER.filter(k=>c3dSelected.has(k)).map(c3dFlight);
@@ -2955,24 +3151,29 @@ function updateC3DTrajectories(){
   // stagger label heights among targets that sit close together
   const placed = [];
   flights.forEach(fl=>{
+    const isBest = c3dBestKeys.has(fl.key);
     const color = new THREE.Color(fl.T.color);
     const pts = [];
     for(let i=0;i<=48;i++){ const t=i/48; pts.push(new THREE.Vector3(fl.x0+(fl.x1-fl.x0)*t, fl.f(t), fl.z0+(fl.z1-fl.z0)*t)); }
     const curve = new THREE.CatmullRomCurve3(pts);
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, 0.035, 8, false), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:0.35, roughness:0.4 }));
+    const tubeR = isBest ? 0.055 : 0.035;
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, tubeR, 8, false), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:isBest ? 0.7 : 0.35, roughness:0.4 }));
+    tube.userData.best = isBest;
     c3d.trajGroup.add(tube);
     // contact point: ball-sized sphere, drop line, and a floor ring under it
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.11,16,12), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:0.5 }));
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(isBest ? 0.14 : 0.11,16,12), new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:isBest ? 0.8 : 0.5 }));
     tip.position.set(fl.x1, fl.y1, fl.z1); c3d.trajGroup.add(tip);
     const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fl.x1,0.02,fl.z1), new THREE.Vector3(fl.x1,fl.y1,fl.z1)]),
       new THREE.LineDashedMaterial({ color, dashSize:0.12, gapSize:0.08, transparent:true, opacity:0.7 }));
     drop.computeLineDistances(); c3d.trajGroup.add(drop);
-    const fring = new THREE.Mesh(new THREE.RingGeometry(0.22,0.3,32), new THREE.MeshBasicMaterial({ color, side:THREE.DoubleSide, transparent:true, opacity:0.8 }));
+    const fring = new THREE.Mesh(new THREE.RingGeometry(0.22, isBest ? 0.38 : 0.3,32), new THREE.MeshBasicMaterial({ color, side:THREE.DoubleSide, transparent:true, opacity:0.8 }));
     fring.rotation.x = -Math.PI/2; fring.position.set(fl.x1, 0.015, fl.z1); c3d.trajGroup.add(fring);
     let lift = 0;
     while(placed.some(p=>Math.abs(p.x-fl.x1)<1.3 && Math.abs(p.z-fl.z1)<1.3 && Math.abs(p.lift-lift)<0.3)) lift += 0.38;
     placed.push({ x:fl.x1, z:fl.z1, lift });
-    const label = c3dLabelSprite(SET_TYPE_MAP[fl.key].label, fl.T.color);
+    const labelText = isBest ? ('BEST · ' + SET_TYPE_MAP[fl.key].label) : SET_TYPE_MAP[fl.key].label;
+    const label = c3dLabelSprite(labelText, isBest ? '#ffcc33' : fl.T.color);
+    if(isBest) label.scale.set(1.85, 0.42, 1);
     label.position.set(fl.x1, fl.y1 + 0.42 + lift, fl.z1); c3d.trajGroup.add(label);
     // a small ball that flies the arc on a loop at (slowed-down) real-time speed
     const mover = new THREE.Mesh(new THREE.SphereGeometry(0.09,14,10), new THREE.MeshStandardMaterial({ color:0xf4f2f0, emissive:color, emissiveIntensity:0.25 }));
@@ -2981,14 +3182,13 @@ function updateC3DTrajectories(){
   });
   c3d.needsRender = true;
   renderC3DTable(flights);
-  const hud = document.getElementById('c3d-hud');
-  hud.innerHTML = `Setter: <b>${(c3dSetter.x+COURT_M.W/2).toFixed(1)} m</b> from left sideline · <b>${c3dSetter.z.toFixed(1)} m</b> off the net · ${flights.length} set type(s)`;
+  updateC3DHud();
 }
 function renderC3DTable(flights){
   const el = document.getElementById('c3d-table');
-  if(!flights.length){ el.innerHTML = '<div class="empty">Pick one or more set types above.</div>'; return; }
+  if(!flights.length){ el.innerHTML = '<div class="empty">Pick one or more set types above — or tap <b>Best set</b> for a textbook call.</div>'; return; }
   el.innerHTML = `<div class="table-scroll"><table><thead><tr><th>Set</th><th>Contact point</th><th>Distance</th><th>Peak height</th><th>Contact height</th><th>Flight time*</th><th>Target</th></tr></thead><tbody>` +
-    flights.map(fl=>`<tr><td><span class="legend-dot" style="background:${fl.T.color}; margin-right:6px;"></span>${SET_TYPE_MAP[fl.key].label}</td>
+    flights.map(fl=>`<tr><td><span class="legend-dot" style="background:${fl.T.color}; margin-right:6px;"></span>${SET_TYPE_MAP[fl.key].label}${c3dBestKeys.has(fl.key)?' <b style="color:#ffcc33">BEST</b>':''}</td>
       <td>${fl.tgtM.x.toFixed(1)} m from left · ${fl.tgtM.d.toFixed(1)} m off net</td><td>${fl.dist.toFixed(1)} m</td><td>${fl.peak.toFixed(1)} m</td><td>${fl.y1.toFixed(1)} m</td><td>${fl.time.toFixed(2)} s</td>
       <td style="white-space:normal; color:var(--text-dim);">${fl.T.note}${fl.T.rel ? ' (moves with the setter)' : ''}</td></tr>`).join('') +
     `</tbody></table></div><div class="sub" style="margin-top:6px;">* Straight-up gravity estimate from the arc height (no spin or air drag). Sets are released at ${C3D.RELEASE_Y} m.</div>`;
@@ -3001,17 +3201,28 @@ function c3dPointerNDC(e){
 function attachC3DControls(){
   const el = c3d.renderer.domElement, wrap = c3d.wrap;
   const pointers = new Map();
-  let mode = null, last = null, pinchDist = 0;
+  let mode = null, last = null, pinchDist = 0, dragBlocker = null;
   el.addEventListener('pointerdown', e=>{
     wrap.focus({ preventScroll:true });
     el.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
     if(pointers.size===2){
-      const [a,b] = [...pointers.values()]; pinchDist = Math.hypot(a.x-b.x, a.y-b.y); mode = 'pinch'; return;
+      const [a,b] = [...pointers.values()]; pinchDist = Math.hypot(a.x-b.x, a.y-b.y); mode = 'pinch'; dragBlocker = null; return;
     }
     c3d.raycaster.setFromCamera(c3dPointerNDC(e), c3d.camera);
-    mode = c3d.raycaster.intersectObject(c3d.setterHit, false).length ? 'setter' : 'orbit';
+    // Prefer blockers over the setter when both sit under the pointer — blockers are
+    // farther along the ray (other side of the net), so a pure nearest-hit test always
+    // picks the setter and makes them undraggable. WASD still moves the setter anytime.
+    let hitB = null, hitBDist = Infinity;
+    c3d.blockerMeshes.forEach((m,i)=>{
+      const hits = c3d.raycaster.intersectObject(m.userData.hit, true);
+      if(hits.length && hits[0].distance < hitBDist){ hitBDist = hits[0].distance; hitB = c3dBlockers[i]; }
+    });
+    if(hitB){ mode = 'blocker'; dragBlocker = hitB; hitB.pinned = true; c3dBlockersFollow = false; }
+    else if(c3d.raycaster.intersectObject(c3d.setterHit, false).length){ mode = 'setter'; }
+    else mode = 'orbit';
     wrap.classList.toggle('dragging-setter', mode==='setter');
+    wrap.classList.toggle('dragging-blocker', mode==='blocker');
     last = { x:e.clientX, y:e.clientY };
   });
   el.addEventListener('pointermove', e=>{
@@ -3026,6 +3237,17 @@ function attachC3DControls(){
       c3d.raycaster.setFromCamera(c3dPointerNDC(e), c3d.camera);
       const p = new THREE.Vector3();
       if(c3d.raycaster.ray.intersectPlane(c3d.floorPlane, p)){ c3dSetter.x = p.x; c3dSetter.z = p.z; placeC3DSetter(); }
+    } else if(mode==='blocker' && dragBlocker){
+      c3d.raycaster.setFromCamera(c3dPointerNDC(e), c3d.camera);
+      const p = new THREE.Vector3();
+      // Intersect a horizontal plane at y=0, then lock z to the net line
+      if(c3d.raycaster.ray.intersectPlane(c3d.floorPlane, p)){
+        dragBlocker.x = Math.max(-COURT_M.W/2+0.3, Math.min(COURT_M.W/2-0.3, p.x));
+        const idx = c3dBlockers.indexOf(dragBlocker);
+        if(idx>=0 && c3d.blockerMeshes[idx]) c3d.blockerMeshes[idx].position.set(dragBlocker.x, 0, C3D.BLOCKER_Z);
+        updateC3DHud();
+        c3d.needsRender = true;
+      }
     } else if(mode==='orbit' && last){
       const dx = e.clientX-last.x, dy = e.clientY-last.y;
       c3d.orbit.theta -= dx*0.008; c3d.orbit.phi -= dy*0.006;
@@ -3037,7 +3259,7 @@ function attachC3DControls(){
     pointers.delete(e.pointerId);
     try{ el.releasePointerCapture(e.pointerId); }catch(err){}
     if(pointers.size===1 && mode==='pinch'){ mode = 'orbit'; const p=[...pointers.values()][0]; last = { x:p.x, y:p.y }; }
-    else if(!pointers.size){ mode = null; last = null; wrap.classList.remove('dragging-setter'); }
+    else if(!pointers.size){ mode = null; last = null; dragBlocker = null; wrap.classList.remove('dragging-setter','dragging-blocker'); }
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
@@ -3063,15 +3285,174 @@ function startC3DLoop(){
   const tick = now=>{
     if(!document.getElementById('court3d').classList.contains('active')){ c3d.raf = null; return; }
     c3d.raf = requestAnimationFrame(tick);
+    // Keep unpinned blockers easing toward the setter's across-court position
+    updateC3DBlockers(false);
     // loop each ball along its arc at half real-time speed, with a short pause at contact
     c3d.movers.forEach(m=>{
       const period = m.time*2 + 0.6;
       const t = Math.max(0, Math.min(1, ((Math.max(0, now - c3d.t0)/1000) % period) / (m.time*2)));
       m.mesh.position.copy(m.curve.getPointAt(t));
     });
+    // Soft pulse on BEST tubes
+    if(c3dBestKeys.size){
+      const pulse = 0.55 + 0.35*Math.sin(now*0.006);
+      c3d.trajGroup.children.forEach(ch=>{
+        if(ch.userData && ch.userData.best && ch.material && ch.material.emissiveIntensity!=null){
+          ch.material.emissiveIntensity = pulse;
+        }
+      });
+    }
     c3d.renderer.render(c3d.scene, c3d.camera);
   };
   c3d.raf = requestAnimationFrame(tick);
+}
+
+
+// ---------- Setter IQ test (mini court under #court3d) ----------
+let iq3d = null;
+let iqScore = { right:0, total:0 };
+let iqSituation = null; // { setterX, blockerXs, answered }
+let iqPick = null;
+
+function initIq3D(){
+  if(iq3d){ resizeIq3D(); startIqLoop(); return; }
+  const wrap = document.getElementById('iq3d-wrap');
+  if(!wrap || typeof THREE==='undefined') return;
+  let renderer;
+  try{ renderer = new THREE.WebGLRenderer({ antialias:true }); }
+  catch(err){ wrap.insertAdjacentHTML('beforeend', '<div class="c3d-fallback">WebGL unavailable for the IQ court.</div>'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  wrap.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0e);
+  const camera = new THREE.PerspectiveCamera(42, 16/9, 0.1, 100);
+  scene.add(new THREE.HemisphereLight(0xfff1e6, 0x1c1a22, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.55); sun.position.set(-4, 12, 8); scene.add(sun);
+
+  const add = (geo, color, pos, opts={})=>{ const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness:0.85, ...opts })); if(pos) m.position.set(...pos); scene.add(m); return m; };
+  const flat = (w,d,color,y,x=0,z=0)=>{ const m = add(new THREE.PlaneGeometry(w,d), color, [x,y,z]); m.rotation.x = -Math.PI/2; return m; };
+  flat(22, 28, 0x151319, 0);
+  flat(9, 18, 0x2a1d17, 0.002);
+  flat(9, 3, 0x3a2414, 0.004, 0, 1.5);
+  flat(9, 3, 0x33211a, 0.004, 0, -1.5);
+  const lineBox = (w,d,x,z,color=0xf4f2f0)=>add(new THREE.BoxGeometry(w,0.01,d), color, [x,0.008,z], { roughness:0.5 });
+  lineBox(0.05,18,-4.5,0); lineBox(0.05,18,4.5,0); lineBox(9.05,0.05,0,-9); lineBox(9.05,0.05,0,9);
+  lineBox(9.05,0.05,0,0); lineBox(9.05,0.05,0,3,0xff6a00); lineBox(9.05,0.05,0,-3,0xff6a00);
+  const net = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 1.0, 95, 10), new THREE.MeshBasicMaterial({ color:0xaeb9cc, wireframe:true, transparent:true, opacity:0.45 }));
+  net.position.set(0, C3D.NET_H-0.5, 0); scene.add(net);
+  add(new THREE.BoxGeometry(9.5, 0.07, 0.03), 0xf4f2f0, [0, C3D.NET_H-0.035, 0]);
+  [-5.5, 5.5].forEach(x=>add(new THREE.CylinderGeometry(0.06,0.06,2.55,16), 0x555f6e, [x,1.275,0]));
+  [-4.5, 4.5].forEach(x=>{
+    for(let i=0;i<18;i++) add(new THREE.CylinderGeometry(0.01,0.01,0.1,8), i%2 ? 0xffffff : 0xe8283f, [x, C3D.NET_H-1.0+0.05+i*0.1, 0], { roughness:0.4 });
+  });
+
+  const setter = makeC3DPlayerMesh(0x89cff0, 'SETTER', '#89cff0');
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.105,16,12), new THREE.MeshStandardMaterial({ color:0xf4f2f0, roughness:0.6 }));
+  ball.position.y = C3D.RELEASE_Y; setter.add(ball);
+  scene.add(setter);
+  const blockers = [0,1,2].map(i=>{
+    const m = makeC3DPlayerMesh(0xe85d04, 'B'+(i+1), '#ff9a3d');
+    scene.add(m); return m;
+  });
+
+  iq3d = { wrap, renderer, scene, camera, setter, blockers, raf:null };
+  // High-ish orbit looking from your back-right corner
+  const orbit = { theta: 0.55, phi: 1.05, radius: 14, target: new THREE.Vector3(0, 1.3, 0.8) };
+  iq3d.orbit = orbit;
+  applyIqCamera();
+  if(window.ResizeObserver) new ResizeObserver(()=>resizeIq3D()).observe(wrap);
+  else window.addEventListener('resize', resizeIq3D);
+  resizeIq3D();
+  renderIqTypeButtons();
+  document.getElementById('iq-next').addEventListener('click', ()=>iqNextSituation());
+  document.getElementById('iq-types').addEventListener('click', e=>{
+    const b = e.target.closest('.opt-btn'); if(!b || !iqSituation || iqSituation.answered) return;
+    iqSubmit(b.dataset.value);
+  });
+  iqNextSituation();
+  startIqLoop();
+}
+function applyIqCamera(){
+  const o = iq3d.orbit, t = o.target;
+  iq3d.camera.position.set(t.x + o.radius*Math.sin(o.phi)*Math.sin(o.theta), t.y + o.radius*Math.cos(o.phi), t.z + o.radius*Math.sin(o.phi)*Math.cos(o.theta));
+  iq3d.camera.lookAt(t);
+}
+function resizeIq3D(){
+  if(!iq3d) return;
+  const w = iq3d.wrap.clientWidth, h = iq3d.wrap.clientHeight;
+  if(!w || !h) return;
+  iq3d.renderer.setSize(w, h, false);
+  iq3d.camera.aspect = w/h; iq3d.camera.updateProjectionMatrix();
+}
+function renderIqTypeButtons(){
+  const el = document.getElementById('iq-types');
+  if(!el) return;
+  el.innerHTML = C3D_TYPE_ORDER.map(k=>{
+    const t = SET_TYPE_MAP[k];
+    const sel = iqPick === k ? ' selected' : '';
+    return `<button type="button" class="opt-btn${sel}" data-value="${k}"><span class="legend-dot" style="background:${SET_TARGETS_M[k].color}"></span>${t.label}</button>`;
+  }).join('');
+}
+function iqRand(a,b){ return a + Math.random()*(b-a); }
+function iqNextSituation(){
+  iqPick = null;
+  // Random setter on our side (front half-ish)
+  const setterX = iqRand(-3.2, 3.2);
+  const setterZ = iqRand(0.5, 2.8);
+  // Random block pack: center + small jitter, sometimes bunched, sometimes split
+  const packCenter = iqRand(-3.0, 3.0);
+  const bunched = Math.random() < 0.45;
+  const spread = bunched ? iqRand(0.6, 1.1) : iqRand(1.3, 2.2);
+  const blockerXs = [-spread, 0, spread].map(o=>{
+    return Math.max(-4.2, Math.min(4.2, packCenter + o + iqRand(-0.15, 0.15)));
+  });
+  iqSituation = { setterX, setterZ, blockerXs, answered:false };
+  if(iq3d){
+    iq3d.setter.position.set(setterX, 0, setterZ);
+    iq3d.blockers.forEach((m,i)=> m.position.set(blockerXs[i], 0, C3D.BLOCKER_Z));
+  }
+  const hud = document.getElementById('iq-hud');
+  if(hud){
+    hud.innerHTML = `Setter <b>${(setterX+COURT_M.W/2).toFixed(1)} m</b> from left · block pack ~<b>${(packCenter+COURT_M.W/2).toFixed(1)} m</b> · pick a set`;
+  }
+  const res = document.getElementById('iq-result');
+  if(res){ res.className = ''; res.textContent = 'What set do you run?'; }
+  renderIqTypeButtons();
+  updateIqScore();
+}
+function iqSubmit(key){
+  if(!iqSituation || iqSituation.answered) return;
+  iqSituation.answered = true;
+  iqPick = key;
+  const rec = recommendSets(iqSituation.setterX, iqSituation.blockerXs);
+  const ok = rec.keys.includes(key);
+  iqScore.total += 1;
+  if(ok) iqScore.right += 1;
+  const res = document.getElementById('iq-result');
+  const labels = rec.keys.map(k=>SET_TYPE_MAP[k].label).join(' / ');
+  const yours = SET_TYPE_MAP[key] ? SET_TYPE_MAP[key].label : key;
+  if(ok){
+    res.className = 'ok';
+    res.innerHTML = `<b>Correct</b> — ${yours} matches the textbook call (${labels}). ${rec.tip}`;
+  } else {
+    res.className = 'bad';
+    res.innerHTML = `<b>Not quite</b> — you picked ${yours}. Textbook: <b>${labels}</b>. ${rec.tip}`;
+  }
+  renderIqTypeButtons();
+  updateIqScore();
+}
+function updateIqScore(){
+  const el = document.getElementById('iq-score');
+  if(el) el.textContent = `Score: ${iqScore.right} / ${iqScore.total}`;
+}
+function startIqLoop(){
+  if(!iq3d || iq3d.raf) return;
+  const tick = ()=>{
+    if(!document.getElementById('court3d').classList.contains('active')){ iq3d.raf = null; return; }
+    iq3d.raf = requestAnimationFrame(tick);
+    iq3d.renderer.render(iq3d.scene, iq3d.camera);
+  };
+  iq3d.raf = requestAnimationFrame(tick);
 }
 
 
