@@ -3222,8 +3222,8 @@ function resetC3DBlockersFollow(){
 // ---- Shared textbook recommendation (Best set + IQ test) ----
 // Simple, readable rules of thumb for a front-row block read:
 //  1) Setter on the left  → prefer spreading right (5 / 3 / C / back1) so the block must chase.
-//  2) Right side covered  → prefer a high ball (4 or 5) so the hitter can tool / go around.
-//  3) Pin lightly covered or blockers bunched → prefer a fast ball (shoot / 3 / quick / bic).
+//  2) Right/left mass covered → high ball to tool / go around; also accept a fast set to the open side.
+//  3) Pin lightly covered or blockers bunched mid → prefer a fast ball (shoot / 3 / quick / bic).
 function recommendSets(setterWorldX, blockerWorldXs){
   const half = COURT_M.W / 2;
   const sx = setterWorldX + half; // 0..9 from left sideline
@@ -3238,18 +3238,20 @@ function recommendSets(setterWorldX, blockerWorldXs){
   const setterLeft = sx < 4.0;
   const setterRight = sx > 5.0;
 
-  // Right mass covered → high set so the attack has time to work around / tool.
+  // Right mass covered (often bunched on the right) → high set to tool / go around,
+  // AND a fast set to the open left (shoot / go) is also a good answer.
   if(nearRight >= 2 || (avgB > 6.0 && nearRight >= 1)){
     if(setterLeft || sx <= 4.5){
-      return { keys:['4'], tip:'Right side is stacked — run a high 4 so your left-side can tool or go around the block.' };
+      return { keys:['4','shoot'], tip:'Right side is stacked — high 4 to tool/go around, or a fast shoot (go) to the open left pin.' };
     }
-    return { keys:['5','4'], tip:'Block mass is on the right — go high (5 or 4) and give the hitter time to work around it.' };
+    return { keys:['5','4','shoot'], tip:'Block mass is on the right — go high (5 or 4) to work around it, or shoot the open left pin.' };
   }
+  // Left mass covered (often bunched on the left) → high set right, AND a fast 3 to the open right.
   if(nearLeft >= 2 || (avgB < 3.0 && nearLeft >= 1)){
     if(setterRight || sx >= 4.5){
-      return { keys:['5'], tip:'Left pin is covered — spread high to the right (5) and make the block travel again.' };
+      return { keys:['5','3'], tip:'Left pin is covered — high 5 to the right, or a fast 3 to the open right side.' };
     }
-    return { keys:['5','3'], tip:'Left is loaded — swing the attack right with a 5 or a fast 3.' };
+    return { keys:['5','3'], tip:'Left is loaded — swing high with a 5, or beat them with a fast 3 to the open right.' };
   }
 
   // Setter on the left → spread right so blockers must move.
