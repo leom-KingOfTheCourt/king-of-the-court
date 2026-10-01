@@ -3220,13 +3220,15 @@ function resetC3DBlockersFollow(){
 }
 
 // ---- Shared textbook recommendation (Best set + IQ test) ----
-// Simple, readable rules of thumb for a front-row block read:
-//  1) Setter on the left  → prefer spreading right (5 / 3 / C / back1) so the block must chase.
-//  2) Right/left mass covered → high ball to tool / go around; also accept a fast set to the open side.
-//  3) Pin lightly covered or blockers bunched mid → prefer a fast ball (shoot / 3 / quick / bic).
+// Leo's rule: setter being on the right (or left) does NOT mean "set the other
+// side" is better. Read the block first:
+//  1) Get away from blockers — open pin / opposite of blocker mass (fast and/or
+//     high to that open side). Multiple answers OK (e.g. open-side fast + high).
+//  2) If you can't get away (blockers spread / covering both pins / no clear
+//     open side) → high set so the hitter has time to go around / tool.
 function recommendSets(setterWorldX, blockerWorldXs){
   const half = COURT_M.W / 2;
-  const sx = setterWorldX + half; // 0..9 from left sideline
+  const sx = setterWorldX + half; // 0..9 from left sideline (context only; not a "set opposite" cue)
   const bxs = (blockerWorldXs && blockerWorldXs.length)
     ? blockerWorldXs.map(x => x + half)
     : [sx];
@@ -3235,56 +3237,68 @@ function recommendSets(setterWorldX, blockerWorldXs){
   const bunched = spread < 3.2;
   const nearLeft = bxs.filter(x => x < 3.0).length;
   const nearRight = bxs.filter(x => x > 6.0).length;
-  const setterLeft = sx < 4.0;
-  const setterRight = sx > 5.0;
+  // Clear mass on one pin (other pin light) → that light pin is open.
+  const leftMass = nearLeft >= 2 || (avgB < 3.0 && nearLeft >= 1);
+  const rightMass = nearRight >= 2 || (avgB > 6.0 && nearRight >= 1);
+  const leftOpen = nearLeft === 0 && !leftMass;
+  const rightOpen = nearRight === 0 && !rightMass;
+  // Both pins have presence and the pack is wide → nowhere clean to run away to.
+  const bothPinsCovered = nearLeft >= 1 && nearRight >= 1 && !bunched;
 
-  // Right mass covered (often bunched on the right) → high set to tool / go around,
-  // AND a fast set to the open left (shoot / go) is also a good answer.
-  if(nearRight >= 2 || (avgB > 6.0 && nearRight >= 1)){
-    if(setterLeft || sx <= 4.5){
-      return { keys:['4','shoot'], tip:'Right side is stacked — high 4 to tool/go around, or a fast shoot (go) to the open left pin.' };
+  // --- 2) Can't get away: spread covering both pins → high ball(s) to tool/go around ---
+  if(bothPinsCovered){
+    // Prefer the slightly less-loaded pin's high ball; accept both highs when even.
+    if(nearLeft > nearRight){
+      return { keys:['5','4'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (5, or 4) so the hitter has time to tool / go around.' };
     }
-    return { keys:['5','4','shoot'], tip:'Block mass is on the right — go high (5 or 4) to work around it, or shoot the open left pin.' };
-  }
-  // Left mass covered (often bunched on the left) → high set right, AND a fast 3 to the open right.
-  if(nearLeft >= 2 || (avgB < 3.0 && nearLeft >= 1)){
-    if(setterRight || sx >= 4.5){
-      return { keys:['5','3'], tip:'Left pin is covered — high 5 to the right, or a fast 3 to the open right side.' };
+    if(nearRight > nearLeft){
+      return { keys:['4','5'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (4, or 5) so the hitter has time to tool / go around.' };
     }
-    return { keys:['5','3'], tip:'Left is loaded — swing high with a 5, or beat them with a fast 3 to the open right.' };
-  }
-
-  // Setter on the left → spread right so blockers must move.
-  if(setterLeft){
-    if(bunched || nearRight === 0){
-      return { keys:['3','c'], tip:'You\'re on the left and the block is bunched or light on the right — beat them with a fast 3 or C ball.' };
-    }
-    return { keys:['5','c'], tip:'Setter on the left — spread right (5 / C) so the blockers have to chase across.' };
+    return { keys:['4','5'], tip:'Blockers cover both pins — no clear open side. High 4 or 5 gives the hitter time to work around the block.' };
   }
 
-  // Setter on the right → spread left.
-  if(setterRight){
-    if(bunched || nearLeft === 0){
-      return { keys:['shoot','4'], tip:'You\'re on the right and the left pin is open or the pack is tight — shoot or high-ball left to pull them.' };
-    }
-    return { keys:['4','shoot'], tip:'Setter on the right — spread left (4 / shoot) and force the block to move.' };
+  // --- 1) Get away: clear open pin opposite blocker mass (fast + high both OK) ---
+  if(rightMass && leftOpen){
+    return { keys:['shoot','4'], tip:'Block mass is on the right — get away to the open left pin (fast shoot or high 4).' };
+  }
+  if(leftMass && rightOpen){
+    return { keys:['3','5'], tip:'Block mass is on the left — get away to the open right pin (fast 3 or high 5).' };
+  }
+  // Mass on one side even if the other isn't fully empty (e.g. one trailer mid): still prefer the open side.
+  if(rightMass && !leftMass){
+    return { keys:['shoot','4'], tip:'Right side is stacked — open left: shoot (go) or high 4 to get away from the block.' };
+  }
+  if(leftMass && !rightMass){
+    return { keys:['3','5'], tip:'Left side is stacked — open right: fast 3 or high 5 to get away from the block.' };
   }
 
-  // Middle setter
+  // Bunched pack → both pins are relatively open; attack with tempo (and high to the lean side).
   if(bunched){
-    const openRight = nearRight <= nearLeft;
-    if(openRight){
-      return { keys:['3','shoot'], tip:'Blockers are bunched in the middle — go around with a fast 3 or a shoot.' };
+    if(avgB > 5.0){
+      return { keys:['shoot','4'], tip:'Blockers are bunched toward the right — beat them to the open left (shoot or high 4).' };
     }
-    return { keys:['shoot','1'], tip:'Blockers are bunched — beat them with a shoot or a quick 1 before they can split.' };
+    if(avgB < 4.0){
+      return { keys:['3','5'], tip:'Blockers are bunched toward the left — beat them to the open right (fast 3 or high 5).' };
+    }
+    return { keys:['shoot','3'], tip:'Blockers are bunched in the middle — go around with a fast shoot or 3 before they can split to a pin.' };
+  }
+
+  // Soft lean / one pin lightly free (no heavy mass, but one end is clearer).
+  if(leftOpen && !rightOpen){
+    return { keys:['shoot','4'], tip:'Left pin is open — get away with a shoot or high 4.' };
+  }
+  if(rightOpen && !leftOpen){
+    return { keys:['3','5'], tip:'Right pin is open — get away with a fast 3 or high 5.' };
   }
   if(avgB > 5.2){
-    return { keys:['4','bic'], tip:'Block leans right — high 4 left, or bic middle to keep the pipes involved.' };
+    return { keys:['shoot','4'], tip:'Block leans right — open left pin (shoot or high 4) to stay away from the mass.' };
   }
   if(avgB < 3.8){
-    return { keys:['5','c'], tip:'Block leans left — high 5 or C on the right while they recover.' };
+    return { keys:['3','5'], tip:'Block leans left — open right pin (fast 3 or high 5) to stay away from the mass.' };
   }
-  return { keys:['2','shoot'], tip:'Balanced look from middle — a 2 keeps the middle honest, or shoot the left pin to stress the end.' };
+
+  // Balanced, no clear hole → high so the hitter can choose / tool.
+  return { keys:['4','5'], tip:'Balanced block with no clear open pin — high 4 or 5 so the hitter has time to go around / tool.' };
 }
 
 function applyC3DBestSet(){
