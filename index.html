@@ -83,14 +83,24 @@
     box-shadow:0 4px 14px rgba(232,93,4,.28);
   }
   nav{ position:relative; }
-  nav button{ touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  /* pan-y: allow vertical page scroll; block browser horizontal pan so hold/drag
+     isn't stolen by overflow-x nav scroll. Horizontal nav scroll is JS-driven. */
+  nav button{
+    touch-action:pan-y;
+    user-select:none; -webkit-user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
   nav button.dragging{
     opacity:.55; z-index:6; cursor:grabbing;
+    touch-action:none;
     box-shadow:0 8px 22px rgba(0,0,0,.28);
     transform:scale(1.04);
   }
-  nav.reordering{ cursor:grabbing; touch-action:none; }
-  nav.reordering button{ cursor:grabbing; touch-action:none; }
+  /* During press (before hold fires): lock browser gestures without a loud visual */
+  nav.tab-pressing, nav.reordering{ touch-action:none; }
+  nav.tab-pressing button, nav.reordering button{ touch-action:none; cursor:grabbing; }
+  nav.reordering{ cursor:grabbing; }
   .tab-order-hint{
     font-size:11px; color:var(--text-dim); margin:-12px 0 16px; font-weight:600;
     display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:0;
@@ -478,7 +488,7 @@
       -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
       padding-bottom:6px; margin-bottom:14px;
     }
-    nav.reordering{ overflow-x:hidden; scroll-snap-type:none; }
+    nav.reordering, nav.tab-pressing{ overflow-x:hidden; scroll-snap-type:none; }
     nav button{
       flex:0 0 auto; scroll-snap-align:start;
       padding:12px 16px 12px 14px; font-size:14px; min-height:44px;
@@ -1250,22 +1260,34 @@ function resetTabOrder(){
   const resetBtn = document.getElementById('reset-tab-order');
   if(resetBtn) resetBtn.addEventListener('click', resetTabOrder);
 
+  // Phone fingers jitter more than 10px before 420ms; browser scroll slop is ~10px.
+  const HOLD_SLOP = 18;
+  const SCROLL_AXIS_RATIO = 1.15; // horizontal must clearly win to steal as nav scroll
+
   let holdTimer = null;
   let pressBtn = null;
   let dragging = null;
+  let scrolling = false;
   let startX = 0, startY = 0;
+  let scrollOrigin = 0;
   let suppressClick = false;
   let pointerId = null;
   let docBound = false;
+  let captureEl = null;
 
   function clearHold(){
     if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
   }
   function unbindDoc(){
     if(!docBound) return;
-    document.removeEventListener('pointermove', onDocMove, {capture:true});
-    document.removeEventListener('pointerup', onDocUp, {capture:true});
-    document.removeEventListener('pointercancel', onDocUp, {capture:true});
+    document.removeEventListener('pointermove', onDocMove, true);
+    document.removeEventListener('pointerup', onDocUp, true);
+    document.removeEventListener('pointercancel', onDocUp, true);
+    document.removeEventListener('lostpointercapture', onLostCapture, true);
+    // Touch fallbacks (older WebKit / gaps vs PointerEvent)
+    document.removeEventListener('touchmove', onTouchMove, {capture:true});
+    document.removeEventListener('touchend', onTouchEnd, {capture:true});
+    document.removeEventListener('touchcancel', onTouchEnd, {capture:true});
     docBound = false;
   }
   function bindDoc(){
@@ -1273,25 +1295,39 @@ function resetTabOrder(){
     document.addEventListener('pointermove', onDocMove, {capture:true, passive:false});
     document.addEventListener('pointerup', onDocUp, {capture:true});
     document.addEventListener('pointercancel', onDocUp, {capture:true});
+    document.addEventListener('lostpointercapture', onLostCapture, {capture:true});
+    document.addEventListener('touchmove', onTouchMove, {capture:true, passive:false});
+    document.addEventListener('touchend', onTouchEnd, {capture:true});
+    document.addEventListener('touchcancel', onTouchEnd, {capture:true});
     docBound = true;
+  }
+  function releaseCapture(){
+    if(captureEl && pointerId!=null){
+      try{ captureEl.releasePointerCapture(pointerId); }catch(e){}
+    }
+    captureEl = null;
   }
   function endDrag(save){
     clearHold();
     unbindDoc();
+    releaseCapture();
     if(dragging) dragging.classList.remove('dragging');
     nav.classList.remove('reordering');
+    nav.classList.remove('tab-pressing');
     if(save && dragging) saveTabOrder();
     dragging = null;
     pressBtn = null;
+    scrolling = false;
     pointerId = null;
   }
   function beginDrag(btn){
-    if(dragging) return;
+    if(dragging || scrolling) return;
     dragging = btn;
     clearHold();
     suppressClick = true;
     btn.classList.add('dragging');
     nav.classList.add('reordering');
+    nav.classList.remove('tab-pressing');
     bindDoc();
     try{ navigator.vibrate?.(10); }catch(e){}
   }
@@ -1315,29 +1351,83 @@ function resetTabOrder(){
       nav.appendChild(dragging);
     }
   }
-  function onDocMove(e){
-    if(pointerId!=null && e.pointerId!==pointerId) return;
-    if(!pressBtn) return;
-    const dx = e.clientX - startX, dy = e.clientY - startY;
-    if(!dragging){
-      // Movement before hold completes → cancel hold so mobile nav scroll / short taps still work
-      if(Math.hypot(dx, dy) > 10){ clearHold(); unbindDoc(); pressBtn = null; }
+  function pointFromEvent(e){
+    if(e.touches && e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    if(e.changedTouches && e.changedTouches[0]) return {x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY};
+    return {x:e.clientX, y:e.clientY};
+  }
+  function onMoveXY(clientX, clientY, e){
+    if(!pressBtn && !dragging && !scrolling) return;
+    const dx = clientX - startX, dy = clientY - startY;
+    const dist = Math.hypot(dx, dy);
+
+    if(dragging){
+      if(e && e.cancelable) e.preventDefault();
+      reorderAt(clientX, clientY);
       return;
     }
-    e.preventDefault();
-    reorderAt(e.clientX, e.clientY);
-  }
-  function onDocUp(e){
-    if(pointerId!=null && e.pointerId!==pointerId) return;
-    if(!pressBtn && !dragging) return;
-    const wasDragging = !!dragging;
-    endDrag(wasDragging);
-    if(wasDragging){
+    if(scrolling){
+      if(e && e.cancelable) e.preventDefault();
+      nav.scrollLeft = scrollOrigin - dx;
       suppressClick = true;
-      setTimeout(()=>{ suppressClick = false; }, 120);
+      return;
+    }
+
+    // Still waiting for hold. touch-action:pan-y already blocks browser horizontal
+    // pan / overflow-x theft; do not preventDefault here so vertical page scroll works.
+    // HOLD_SLOP (18px) absorbs normal finger jitter without cancelling the timer.
+    if(dist <= HOLD_SLOP) return;
+
+    // Movement past slop before hold → cancel hold; horizontal swipe scrolls the nav.
+    clearHold();
+    nav.classList.remove('tab-pressing');
+    if(Math.abs(dx) >= Math.abs(dy) * SCROLL_AXIS_RATIO){
+      scrolling = true;
+      suppressClick = true;
+      if(e && e.cancelable) e.preventDefault();
+      nav.scrollLeft = scrollOrigin - dx;
+    } else {
+      // Vertical intent: drop press so pan-y can scroll the page on later moves.
+      pressBtn = null;
+      releaseCapture();
+      unbindDoc();
+    }
+  }
+  function onDocMove(e){
+    if(pointerId!=null && e.pointerId!==pointerId) return;
+    onMoveXY(e.clientX, e.clientY, e);
+  }
+  function onTouchMove(e){
+    // Mirror pointer path for engines that lag pointerstream vs touch; always non-passive.
+    if(!pressBtn && !dragging && !scrolling) return;
+    const p = pointFromEvent(e);
+    onMoveXY(p.x, p.y, e);
+  }
+  function finishUp(){
+    const wasDragging = !!dragging;
+    const wasScrolling = scrolling;
+    endDrag(wasDragging);
+    if(wasDragging || wasScrolling){
+      suppressClick = true;
+      setTimeout(()=>{ suppressClick = false; }, 160);
     } else {
       suppressClick = false;
     }
+  }
+  function onDocUp(e){
+    if(pointerId!=null && e.pointerId!==pointerId) return;
+    if(!pressBtn && !dragging && !scrolling) return;
+    finishUp();
+  }
+  function onTouchEnd(e){
+    if(!pressBtn && !dragging && !scrolling) return;
+    // If PointerEvents also fire, onDocUp will no-op after endDrag clears state.
+    finishUp();
+  }
+  function onLostCapture(e){
+    if(pointerId!=null && e.pointerId!==pointerId) return;
+    if(!pressBtn && !dragging && !scrolling) return;
+    finishUp();
   }
 
   nav.querySelectorAll('button[data-tab]').forEach(btn=>{
@@ -1350,17 +1440,28 @@ function resetTabOrder(){
       }
       showTab(btn.dataset.tab);
     });
+    btn.addEventListener('contextmenu', e=>{
+      // iOS/Android long-press callout / menu steals the hold-to-drag gesture
+      if(pressBtn===btn || dragging){ e.preventDefault(); }
+    });
     btn.addEventListener('pointerdown', e=>{
       if(e.button!=null && e.button!==0) return;
+      // Ignore secondary pointers (multi-touch pinch)
+      if(pointerId!=null && dragging) return;
       pressBtn = btn;
       startX = e.clientX; startY = e.clientY;
+      scrollOrigin = nav.scrollLeft;
+      scrolling = false;
       suppressClick = false;
       pointerId = e.pointerId;
       clearHold();
+      nav.classList.add('tab-pressing');
       bindDoc();
+      captureEl = btn;
+      try{ btn.setPointerCapture(e.pointerId); }catch(err){ captureEl = null; }
       holdTimer = setTimeout(()=>{
         holdTimer = null;
-        if(pressBtn===btn) beginDrag(btn);
+        if(pressBtn===btn && !scrolling) beginDrag(btn);
       }, TAB_HOLD_MS);
     });
   });
