@@ -3220,18 +3220,18 @@ function resetC3DBlockersFollow(){
 }
 
 // ---- Shared textbook recommendation (Best set + IQ test) ----
-// Leo's rule: setter being on the right (or left) does NOT mean "set the other
-// side" is better. Read the block first:
-//  1) Get away from blockers — open pin / opposite of blocker mass (fast and/or
-//     high to that open side). Multiple answers OK (e.g. open-side fast + high).
-//  2) If you can't get away (blockers spread / covering both pins / no clear
-//     open side) → high set so the hitter has time to go around / tool.
+// Leo's rule: setter X never decides the call. Read the block first:
+//  0) ALL blockers on the right half → open left (shoot/4) — even if setter is left.
+//     ALL blockers on the left half  → open right (3/5) — even if setter is right.
+//  1) Otherwise get away from blocker mass (open-side fast and/or high).
+//  2) If you can't get away (spread covering both pins) → high 4/5 to tool/go around.
+// setterWorldX is kept for call-site compatibility only; it must not gate open-pin answers.
 function recommendSets(setterWorldX, blockerWorldXs){
   const half = COURT_M.W / 2;
-  const sx = setterWorldX + half; // 0..9 from left sideline (context only; not a "set opposite" cue)
+  // Never seed blockers from setter position — that would reintroduce setter-side bias.
   const bxs = (blockerWorldXs && blockerWorldXs.length)
     ? blockerWorldXs.map(x => x + half)
-    : [sx];
+    : [half];
   const avgB = bxs.reduce((a,b)=>a+b, 0) / bxs.length;
   const spread = Math.max(...bxs) - Math.min(...bxs);
   const bunched = spread < 3.2;
@@ -3244,6 +3244,17 @@ function recommendSets(setterWorldX, blockerWorldXs){
   const rightOpen = nearRight === 0 && !rightMass;
   // Both pins have presence and the pack is wide → nowhere clean to run away to.
   const bothPinsCovered = nearLeft >= 1 && nearRight >= 1 && !bunched;
+
+  // --- 0) Hard invariant: whole pack on one half → opposite pin (fast + high) ---
+  // Strict half-court (mid = 4.5). allRight && allLeft only when every x === 4.5 (skip).
+  const allRight = bxs.every(x => x >= 4.5);
+  const allLeft  = bxs.every(x => x <= 4.5);
+  if(allRight && !allLeft){
+    return { keys:['shoot','4'], tip:'Every blocker is on the right half — get away to the open left (fast shoot or high 4). Setter spot does not matter.', why:'away from the block — all blockers on the right, open left pin' };
+  }
+  if(allLeft && !allRight){
+    return { keys:['3','5'], tip:'Every blocker is on the left half — get away to the open right (fast 3 or high 5). Setter spot does not matter.', why:'away from the block — all blockers on the left, open right pin' };
+  }
 
   // --- 2) Can't get away: spread covering both pins → high ball(s) to tool/go around ---
   if(bothPinsCovered){
