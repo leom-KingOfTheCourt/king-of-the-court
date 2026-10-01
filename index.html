@@ -3249,56 +3249,56 @@ function recommendSets(setterWorldX, blockerWorldXs){
   if(bothPinsCovered){
     // Prefer the slightly less-loaded pin's high ball; accept both highs when even.
     if(nearLeft > nearRight){
-      return { keys:['5','4'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (5, or 4) so the hitter has time to tool / go around.' };
+      return { keys:['5','4'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (5, or 4) so the hitter has time to tool / go around.', why:'more time for the hitter when both sides have blockers' };
     }
     if(nearRight > nearLeft){
-      return { keys:['4','5'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (4, or 5) so the hitter has time to tool / go around.' };
+      return { keys:['4','5'], tip:'Blockers are spread across both pins — nowhere clean to escape. Go high (4, or 5) so the hitter has time to tool / go around.', why:'more time for the hitter when both sides have blockers' };
     }
-    return { keys:['4','5'], tip:'Blockers cover both pins — no clear open side. High 4 or 5 gives the hitter time to work around the block.' };
+    return { keys:['4','5'], tip:'Blockers cover both pins — no clear open side. High 4 or 5 gives the hitter time to work around the block.', why:'more time for the hitter when both sides have blockers' };
   }
 
   // --- 1) Get away: clear open pin opposite blocker mass (fast + high both OK) ---
   if(rightMass && leftOpen){
-    return { keys:['shoot','4'], tip:'Block mass is on the right — get away to the open left pin (fast shoot or high 4).' };
+    return { keys:['shoot','4'], tip:'Block mass is on the right — get away to the open left pin (fast shoot or high 4).', why:'away from the block — open left pin, fewer / no blockers that side' };
   }
   if(leftMass && rightOpen){
-    return { keys:['3','5'], tip:'Block mass is on the left — get away to the open right pin (fast 3 or high 5).' };
+    return { keys:['3','5'], tip:'Block mass is on the left — get away to the open right pin (fast 3 or high 5).', why:'away from the block — open right pin, fewer / no blockers that side' };
   }
   // Mass on one side even if the other isn't fully empty (e.g. one trailer mid): still prefer the open side.
   if(rightMass && !leftMass){
-    return { keys:['shoot','4'], tip:'Right side is stacked — open left: shoot (go) or high 4 to get away from the block.' };
+    return { keys:['shoot','4'], tip:'Right side is stacked — open left: shoot (go) or high 4 to get away from the block.', why:'away from the block — open left, fewer blockers that side' };
   }
   if(leftMass && !rightMass){
-    return { keys:['3','5'], tip:'Left side is stacked — open right: fast 3 or high 5 to get away from the block.' };
+    return { keys:['3','5'], tip:'Left side is stacked — open right: fast 3 or high 5 to get away from the block.', why:'away from the block — open right, fewer blockers that side' };
   }
 
   // Bunched pack → both pins are relatively open; attack with tempo (and high to the lean side).
   if(bunched){
     if(avgB > 5.0){
-      return { keys:['shoot','4'], tip:'Blockers are bunched toward the right — beat them to the open left (shoot or high 4).' };
+      return { keys:['shoot','4'], tip:'Blockers are bunched toward the right — beat them to the open left (shoot or high 4).', why:'away from the block — open left pin' };
     }
     if(avgB < 4.0){
-      return { keys:['3','5'], tip:'Blockers are bunched toward the left — beat them to the open right (fast 3 or high 5).' };
+      return { keys:['3','5'], tip:'Blockers are bunched toward the left — beat them to the open right (fast 3 or high 5).', why:'away from the block — open right pin' };
     }
-    return { keys:['shoot','3'], tip:'Blockers are bunched in the middle — go around with a fast shoot or 3 before they can split to a pin.' };
+    return { keys:['shoot','3'], tip:'Blockers are bunched in the middle — go around with a fast shoot or 3 before they can split to a pin.', why:'away from the block — both pins open while they are bunched' };
   }
 
   // Soft lean / one pin lightly free (no heavy mass, but one end is clearer).
   if(leftOpen && !rightOpen){
-    return { keys:['shoot','4'], tip:'Left pin is open — get away with a shoot or high 4.' };
+    return { keys:['shoot','4'], tip:'Left pin is open — get away with a shoot or high 4.', why:'open left pin — fewer / no blockers that side' };
   }
   if(rightOpen && !leftOpen){
-    return { keys:['3','5'], tip:'Right pin is open — get away with a fast 3 or high 5.' };
+    return { keys:['3','5'], tip:'Right pin is open — get away with a fast 3 or high 5.', why:'open right pin — fewer / no blockers that side' };
   }
   if(avgB > 5.2){
-    return { keys:['shoot','4'], tip:'Block leans right — open left pin (shoot or high 4) to stay away from the mass.' };
+    return { keys:['shoot','4'], tip:'Block leans right — open left pin (shoot or high 4) to stay away from the mass.', why:'away from the block — open left pin' };
   }
   if(avgB < 3.8){
-    return { keys:['3','5'], tip:'Block leans left — open right pin (fast 3 or high 5) to stay away from the mass.' };
+    return { keys:['3','5'], tip:'Block leans left — open right pin (fast 3 or high 5) to stay away from the mass.', why:'away from the block — open right pin' };
   }
 
   // Balanced, no clear hole → high so the hitter can choose / tool.
-  return { keys:['4','5'], tip:'Balanced block with no clear open pin — high 4 or 5 so the hitter has time to go around / tool.' };
+  return { keys:['4','5'], tip:'Balanced block with no clear open pin — high 4 or 5 so the hitter has time to go around / tool.', why:'more time for the hitter — no clear open pin' };
 }
 
 function applyC3DBestSet(){
@@ -3799,13 +3799,13 @@ function iqSubmit(key){
   if(ok) iqScore.right += 1;
   const res = document.getElementById('iq-result');
   const labels = rec.keys.map(k=>SET_TYPE_MAP[k].label).join(' / ');
-  const yours = SET_TYPE_MAP[key] ? SET_TYPE_MAP[key].label : key;
+  const why = rec.why || rec.tip;
   if(ok){
     res.className = 'ok';
-    res.innerHTML = `<b>Correct</b> — ${yours} matches the textbook call (${labels}). ${rec.tip}`;
+    res.innerHTML = `<b>Good job</b> — ${why}.`;
   } else {
     res.className = 'bad';
-    res.innerHTML = `<b>Not quite</b> — you picked ${yours}. Textbook: <b>${labels}</b>. ${rec.tip}`;
+    res.innerHTML = `This is better: <b>${labels}</b> — ${why}.`;
   }
   renderIqTypeButtons();
   updateIqScore();
