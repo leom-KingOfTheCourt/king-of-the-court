@@ -3253,7 +3253,7 @@ function recommendSets(setterWorldX, blockerWorldXs){
     return { keys:['shoot','4'], tip:'Every blocker is on the right half — get away to the open left (fast shoot or high 4). Setter spot does not matter.', why:'away from the block — all blockers on the right, open left pin' };
   }
   if(allLeft && !allRight){
-    return { keys:['3','5'], tip:'Every blocker is on the left half — get away to the open right (fast 3 or high 5). Setter spot does not matter.', why:'away from the block — all blockers on the left, open right pin' };
+    return { keys:['3','5','c'], tip:'Every blocker is on the left half — get away to the open right (fast 3 or high 5). Setter spot does not matter.', why:'away from the block — all blockers on the left, open right pin' };
   }
 
   // --- 2) Can't get away: spread covering both pins → high ball(s) to tool/go around ---
@@ -3273,14 +3273,14 @@ function recommendSets(setterWorldX, blockerWorldXs){
     return { keys:['shoot','4'], tip:'Block mass is on the right — get away to the open left pin (fast shoot or high 4).', why:'away from the block — open left pin, fewer / no blockers that side' };
   }
   if(leftMass && rightOpen){
-    return { keys:['3','5'], tip:'Block mass is on the left — get away to the open right pin (fast 3 or high 5).', why:'away from the block — open right pin, fewer / no blockers that side' };
+    return { keys:['3','5','c'], tip:'Block mass is on the left — get away to the open right pin (fast 3 or high 5).', why:'away from the block — open right pin, fewer / no blockers that side' };
   }
   // Mass on one side even if the other isn't fully empty (e.g. one trailer mid): still prefer the open side.
   if(rightMass && !leftMass){
     return { keys:['shoot','4'], tip:'Right side is stacked — open left: shoot (go) or high 4 to get away from the block.', why:'away from the block — open left, fewer blockers that side' };
   }
   if(leftMass && !rightMass){
-    return { keys:['3','5'], tip:'Left side is stacked — open right: fast 3 or high 5 to get away from the block.', why:'away from the block — open right, fewer blockers that side' };
+    return { keys:['3','5','c'], tip:'Left side is stacked — open right: fast 3 or high 5 to get away from the block.', why:'away from the block — open right, fewer blockers that side' };
   }
 
   // Bunched pack → both pins are relatively open; attack with tempo (and high to the lean side).
@@ -3289,7 +3289,7 @@ function recommendSets(setterWorldX, blockerWorldXs){
       return { keys:['shoot','4'], tip:'Blockers are bunched toward the right — beat them to the open left (shoot or high 4).', why:'away from the block — open left pin' };
     }
     if(avgB < 4.0){
-      return { keys:['3','5'], tip:'Blockers are bunched toward the left — beat them to the open right (fast 3 or high 5).', why:'away from the block — open right pin' };
+      return { keys:['3','5','c'], tip:'Blockers are bunched toward the left — beat them to the open right (fast 3 or high 5).', why:'away from the block — open right pin' };
     }
     return { keys:['shoot','3'], tip:'Blockers are bunched in the middle — go around with a fast shoot or 3 before they can split to a pin.', why:'away from the block — both pins open while they are bunched' };
   }
@@ -3299,13 +3299,13 @@ function recommendSets(setterWorldX, blockerWorldXs){
     return { keys:['shoot','4'], tip:'Left pin is open — get away with a shoot or high 4.', why:'open left pin — fewer / no blockers that side' };
   }
   if(rightOpen && !leftOpen){
-    return { keys:['3','5'], tip:'Right pin is open — get away with a fast 3 or high 5.', why:'open right pin — fewer / no blockers that side' };
+    return { keys:['3','5','c'], tip:'Right pin is open — get away with a fast 3 or high 5.', why:'open right pin — fewer / no blockers that side' };
   }
   if(avgB > 5.2){
     return { keys:['shoot','4'], tip:'Block leans right — open left pin (shoot or high 4) to stay away from the mass.', why:'away from the block — open left pin' };
   }
   if(avgB < 3.8){
-    return { keys:['3','5'], tip:'Block leans left — open right pin (fast 3 or high 5) to stay away from the mass.', why:'away from the block — open right pin' };
+    return { keys:['3','5','c'], tip:'Block leans left — open right pin (fast 3 or high 5) to stay away from the mass.', why:'away from the block — open right pin' };
   }
 
   // Balanced, no clear hole → high so the hitter can choose / tool.
