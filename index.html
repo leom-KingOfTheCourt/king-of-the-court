@@ -83,6 +83,26 @@
     box-shadow:0 4px 14px rgba(232,93,4,.28);
   }
   nav{ position:relative; }
+  nav button{ touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  nav button.dragging{
+    opacity:.55; z-index:6; cursor:grabbing;
+    box-shadow:0 8px 22px rgba(0,0,0,.28);
+    transform:scale(1.04);
+  }
+  nav.reordering{ cursor:grabbing; touch-action:none; }
+  nav.reordering button{ cursor:grabbing; touch-action:none; }
+  .tab-order-hint{
+    font-size:11px; color:var(--text-dim); margin:-12px 0 16px; font-weight:600;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:0;
+  }
+  .tab-order-hint[hidden]{ display:none !important; }
+  .tab-order-hint button#reset-tab-order{
+    font-family:var(--font-display); letter-spacing:.04em; font-size:12px;
+    background:transparent; color:var(--text-dim); border:1px solid var(--border);
+    padding:3px 10px; cursor:pointer;
+    clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);
+  }
+  .tab-order-hint button#reset-tab-order:hover{ border-color:var(--orange); color:var(--orange2); }
   section{display:none;}
   section.active{display:block;}
   .card{
@@ -458,6 +478,7 @@
       -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
       padding-bottom:6px; margin-bottom:14px;
     }
+    nav.reordering{ overflow-x:hidden; scroll-snap-type:none; }
     nav button{
       flex:0 0 auto; scroll-snap-align:start;
       padding:12px 16px 12px 14px; font-size:14px; min-height:44px;
@@ -574,6 +595,10 @@
       <svg class="crow-svg"><use href="#crow-fly"/></svg>
     </span>
   </nav>
+  <div class="tab-order-hint" id="tab-order-hint" hidden>
+    <span>Hold a tab, then drag to reorder</span>
+    <button type="button" id="reset-tab-order" title="Restore default tab order">Reset tab order</button>
+  </div>
 
 
   <div class="backup-banner" id="backup-banner">
@@ -1083,6 +1108,7 @@
     <div class="card">
       <h2>Backup your data</h2>
       <div class="sub">All data lives in this browser only. Export a backup regularly, especially before clearing browser data.</div>
+      <div class="sub" style="margin-top:6px;">Nav tabs: hold a tab, then drag to reorder for your priorities. A Reset tab order control appears under the nav when the order is customized.</div>
       <div class="top-actions" style="justify-content:flex-start;">
         <button class="secondary" id="export-json-btn">Export JSON backup</button>
         <button class="secondary" id="export-csv-btn">Export CSV</button>
@@ -1156,7 +1182,7 @@ function showTab(tab, updateHash=true){
   const btn = document.querySelector(`nav button[data-tab="${tab}"]`);
   const sec = document.getElementById(tab);
   if(!btn || !sec) return;
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('nav button[data-tab]').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
   btn.classList.add('active');
   sec.classList.add('active');
@@ -1168,9 +1194,177 @@ function showTab(tab, updateHash=true){
   if(typeof TAB_HOOKS!=='undefined' && TAB_HOOKS[tab]) TAB_HOOKS[tab]();
   if(updateHash && location.hash!=='#'+tab) history.replaceState(null, '', '#'+tab);
 }
-document.querySelectorAll('nav button').forEach(btn=>{
-  btn.addEventListener('click', ()=>showTab(btn.dataset.tab));
-});
+
+// Tab order: long-press then drag (phone + desktop). Short tap still switches tabs.
+const TAB_ORDER_KEY = 'kotc-tab-order-v1';
+const TAB_HOLD_MS = 420;
+const DEFAULT_TAB_ORDER = [...document.querySelectorAll('nav button[data-tab]')].map(b=>b.dataset.tab);
+
+function currentTabOrder(){
+  return [...document.querySelectorAll('nav button[data-tab]')].map(b=>b.dataset.tab);
+}
+function loadTabOrder(){
+  try{
+    const o = JSON.parse(localStorage.getItem(TAB_ORDER_KEY));
+    if(!Array.isArray(o) || o.length!==DEFAULT_TAB_ORDER.length) return null;
+    const want = new Set(DEFAULT_TAB_ORDER);
+    if(o.some(t=>!want.has(t)) || new Set(o).size!==o.length) return null;
+    return o;
+  }catch(e){ return null; }
+}
+function saveTabOrder(){
+  localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(currentTabOrder()));
+  updateTabOrderHint();
+}
+function applyTabOrder(order){
+  const nav = document.querySelector('nav');
+  if(!nav || !order) return;
+  const byTab = Object.fromEntries([...nav.querySelectorAll('button[data-tab]')].map(b=>[b.dataset.tab, b]));
+  const crow = nav.querySelector('[data-crow="nav"]');
+  order.forEach(t=>{ if(byTab[t]) nav.insertBefore(byTab[t], crow||null); });
+  DEFAULT_TAB_ORDER.forEach(t=>{
+    if(byTab[t] && !order.includes(t)) nav.insertBefore(byTab[t], crow||null);
+  });
+}
+function tabOrderIsCustom(){
+  const cur = currentTabOrder();
+  return cur.some((t,i)=>t!==DEFAULT_TAB_ORDER[i]);
+}
+function updateTabOrderHint(){
+  const hint = document.getElementById('tab-order-hint');
+  if(!hint) return;
+  hint.hidden = !tabOrderIsCustom();
+}
+function resetTabOrder(){
+  localStorage.removeItem(TAB_ORDER_KEY);
+  applyTabOrder(DEFAULT_TAB_ORDER);
+  updateTabOrderHint();
+  toast('Tab order reset');
+}
+(function initTabReorder(){
+  const nav = document.querySelector('nav');
+  if(!nav) return;
+  const saved = loadTabOrder();
+  if(saved) applyTabOrder(saved);
+  updateTabOrderHint();
+  const resetBtn = document.getElementById('reset-tab-order');
+  if(resetBtn) resetBtn.addEventListener('click', resetTabOrder);
+
+  let holdTimer = null;
+  let pressBtn = null;
+  let dragging = null;
+  let startX = 0, startY = 0;
+  let suppressClick = false;
+  let pointerId = null;
+  let docBound = false;
+
+  function clearHold(){
+    if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+  }
+  function unbindDoc(){
+    if(!docBound) return;
+    document.removeEventListener('pointermove', onDocMove, {capture:true});
+    document.removeEventListener('pointerup', onDocUp, {capture:true});
+    document.removeEventListener('pointercancel', onDocUp, {capture:true});
+    docBound = false;
+  }
+  function bindDoc(){
+    if(docBound) return;
+    document.addEventListener('pointermove', onDocMove, {capture:true, passive:false});
+    document.addEventListener('pointerup', onDocUp, {capture:true});
+    document.addEventListener('pointercancel', onDocUp, {capture:true});
+    docBound = true;
+  }
+  function endDrag(save){
+    clearHold();
+    unbindDoc();
+    if(dragging) dragging.classList.remove('dragging');
+    nav.classList.remove('reordering');
+    if(save && dragging) saveTabOrder();
+    dragging = null;
+    pressBtn = null;
+    pointerId = null;
+  }
+  function beginDrag(btn){
+    if(dragging) return;
+    dragging = btn;
+    clearHold();
+    suppressClick = true;
+    btn.classList.add('dragging');
+    nav.classList.add('reordering');
+    bindDoc();
+    try{ navigator.vibrate?.(10); }catch(e){}
+  }
+  function reorderAt(clientX, clientY){
+    if(!dragging) return;
+    const others = [...nav.querySelectorAll('button[data-tab]')].filter(b=>b!==dragging);
+    let before = null;
+    for(const b of others){
+      const r = b.getBoundingClientRect();
+      const midX = r.left + r.width/2;
+      const midY = r.top + r.height/2;
+      if(clientY < midY - r.height*0.15 || (clientY <= midY + r.height*0.15 && clientX < midX)){
+        before = b; break;
+      }
+    }
+    const crow = nav.querySelector('[data-crow="nav"]');
+    const ref = before || crow;
+    if(ref){
+      if(dragging.nextElementSibling !== ref) nav.insertBefore(dragging, ref);
+    } else if(dragging !== nav.lastElementChild){
+      nav.appendChild(dragging);
+    }
+  }
+  function onDocMove(e){
+    if(pointerId!=null && e.pointerId!==pointerId) return;
+    if(!pressBtn) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if(!dragging){
+      // Movement before hold completes → cancel hold so mobile nav scroll / short taps still work
+      if(Math.hypot(dx, dy) > 10){ clearHold(); unbindDoc(); pressBtn = null; }
+      return;
+    }
+    e.preventDefault();
+    reorderAt(e.clientX, e.clientY);
+  }
+  function onDocUp(e){
+    if(pointerId!=null && e.pointerId!==pointerId) return;
+    if(!pressBtn && !dragging) return;
+    const wasDragging = !!dragging;
+    endDrag(wasDragging);
+    if(wasDragging){
+      suppressClick = true;
+      setTimeout(()=>{ suppressClick = false; }, 120);
+    } else {
+      suppressClick = false;
+    }
+  }
+
+  nav.querySelectorAll('button[data-tab]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      if(suppressClick){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        suppressClick = false;
+        return;
+      }
+      showTab(btn.dataset.tab);
+    });
+    btn.addEventListener('pointerdown', e=>{
+      if(e.button!=null && e.button!==0) return;
+      pressBtn = btn;
+      startX = e.clientX; startY = e.clientY;
+      suppressClick = false;
+      pointerId = e.pointerId;
+      clearHold();
+      bindDoc();
+      holdTimer = setTimeout(()=>{
+        holdTimer = null;
+        if(pressBtn===btn) beginDrag(btn);
+      }, TAB_HOLD_MS);
+    });
+  });
+})();
 
 
 function toast(msg){
