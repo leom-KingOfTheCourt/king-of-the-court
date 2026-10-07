@@ -482,6 +482,22 @@
   .fix-tbl td{ white-space:nowrap; }
   #tonight-print-btn{ margin-left:8px; }
 
+
+  /* --- About + Decisions (focus features) --- */
+  .about-card .about-voice{
+    font-size:15px; line-height:1.55; color:var(--text); margin:10px 0 0; font-weight:600;
+  }
+  .about-card .about-meta{
+    margin-top:10px; font-size:12.5px; color:var(--text-dim); font-weight:600; line-height:1.45;
+  }
+  .about-card .about-meta b{ color:var(--orange2); font-weight:700; }
+  .about-card .about-links{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
+  .about-compact .about-voice{ font-size:14.5px; }
+  @media (max-width:768px){
+    .about-card .about-links{ flex-direction:column; }
+    .about-card .about-links .secondary, .about-card .about-links .primary{ width:100%; text-align:center; }
+  }
+
   /* --- Phone layout (auto-detect; no prompt) --- */
   html, body{ overflow-x:hidden; max-width:100%; }
   .wrap{ overflow-x:hidden; }
@@ -627,6 +643,7 @@
 
   <nav>
     <button class="active" data-tab="balltime">Balltime</button>
+    <button data-tab="about">About</button>
     <button data-tab="stats">Match Stats</button>
     <button data-tab="progress">Progress</button>
     <button data-tab="report">Report Card</button>
@@ -652,6 +669,24 @@
     <button class="secondary" id="backup-banner-btn">Export backup now</button>
   </div>
 
+
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="card about-card">
+      <h2>About this project</h2>
+      <div class="sub">Leo Masubuchi Ng · HS junior setter · jersey #5</div>
+      <p class="about-voice">I&rsquo;m a high school setter. Most volleyball stats tell me what happened after the set. I wanted to understand why I make certain setting decisions, when I become predictable, and how they change under pressure.</p>
+      <div class="about-meta">
+        Built from my own Balltime game tags — pass quality, set calls, destinations, and results when they&rsquo;re available.
+        Pages like <b>Tendencies</b> dig into patterns; they don&rsquo;t prescribe what to set.
+      </div>
+      <div class="about-links">
+        <button type="button" class="secondary" data-go="tendencies">Tendencies</button>
+        <button type="button" class="secondary" data-go="dashboard">Dashboard</button>
+      </div>
+    </div>
+  </section>
 
   <!-- DATA -->
   <section id="data">
@@ -696,6 +731,15 @@
 
   <!-- DASHBOARD -->
   <section id="dashboard">
+    <div class="card about-card about-compact" id="dash-about">
+      <h2>About this project</h2>
+      <div class="sub">Leo · HS JR setter #5</div>
+      <p class="about-voice">I&rsquo;m a high school setter. Most volleyball stats tell me what happened after the set. I wanted to understand why I make certain setting decisions, when I become predictable, and how they change under pressure.</p>
+      <div class="about-links">
+        <button type="button" class="secondary" data-go="about">Full About</button>
+        <button type="button" class="secondary" data-go="tendencies">Tendencies</button>
+      </div>
+    </div>
     <div class="card">
       <h2>Overview</h2>
       <div class="sub">From Balltime games in data/games — same source as Progress / Report / Tendencies.</div>
@@ -2782,6 +2826,7 @@ function refreshMatchUi(){
 
 // ---------- Match stats tab (Balltime CSV team view + set log filtered by match) ----------
 var TAB_HOOKS = TAB_HOOKS || {};
+TAB_HOOKS.about = ()=>{};
 TAB_HOOKS.stats = ()=>{ populateMatchSelects(); renderMatchStats(); renderTonightTakeaways(); };
 const PLAYER_COLORS = ['#ff6a00','#e8283f','#ffab4d','#35d488','#ffcc33','#7ec4ff','#b78cff','#ff7ab6','#4de0d0','#c9c3d6','#ff9d6b','#6bdba3'];
 
@@ -4241,8 +4286,11 @@ async function updateBtGameMsg(videoId){
       : `<span style="color:var(--mid)">Not in Progress yet — send this link to your Grok bot to add it. (This site can't pull from Balltime itself.)</span>`;
   }catch(e){ el.innerHTML = '<span style="color:var(--text-dim)">Couldn\'t check the Progress games list.</span>'; }
 }
-document.getElementById('bt-link-msg').parentElement.addEventListener('click', (e)=>{
-  const a = e.target.closest('[data-go]'); if(a){ e.preventDefault(); showTab(a.dataset.go); }
+// data-go links/buttons anywhere in the app (About, Balltime notices, …)
+document.querySelector('.wrap').addEventListener('click', (e)=>{
+  const a = e.target.closest('[data-go]'); if(!a) return;
+  e.preventDefault();
+  showTab(a.dataset.go);
 });
 btLinkInput.addEventListener('input', ()=>{ const r = parseBalltimeLink(btLinkInput.value); updateBtGameMsg(r && !r.error ? r.videoId : null); });
 
