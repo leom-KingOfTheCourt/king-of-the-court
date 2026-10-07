@@ -4184,13 +4184,7 @@ function renderDecPatterns(games, chains){
       `<div class="pg-note" style="margin-top:8px;">July 8 is thin on pass/zone tags — July 10 supports these pattern lines.</div>`);
   }
 
-  // Same-hitter streak (works without pass/zone)
-  const withAtt = chains.filter(c => c.attacker);
-  let sameAfter = 0, chanceAfter = 0;
-  for(let i=1;i<withAtt.length;i++){
-    // consecutive in filtered list is wrong — use original order within each game
-  }
-  // Per-game chronological chains
+  // Same-hitter streak (works without pass/zone) — chronological per game
   let sameN = 0, sameD = 0, streak2N = 0, streak2D = 0;
   games.forEach(g=>{
     const cs = g.chains || [];
@@ -4268,7 +4262,7 @@ function renderDecPredict(games, chains){
 
   // Overall destination concentration
   if(anyPos){
-    const ms = decModeShare(chains, c => decBucket(c));
+    const ms = decModeShare(chains, c => { const b = decBucket(c); return (b && b!=='not-attacked') ? b : null; });
     cards.push(scoreCard('Overall destination', ms, 'Needs zone tags'));
   } else {
     cards.push(scoreCard('Overall destination', null, 'Can\'t chart yet — missing zones / ball tracking'));
