@@ -493,9 +493,61 @@
   .about-card .about-meta b{ color:var(--orange2); font-weight:700; }
   .about-card .about-links{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }
   .about-compact .about-voice{ font-size:14.5px; }
+  .dec-frame{
+    font-family:var(--font-display); letter-spacing:.03em; font-size:20px; color:var(--orange2);
+    margin:0 0 8px; font-weight:400; line-height:1.25;
+  }
+  .dec-pattern{
+    background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange);
+    border-radius:6px; padding:10px 12px; margin:8px 0; font-size:14px; line-height:1.45; color:var(--text);
+  }
+  .dec-pattern .dec-n{ color:var(--text-dim); font-size:12px; font-weight:600; }
+  .dec-missing{
+    background:var(--card2); border:1px dashed var(--border); border-radius:6px;
+    padding:10px 12px; margin:8px 0; color:var(--text-dim); font-size:13.5px; line-height:1.45;
+  }
+  .dec-score-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:10px;
+  }
+  .dec-score-box{
+    background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; text-align:center;
+  }
+  .dec-score-box .val{
+    font-family:var(--font-display); font-size:28px; letter-spacing:.03em; color:var(--orange2); line-height:1.1;
+  }
+  .dec-score-box .lbl{ font-size:12px; color:var(--text-dim); font-weight:700; margin-top:4px; line-height:1.3; }
+  .dec-score-box .hint{ font-size:11px; color:var(--text-dim); margin-top:6px; line-height:1.35; }
+  .dec-method{
+    margin-top:10px; font-size:13px; color:var(--text-dim); line-height:1.45; font-weight:600;
+  }
+  .dec-method b{ color:var(--text); }
+  .wwys-situation{
+    background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:14px 14px; margin:10px 0;
+  }
+  .wwys-situation .wwys-row{ display:flex; flex-wrap:wrap; gap:8px 14px; margin:4px 0; font-size:14px; }
+  .wwys-situation .wwys-k{ color:var(--text-dim); font-weight:700; min-width:7.5em; }
+  .wwys-situation .wwys-v{ color:var(--text); font-weight:700; }
+  .wwys-choices{ display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px; }
+  .wwys-choices .opt-btn{ min-height:44px; }
+  .wwys-reveal{
+    margin-top:12px; padding:12px 14px; background:#1a3a5c; border:1px solid #2e5c8f;
+    border-radius:8px; color:#9fd0ff; font-size:14px; line-height:1.5; display:none;
+  }
+  .wwys-reveal.show{ display:block; }
+  .wwys-reveal b{ color:#fff; }
+  .blind-q{
+    background:var(--card2); border:1px solid var(--border); border-left:3px solid #ffcc33;
+    border-radius:6px; padding:12px 14px; margin:10px 0; font-size:14.5px; line-height:1.45; color:var(--text);
+  }
+  .blind-q .blind-ctx{ display:block; margin-top:6px; font-size:12.5px; color:var(--text-dim); font-weight:600; }
   @media (max-width:768px){
+    .dec-score-grid{ grid-template-columns:1fr 1fr; }
+    .dec-frame{ font-size:18px; }
     .about-card .about-links{ flex-direction:column; }
     .about-card .about-links .secondary, .about-card .about-links .primary{ width:100%; text-align:center; }
+  }
+  @media (max-width:480px){
+    .dec-score-grid{ grid-template-columns:1fr; }
   }
 
   /* --- Phone layout (auto-detect; no prompt) --- */
@@ -648,6 +700,7 @@
     <button data-tab="progress">Progress</button>
     <button data-tab="report">Report Card</button>
     <button data-tab="tendencies">Tendencies</button>
+    <button data-tab="decisions">Decisions</button>
     <button data-tab="court2d">Court Map</button>
     <button data-tab="court3d">3D Court</button>
     <button data-tab="data">All Sets</button>
@@ -679,9 +732,10 @@
       <p class="about-voice">I&rsquo;m a high school setter. Most volleyball stats tell me what happened after the set. I wanted to understand why I make certain setting decisions, when I become predictable, and how they change under pressure.</p>
       <div class="about-meta">
         Built from my own Balltime game tags — pass quality, set calls, destinations, and results when they&rsquo;re available.
-        Pages like <b>Tendencies</b> dig into patterns; they don&rsquo;t prescribe what to set.
+        Pages like <b>Tendencies</b> and <b>Decisions</b> dig into patterns; they don&rsquo;t prescribe what to set.
       </div>
       <div class="about-links">
+        <button type="button" class="primary" data-go="decisions">Open Decisions</button>
         <button type="button" class="secondary" data-go="tendencies">Tendencies</button>
         <button type="button" class="secondary" data-go="dashboard">Dashboard</button>
       </div>
@@ -737,7 +791,7 @@
       <p class="about-voice">I&rsquo;m a high school setter. Most volleyball stats tell me what happened after the set. I wanted to understand why I make certain setting decisions, when I become predictable, and how they change under pressure.</p>
       <div class="about-links">
         <button type="button" class="secondary" data-go="about">Full About</button>
-        <button type="button" class="secondary" data-go="tendencies">Tendencies</button>
+        <button type="button" class="primary" data-go="decisions">Decisions</button>
       </div>
     </div>
     <div class="card">
@@ -798,6 +852,43 @@
     </div>
   </section>
 
+
+
+  <!-- DECISIONS (focus: why / predictability / training / blind spots) -->
+  <section id="decisions">
+    <div class="card">
+      <h2>Setter decisions</h2>
+      <div class="sub">Why the ball went where it did — from Balltime tags when they exist. Small sample (1–2 games).</div>
+      <div class="row" style="max-width:420px;margin-top:8px;"><div><label>Game</label><select id="dec-game"></select></div></div>
+      <div id="dec-head" class="pg-note" style="margin-top:8px;"></div>
+      <div id="dec-confidence" class="data-conf" style="margin-top:6px;"></div>
+    </div>
+
+    <div class="card" id="dec-analysis-card">
+      <p class="dec-frame">When do I become predictable as a setter?</p>
+      <div class="sub">Pattern reads from set choice in context — not just kill / error after the set.</div>
+      <div id="dec-patterns"><div class="empty">Loading…</div></div>
+      <div id="dec-context-gaps"></div>
+    </div>
+
+    <div class="card" id="dec-predict-card">
+      <h2>Predictability</h2>
+      <div class="sub">How concentrated your choice is in each situation. Higher = more often the same option.</div>
+      <div id="dec-predict"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div class="card" id="dec-wwys-card">
+      <h2>What would you set?</h2>
+      <div class="sub">A real tagged situation from your games. Pick a destination, then see what you actually set and what happened.</div>
+      <div id="dec-wwys"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div class="card" id="dec-blind-card">
+      <h2>Blind spot finder</h2>
+      <div class="sub">Contrasts surfaced as questions — for discovery, not instructions.</div>
+      <div id="dec-blind"><div class="empty">Loading…</div></div>
+    </div>
+  </section>
 
   <!-- DIAGNOSE -->
   <section id="diagnose">
@@ -2826,7 +2917,6 @@ function refreshMatchUi(){
 
 // ---------- Match stats tab (Balltime CSV team view + set log filtered by match) ----------
 var TAB_HOOKS = TAB_HOOKS || {};
-TAB_HOOKS.about = ()=>{};
 TAB_HOOKS.stats = ()=>{ populateMatchSelects(); renderMatchStats(); renderTonightTakeaways(); };
 const PLAYER_COLORS = ['#ff6a00','#e8283f','#ffab4d','#35d488','#ffcc33','#7ec4ff','#b78cff','#ff7ab6','#4de0d0','#c9c3d6','#ff9d6b','#6bdba3'];
 
@@ -3952,6 +4042,483 @@ function tabFromHash(){
   return h && document.querySelector(`nav button[data-tab="${CSS.escape(h)}"]`) ? h : null;
 }
 window.addEventListener('hashchange', ()=>{ const t = tabFromHash(); if(t) showTab(t, false); });
+
+
+
+// ---------- Decisions focus: analysis, predictability, WWYS, blind spots ----------
+const DEC_BUCKET_LABELS = {
+  'left':'Outside / left',
+  'middle/quick':'Middle / quick',
+  'right/back-set':'Right / behind',
+  'back-row':'Back row',
+  'not-attacked':'Not attacked',
+  'unknown':'Unknown'
+};
+const DEC_PASS_LABELS = { 3:'3-pass', 2:'2-pass', 1:'1-pass', 0:'0-pass' };
+let decSelected = null;
+let wwysState = { idx: 0, pool: [], answered: false };
+
+function decPct(n, d){
+  if(!d) return null;
+  return Math.round(100 * n / d);
+}
+function decFmtPct(n, d){
+  const p = decPct(n, d);
+  return p==null ? 'n/a' : p + '%';
+}
+function decBucket(c){
+  const b = c && c.bucket;
+  if(!b || b==='unknown') return null;
+  return b;
+}
+function decHasPass(g){ return !!(g && g.available && g.available.passRatings); }
+function decHasPos(g){ return !!(g && g.available && g.available.positional); }
+function decHasCalls(g){ return !!(g && g.available && g.available.setCalls); }
+
+/** Mode-share: fraction of tagged sets that went to the single most common key. */
+function decModeShare(items, keyFn){
+  const counts = {};
+  let n = 0;
+  items.forEach(it=>{
+    const k = keyFn(it);
+    if(k==null || k==='' || k==='unknown') return;
+    counts[k] = (counts[k]||0) + 1;
+    n++;
+  });
+  if(!n) return null;
+  let mode = null, modeN = 0;
+  Object.entries(counts).forEach(([k,v])=>{ if(v > modeN){ mode = k; modeN = v; } });
+  return { mode, modeN, n, share: modeN / n, counts };
+}
+
+function decPassKey(p){
+  if(p===0 || p===1) return '0-1';
+  if(p===2) return '2';
+  if(p===3) return '3';
+  return null;
+}
+
+TAB_HOOKS.decisions = ()=>{ renderDecisions(); };
+TAB_HOOKS.about = ()=>{};
+
+async function renderDecisions(){
+  const sel = document.getElementById('dec-game');
+  const head = document.getElementById('dec-head');
+  const conf = document.getElementById('dec-confidence');
+  if(!sel) return;
+  let games = [];
+  try{ games = await loadAllGames(); }catch(e){ games = []; }
+  if(!games.length){
+    if(head) head.textContent = 'No Balltime games in data/games yet.';
+    ['dec-patterns','dec-predict','dec-wwys','dec-blind','dec-context-gaps'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.innerHTML = '<div class="empty">No games loaded.</div>';
+    });
+    return;
+  }
+  const latest = games[games.length-1];
+  const cur = decSelected || latest.id;
+  decSelected = (cur==='all' || games.some(g=>g.id===cur)) ? cur : latest.id;
+  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${(g.chains||[]).length} sets</option>`).join('') +
+    `<option value="all">All games</option>`;
+  sel.value = decSelected;
+
+  const picked = decSelected==='all' ? games : games.filter(g=>g.id===decSelected);
+  const primary = picked.find(g=>decHasPass(g) && decHasPos(g)) || picked[picked.length-1];
+  const chains = picked.flatMap(g => (g.chains||[]).map(c => Object.assign({ _gameId:g.id, _date:g.date }, c)));
+  if(head){
+    const names = picked.map(g=>g.date||g.name).join(' · ');
+    head.innerHTML = `<b>${escapeHtml(names)}</b> · ${chains.length} Leo sets · focus: choice in context`;
+  }
+  if(conf){
+    conf.innerHTML = picked.length===1 ? dataConfidenceHtml(picked[0]) : dataConfidenceHtmlMany(picked);
+  }
+
+  renderDecPatterns(picked, chains);
+  renderDecPredict(picked, chains);
+  renderDecWwys(picked);
+  renderDecBlind(picked, chains);
+}
+
+document.getElementById('dec-game').addEventListener('change', (e)=>{
+  decSelected = e.target.value;
+  wwysState = { idx: 0, pool: [], answered: false };
+  renderDecisions();
+});
+
+function renderDecPatterns(games, chains){
+  const box = document.getElementById('dec-patterns');
+  const gaps = document.getElementById('dec-context-gaps');
+  if(!box) return;
+  const anyPass = games.some(decHasPass);
+  const anyPos = games.some(decHasPos);
+  const parts = [];
+
+  // Bad pass → outside
+  if(anyPass && anyPos){
+    const bad = chains.filter(c => c.pass===1 || c.pass===0);
+    const tagged = bad.filter(c => decBucket(c));
+    const outside = tagged.filter(c => c.bucket==='left');
+    if(tagged.length){
+      parts.push(`<div class="dec-pattern">On <b>bad passes</b> (0–1), you set <b>outside</b> ${decFmtPct(outside.length, tagged.length)} of the time.` +
+        ` <span class="dec-n">(${outside.length}/${tagged.length} tagged · destinations known)</span></div>`);
+      const mid = tagged.filter(c => c.bucket==='middle/quick');
+      parts.push(`<div class="dec-pattern">On those same bad passes, <b>middle / quick</b> was ${decFmtPct(mid.length, tagged.length)}.` +
+        ` <span class="dec-n">(${mid.length}/${tagged.length})</span></div>`);
+    } else {
+      parts.push(`<div class="dec-missing">Bad-pass destination mix: <b>can't chart yet</b> — no 0–1 passes with zone tags in this selection.</div>`);
+    }
+
+    // Pass 2 / 3 middle usage
+    [[3,'3-passes'],[2,'2-passes']].forEach(([p,lab])=>{
+      const sub = chains.filter(c => c.pass===p && decBucket(c));
+      if(!sub.length) return;
+      const mid = sub.filter(c => c.bucket==='middle/quick');
+      parts.push(`<div class="dec-pattern">On <b>${lab}</b>, you used <b>middle / quick</b> ${decFmtPct(mid.length, sub.length)} of the time.` +
+        ` <span class="dec-n">(${mid.length}/${sub.length})</span></div>`);
+    });
+  } else {
+    const miss = [];
+    if(!anyPass) miss.push('pass ratings');
+    if(!anyPos) miss.push('zones / ball tracking');
+    parts.push(chartMissingMsg(miss) +
+      `<div class="pg-note" style="margin-top:8px;">July 8 is thin on pass/zone tags — July 10 supports these pattern lines.</div>`);
+  }
+
+  // Same-hitter streak (works without pass/zone)
+  const withAtt = chains.filter(c => c.attacker);
+  let sameAfter = 0, chanceAfter = 0;
+  for(let i=1;i<withAtt.length;i++){
+    // consecutive in filtered list is wrong — use original order within each game
+  }
+  // Per-game chronological chains
+  let sameN = 0, sameD = 0, streak2N = 0, streak2D = 0;
+  games.forEach(g=>{
+    const cs = g.chains || [];
+    for(let i=1;i<cs.length;i++){
+      const prev = cs[i-1].attacker, cur = cs[i].attacker;
+      if(!prev || !cur) continue;
+      sameD++;
+      if(prev===cur) sameN++;
+    }
+    for(let i=2;i<cs.length;i++){
+      const a = cs[i-2].attacker, b = cs[i-1].attacker, cur = cs[i].attacker;
+      if(!a || !b || a!==b || !cur) continue;
+      streak2D++;
+      if(cur===b) streak2N++;
+    }
+  });
+  if(sameD){
+    parts.push(`<div class="dec-pattern">After setting a hitter, you chose <b>that same hitter again</b> on the next set ${decFmtPct(sameN, sameD)} of the time.` +
+      ` <span class="dec-n">(${sameN}/${sameD} consecutive tagged attackers)</span></div>`);
+  }
+  if(streak2D){
+    parts.push(`<div class="dec-pattern">After setting the <b>same hitter twice in a row</b>, you went back to them ${decFmtPct(streak2N, streak2D)} of the time.` +
+      ` <span class="dec-n">(${streak2N}/${streak2D} chances)</span></div>`);
+  } else if(sameD){
+    parts.push(`<div class="dec-missing">Same-hitter streak (2+): <b>not enough chances yet</b> in this selection to chart a rate.</div>`);
+  }
+
+  // In vs OOS middle
+  const inn = chains.filter(c => c.system==='in' && decBucket(c));
+  const oos = chains.filter(c => c.system==='oos' && decBucket(c));
+  if(inn.length && oos.length && anyPos){
+    const midIn = inn.filter(c => c.bucket==='middle/quick').length;
+    const midOos = oos.filter(c => c.bucket==='middle/quick').length;
+    parts.push(`<div class="dec-pattern">Middle / quick share: <b>in-system</b> ${decFmtPct(midIn, inn.length)} · <b>out-of-system</b> ${decFmtPct(midOos, oos.length)}.` +
+      ` <span class="dec-n">(in ${midIn}/${inn.length} · oos ${midOos}/${oos.length})</span></div>`);
+  }
+
+  if(!parts.length){
+    box.innerHTML = '<div class="empty">Not enough tagged sets for pattern sentences.</div>';
+  } else {
+    box.innerHTML = parts.join('');
+  }
+
+  if(gaps){
+    gaps.innerHTML = `
+      <div class="dec-missing" style="margin-top:12px;">
+        <b>Context we can&rsquo;t chart yet</b> from Balltime share-page chains:
+        <ul style="margin:6px 0 0; padding-left:1.2em;">
+          <li><b>Score / score difference</b> — no point-by-point score on each set</li>
+          <li><b>Rotation</b> — not in the tagged chains</li>
+          <li><b>Available hitters</b> — we only see who received the set, not who was an option</li>
+        </ul>
+        Previous set and pass quality <em>are</em> used when tagged (stronger on July 10).
+      </div>`;
+  }
+}
+
+function renderDecPredict(games, chains){
+  const box = document.getElementById('dec-predict');
+  if(!box) return;
+  const anyPass = games.some(decHasPass);
+  const anyPos = games.some(decHasPos);
+  const cards = [];
+
+  function scoreCard(label, ms, hint){
+    if(!ms || ms.n < 3){
+      return `<div class="dec-score-box"><div class="val">—</div><div class="lbl">${escapeHtml(label)}</div>` +
+        `<div class="hint">${ms && ms.n ? 'n='+ms.n+' — need a few more tagged sets' : (hint||'Can\'t score yet')}</div></div>`;
+    }
+    const pct = Math.round(100 * ms.share);
+    const modeLab = DEC_BUCKET_LABELS[ms.mode] || ('#'+ms.mode) || ms.mode;
+    return `<div class="dec-score-box"><div class="val">${pct}</div><div class="lbl">${escapeHtml(label)}</div>` +
+      `<div class="hint">Mode: ${escapeHtml(String(modeLab))} · ${ms.modeN}/${ms.n}</div></div>`;
+  }
+
+  // Overall destination concentration
+  if(anyPos){
+    const ms = decModeShare(chains, c => decBucket(c));
+    cards.push(scoreCard('Overall destination', ms, 'Needs zone tags'));
+  } else {
+    cards.push(scoreCard('Overall destination', null, 'Can\'t chart yet — missing zones / ball tracking'));
+  }
+
+  // By bad pass
+  if(anyPass && anyPos){
+    const bad = chains.filter(c => c.pass===1 || c.pass===0);
+    cards.push(scoreCard('On bad pass (0–1)', decModeShare(bad, c => decBucket(c)), 'No bad-pass tags'));
+    const p3 = chains.filter(c => c.pass===3);
+    cards.push(scoreCard('On 3-pass', decModeShare(p3, c => decBucket(c)), 'No 3-pass tags'));
+    const p2 = chains.filter(c => c.pass===2);
+    cards.push(scoreCard('On 2-pass', decModeShare(p2, c => decBucket(c)), 'No 2-pass tags'));
+  } else {
+    cards.push(scoreCard('On bad pass (0–1)', null, 'Can\'t chart yet — missing pass ratings and/or zones'));
+    cards.push(scoreCard('On 3-pass', null, 'Can\'t chart yet — missing pass ratings and/or zones'));
+  }
+
+  // Same-hitter: predictability of "repeat vs switch" after a set to a known attacker
+  // Mode share of next attacker among options — use binary repeat rate as concentration toward "same"
+  // Better: mode-share of next attacker identity after any set (overall hitter concentration)
+  const msHit = decModeShare(chains.filter(c=>c.attacker), c => c.attacker);
+  if(msHit){
+    cards.push(`<div class="dec-score-box"><div class="val">${Math.round(100*msHit.share)}</div>` +
+      `<div class="lbl">Hitter concentration</div>` +
+      `<div class="hint">Mode #${escapeHtml(msHit.mode)} · ${msHit.modeN}/${msHit.n}</div></div>`);
+  }
+
+  // Same-hitter streak predictability: among next choices after a repeat opportunity,
+  // share that stuck with same (that's the "mode" if >=50%, else switch is mode)
+  let stick = 0, stickD = 0;
+  games.forEach(g=>{
+    const cs = g.chains||[];
+    for(let i=1;i<cs.length;i++){
+      const prev=cs[i-1].attacker, cur=cs[i].attacker;
+      if(!prev||!cur) continue;
+      stickD++; if(prev===cur) stick++;
+    }
+  });
+  if(stickD >= 3){
+    const share = Math.max(stick, stickD-stick) / stickD; // concentration toward majority of stick/switch
+    const mode = stick >= stickD-stick ? 'repeat same hitter' : 'switch hitter';
+    cards.push(`<div class="dec-score-box"><div class="val">${Math.round(100*share)}</div>` +
+      `<div class="lbl">After previous hitter</div>` +
+      `<div class="hint">Mode: ${mode} · n=${stickD}</div></div>`);
+  } else {
+    cards.push(scoreCard('After previous hitter', null, 'Need more consecutive tagged attackers'));
+  }
+
+  // Close score — unavailable
+  cards.push(`<div class="dec-score-box"><div class="val">—</div><div class="lbl">Close score</div>` +
+    `<div class="hint">Can't chart yet — no point-by-point score on sets</div></div>`);
+
+  box.innerHTML = `<div class="dec-score-grid">${cards.join('')}</div>` +
+    `<div class="dec-method"><b>Method:</b> predictability here is <b>mode-share</b> — the percent of sets in that situation that went to the single most common choice. 100 = always the same option; ~equal split across options reads lower. Not a grade.</div>` +
+    `<div class="pg-note" style="margin-top:8px;">With only 1–2 games, treat these as sketches. July 8 lacks pass/zone tags, so several situation scores stay blank until more tagged film lands.</div>`;
+}
+
+function renderDecWwys(games){
+  const box = document.getElementById('dec-wwys');
+  if(!box) return;
+  // Prefer July 10-style chains with pass + bucket + blockers
+  const pool = [];
+  games.forEach(g=>{
+    const rich = decHasPass(g) && decHasPos(g);
+    (g.chains||[]).forEach((c,i)=>{
+      if(!decBucket(c)) return;
+      const confidence = rich && c.pass!=null ? 'high' : (decBucket(c) ? 'medium' : 'low');
+      if(!rich && confidence==='low') return;
+      // Prefer serve-receive with pass; allow digs with system
+      if(c.pass==null && c.origin==='serve-receive' && rich) return; // skip unrated SR when we expect pass
+      pool.push({ g, c, i, confidence, rich });
+    });
+  });
+  // Prefer high confidence
+  pool.sort((a,b)=>{
+    const rank = { high:0, medium:1, low:2 };
+    return rank[a.confidence]-rank[b.confidence] || (a.g.date||'').localeCompare(b.g.date||'');
+  });
+  if(!pool.length){
+    box.innerHTML = chartMissingMsg(['pass ratings','zones']) +
+      `<div class="pg-note" style="margin-top:8px;">Need tagged set destinations (July 10 has them) to build situations.</div>`;
+    return;
+  }
+  if(!wwysState.pool.length || wwysState.pool.length !== pool.length){
+    // keep idx if possible
+    wwysState.pool = pool;
+    if(wwysState.idx >= pool.length) wwysState.idx = 0;
+    wwysState.answered = false;
+  }
+  const item = wwysState.pool[wwysState.idx];
+  const c = item.c;
+  const passLab = c.pass==null ? 'Unrated / n/a' : `${c.pass} · ${c.pass===3?'Perfect':c.pass===2?'Good':c.pass===1?'Poor':'Error'}`;
+  const originLab = c.origin==='serve-receive'?'Serve-receive':c.origin==='dig'?'Dig':c.origin==='free'?'Free ball':(c.origin||'—');
+  const confLab = item.confidence==='high'?'High (pass + zone tagged)':item.confidence==='medium'?'Medium (zone tagged; pass thin)':'Low';
+  const choices = [
+    { k:'left', lab:'Outside / left' },
+    { k:'middle/quick', lab:'Middle / quick' },
+    { k:'right/back-set', lab:'Right / behind' },
+    { k:'back-row', lab:'Back row' }
+  ];
+
+  box.innerHTML = `
+    <div class="wwys-situation">
+      <div class="wwys-row"><span class="wwys-k">Game</span><span class="wwys-v">${escapeHtml(item.g.date||'')}</span></div>
+      <div class="wwys-row"><span class="wwys-k">Set · rally</span><span class="wwys-v">Set ${c.set??'—'} · rally ${c.rally??'—'}</span></div>
+      <div class="wwys-row"><span class="wwys-k">Origin</span><span class="wwys-v">${escapeHtml(originLab)}</span></div>
+      <div class="wwys-row"><span class="wwys-k">Pass</span><span class="wwys-v">${escapeHtml(passLab)}</span></div>
+      <div class="wwys-row"><span class="wwys-k">System</span><span class="wwys-v">${escapeHtml(c.system||'—')}</span></div>
+      <div class="wwys-row"><span class="wwys-k">Blockers</span><span class="wwys-v">${c.blockers==null?'Can\'t chart yet':c.blockers}</span></div>
+      <div class="wwys-row"><span class="wwys-k">Score</span><span class="wwys-v">Can't chart yet — no rally score in tags</span></div>
+      <div class="wwys-row"><span class="wwys-k">Confidence</span><span class="wwys-v">${escapeHtml(confLab)}</span></div>
+    </div>
+    <div class="sub" style="margin-top:4px;">What would you set?</div>
+    <div class="wwys-choices" id="wwys-choices">
+      ${choices.map(ch=>`<button type="button" class="opt-btn" data-wwys="${ch.k}">${ch.lab}</button>`).join('')}
+    </div>
+    <div class="wwys-reveal" id="wwys-reveal"></div>
+    <div class="top-actions" style="justify-content:flex-start;margin-top:12px;">
+      <button type="button" class="secondary" id="wwys-next">Another situation</button>
+    </div>
+  `;
+
+  const reveal = document.getElementById('wwys-reveal');
+  document.querySelectorAll('#wwys-choices [data-wwys]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(wwysState.answered) return;
+      wwysState.answered = true;
+      document.querySelectorAll('#wwys-choices [data-wwys]').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const pick = btn.dataset.wwys;
+      const actual = decBucket(c);
+      const match = pick === actual;
+      const call = c.call ? ` Call tagged “${c.call}”.` : '';
+      const att = c.attacker ? ` Hitter #${c.attacker}.` : '';
+      const res = c.result ? ` Result: ${c.result}${c.assist?' (assist)':''}.` : '';
+      const blk = c.blockers!=null ? ` Blockers on the swing: ${c.blockers}.` : '';
+      reveal.classList.add('show');
+      reveal.innerHTML = `<b>${match?'Same destination as you set that day.':'Different from what you set that day.'}</b><br>` +
+        `You picked <b>${escapeHtml(DEC_BUCKET_LABELS[pick]||pick)}</b>. Actual set: <b>${escapeHtml(DEC_BUCKET_LABELS[actual]||actual||'—')}</b>.` +
+        escapeHtml(call) + escapeHtml(att) + escapeHtml(res) + escapeHtml(blk);
+    });
+  });
+  document.getElementById('wwys-next').addEventListener('click', ()=>{
+    wwysState.idx = (wwysState.idx + 1) % wwysState.pool.length;
+    wwysState.answered = false;
+    renderDecWwys(games);
+  });
+}
+
+function renderDecBlind(games, chains){
+  const box = document.getElementById('dec-blind');
+  if(!box) return;
+  const qs = [];
+  const anyPass = games.some(decHasPass);
+  const anyPos = games.some(decHasPos);
+
+  if(anyPass && anyPos){
+    const byPass = {};
+    [3,2,1].forEach(p=>{
+      const sub = chains.filter(c => c.pass===p && decBucket(c));
+      if(sub.length>=3){
+        const mid = sub.filter(c => c.bucket==='middle/quick').length;
+        byPass[p] = { n:sub.length, mid, pct: decPct(mid, sub.length) };
+      }
+    });
+    if(byPass[3] && byPass[1] && byPass[3].pct != null && byPass[1].pct != null && byPass[3].pct !== byPass[1].pct){
+      qs.push({
+        q: `Why does your middle usage move from ${byPass[3].pct}% on 3-passes to ${byPass[1].pct}% on 1-passes?`,
+        ctx: `3-pass n=${byPass[3].n} · 1-pass n=${byPass[1].n} · destination-tagged only`
+      });
+    }
+    if(byPass[3] && byPass[2] && byPass[3].pct !== byPass[2].pct){
+      qs.push({
+        q: `Why is middle / quick ${byPass[2].pct}% on 2-passes but ${byPass[3].pct}% on 3-passes?`,
+        ctx: `2-pass n=${byPass[2].n} · 3-pass n=${byPass[3].n}`
+      });
+    }
+    // Outside share on bad vs good
+    const bad = chains.filter(c => (c.pass===0||c.pass===1) && decBucket(c));
+    const good = chains.filter(c => c.pass===3 && decBucket(c));
+    if(bad.length>=3 && good.length>=3){
+      const bOut = decPct(bad.filter(c=>c.bucket==='left').length, bad.length);
+      const gOut = decPct(good.filter(c=>c.bucket==='left').length, good.length);
+      if(bOut !== gOut){
+        qs.push({
+          q: `Why does outside / left go from ${gOut}% on 3-passes to ${bOut}% on bad passes?`,
+          ctx: `Bad-pass n=${bad.length} · 3-pass n=${good.length}`
+        });
+      }
+    }
+  }
+
+  // Hitter concentration
+  const hit = {};
+  chains.forEach(c=>{ if(c.attacker) hit[c.attacker]=(hit[c.attacker]||0)+1; });
+  const ranked = Object.entries(hit).sort((a,b)=>b[1]-a[1]);
+  const attacked = ranked.reduce((s,[,n])=>s+n,0);
+  if(ranked.length && attacked>=10){
+    const [top, topN] = ranked[0];
+    const share = decPct(topN, attacked);
+    // by origin
+    const sr = chains.filter(c=>c.origin==='serve-receive' && c.attacker);
+    const dig = chains.filter(c=>c.origin==='dig' && c.attacker);
+    if(sr.length>=5 && dig.length>=5){
+      const srTop = decPct(sr.filter(c=>c.attacker===top).length, sr.length);
+      const digTop = decPct(dig.filter(c=>c.attacker===top).length, dig.length);
+      if(srTop !== digTop){
+        qs.push({
+          q: `Why does #${top} get ${srTop}% of serve-receive sets but ${digTop}% of dig sets?`,
+          ctx: `Overall #${top} is ${share}% of attacked sets (${topN}/${attacked})`
+        });
+      }
+    } else {
+      qs.push({
+        q: `Why does #${top} take ${share}% of your attacked sets — is that matchup, comfort, or availability?`,
+        ctx: `${topN}/${attacked} with a tagged attacker · available hitters not in the data`
+      });
+    }
+  }
+
+  // In vs OOS
+  const inn = chains.filter(c=>c.system==='in' && decBucket(c));
+  const oos = chains.filter(c=>c.system==='oos' && decBucket(c));
+  if(inn.length>=5 && oos.length>=5 && anyPos){
+    const midIn = decPct(inn.filter(c=>c.bucket==='middle/quick').length, inn.length);
+    const midOos = decPct(oos.filter(c=>c.bucket==='middle/quick').length, oos.length);
+    if(midIn !== midOos){
+      qs.push({
+        q: `Why does middle / quick sit at ${midIn}% in-system vs ${midOos}% out-of-system?`,
+        ctx: `In n=${inn.length} · OOS n=${oos.length}`
+      });
+    }
+  }
+
+  // Always note missing score pressure
+  qs.push({
+    q: 'When the score is tight, do your choices narrow — and would we even see it yet?',
+    ctx: 'Can\'t chart yet — Balltime share-page chains have no rally score or score difference'
+  });
+
+  if(!qs.length){
+    box.innerHTML = '<div class="empty">Not enough contrast in this selection to surface questions.</div>';
+    return;
+  }
+  box.innerHTML = qs.map(x =>
+    `<div class="blind-q">${escapeHtml(x.q)}<span class="blind-ctx">${escapeHtml(x.ctx)}</span></div>`
+  ).join('') +
+    `<div class="pg-note" style="margin-top:8px;">These are prompts to notice patterns — not coaching prescriptions.</div>`;
+}
 
 
 // ---------- Init ----------
