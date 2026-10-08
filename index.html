@@ -352,6 +352,36 @@
   .pass-tbl-wrap{ overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; }
   .pass-tbl-wrap table{ width:max-content; min-width:100%; }
   .pass-chart-box{ position:relative; height:220px; margin-top:6px; width:100%; max-width:100%; }
+  .pm-controls{ display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end; margin:12px 0 10px; }
+  .pm-game{ min-width:170px; max-width:240px; flex:0 0 auto; }
+  .pm-game select{ width:100%; }
+  #pass-filter{ flex:1 1 320px; margin:0; }
+  .pm-wrap{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:16px; align-items:start; }
+  .pm-wrap > *{ min-width:0; }
+  @media (max-width:820px){ .pm-wrap{ grid-template-columns:minmax(0,1fr); } }
+  .pm-svg{ width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:10px; border:1px solid var(--border); background:#141110; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .pm-svg .pm-area{ cursor:pointer; }
+  .pm-svg .pm-area:focus{ outline:none; }
+  .pm-svg .pm-area:focus-visible circle.pm-dot{ stroke:#ffcc33; }
+  .pm-key{ display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12px; color:var(--text-dim); margin-top:8px; justify-content:center; }
+  .pm-key i{ display:inline-block; width:14px; height:4px; border-radius:2px; margin-right:5px; vertical-align:3px; }
+  .pm-detail{ background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; }
+  .pm-detail h3{ font-family:var(--font-display); font-weight:400; letter-spacing:.05em; color:var(--orange2); margin:0 0 4px; font-size:19px; }
+  .pm-detail .pm-hint{ color:var(--text-dim); font-size:13px; margin:0 0 8px; }
+  .pm-row{ display:grid; grid-template-columns:112px minmax(0,1fr) auto; gap:8px; align-items:center; margin:7px 0; font-size:13px; }
+  .pm-row .pm-name{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pm-row .pm-name i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:0; }
+  .pm-bar{ height:10px; background:#1d1a17; border-radius:5px; overflow:hidden; }
+  .pm-bar b{ display:block; height:100%; border-radius:5px; }
+  .pm-row .pm-val{ font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--text); }
+  .pm-row .pm-val span{ color:var(--text-dim); font-size:12px; }
+  .pm-areas{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .pm-areas button{ background:#1d1a17; border:1px solid var(--border); color:var(--text); border-radius:999px; padding:5px 10px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+  .pm-areas button.on{ background:linear-gradient(100deg, var(--orange), #ff7a18); color:#111; border-color:var(--orange); }
+  .pm-note{ color:var(--text-dim); font-size:12px; margin-top:10px; line-height:1.45; }
+  .pm-note b{ color:var(--orange2); }
+  .pm-more{ margin-top:14px; border-top:1px solid var(--border); padding-top:10px; }
+  .pm-more summary{ cursor:pointer; color:var(--orange2); font-family:var(--font-display); letter-spacing:.05em; font-size:15px; }
   .pg-games{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:12px; }
   .pg-game{ background:var(--card2); border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:6px; padding:12px 14px; cursor:pointer; display:block; }
   .pg-game.off{ opacity:.55; border-left-color:var(--border); }
@@ -600,6 +630,11 @@
     .pass-tbl-wrap table{ font-size:12px; }
     .pass-tbl-wrap th, .pass-tbl-wrap td{ padding:6px 7px; }
     #pass-filter .opt-btn{ min-height:44px; }
+    .pm-controls{ flex-direction:column; align-items:stretch; }
+    .pm-game{ max-width:none; }
+    #pass-filter{ flex:none; }
+    .pm-svg{ max-width:100%; }
+    .pm-row{ grid-template-columns:108px minmax(0,1fr) auto; gap:6px; font-size:12px; }
     .table-scroll, .pass-tbl-wrap, .td-health-list{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
     .row{ flex-direction:column; align-items:stretch; }
     .row > div{ min-width:0; width:100%; }
@@ -896,10 +931,18 @@
       <span class="hidden-crow crow-side on-dark" style="right:12px;top:12px;" aria-hidden="true" data-crow="diagnose">
         <svg class="crow-svg"><use href="#crow-side"/></svg>
       </span>
-      <h2>Pass → set: what happens off each pass</h2>
-      <div class="sub">July 10 Balltime serve-receive chains (pass rating → set destination → result). Dots = pass landing by 0–3 rating; dashed lines = set to hit. July 8 has no pass ratings — n/a. AI-tagged, small sample.</div>
-      <div class="opt-group" id="pass-filter" style="margin:12px 0 4px;"></div>
-      <div id="pass-body"><div class="sub">Loading July 10 pass data…</div></div>
+      <h2>Pass → set: where each pass went</h2>
+      <div class="sub">Each circle is an area your passes (and digs) landed in, with the share of passes from there. Arrows show where you set those balls — thicker = more often. Tap a circle to see just its arrows.</div>
+      <div class="pm-controls">
+        <div class="pm-game"><label for="pass-game">Game</label><select id="pass-game"></select></div>
+        <div class="opt-group" id="pass-filter"></div>
+      </div>
+      <div id="pass-body"><div class="sub">Loading games…</div></div>
+      <details class="pm-more" id="pm-more">
+        <summary>July 10 serve-receive table &amp; notes (all Team A setters)</summary>
+        <div class="pass-tbl-wrap" id="pass-table"></div>
+        <div class="pass-read" id="pass-read"></div>
+      </details>
     </div>
   </section>
 
@@ -4536,7 +4579,7 @@ const PASS_LANES = [
   ['dump','Setter dump'], ['free','Free ball over'], ['none','No set / swing']
 ];
 const PASS_LANE_COLORS = { left:'#ff6a00', middle:'#ffab4d', right:'#e8283f', back:'#7ec4ff', dump:'#b78cff', free:'#c9c3d6', none:'#4a4652' };
-let passData = null, passLoading = false, passFilter = 'all';
+let passData = null, passLoading = false, passDetailDone = false;
 
 function passKey(c){ return c.pass==null ? 'u' : String(c.pass); }
 function passLevel(k){ return PASS_LEVELS.find(l=>l.k===k); }
@@ -4550,115 +4593,281 @@ function passFmtEff(x){ return x==null ? '—' : (x<0?'-':'') + Math.abs(x).toFi
 function passMean(arr){ return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
 function passSd(arr){ const m = passMean(arr); return arr.length>1 ? Math.sqrt(arr.reduce((s,v)=>s+(v-m)*(v-m),0)/(arr.length-1)) : 0; }
 
-TAB_HOOKS.diagnose = ()=>{ loadPassAnalysis(); };
-async function loadPassAnalysis(){
-  if(passData){ renderPassAnalysis(); return; }
-  if(passLoading) return;
-  passLoading = true;
-  try{
-    const res = await fetch(PASS_CHAINS_FILE, { cache:'no-cache' });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if(!data || !Array.isArray(data.chains)) throw new Error('bad file');
-    passData = data;
-  }catch(err){
-    document.getElementById('pass-body').innerHTML = '<div class="sub">Couldn\'t load the July 10 pass data (' + escapeHtml(String(err.message||err)) + ').</div>';
-    passLoading = false; return;
-  }
-  passLoading = false;
-  renderPassAnalysis();
+// ---------- Diagnose: VNL-style pass map (data/games/*.json — Leo's sets) ----------
+// Pass spot = Balltime's set-contact point (setFrom), i.e. where the pass/dig arrived for the setter.
+// Set destination = the chain's bucket (same buckets as the Decisions tab).
+// Coordinates are metres on Team A's side: x across from the left sideline, d = distance from the net.
+const PM_AREAS = [
+  { k:'target', label:'Target',       desc:'at the net, right of center', cx:6.55, cd:0.8,  rect:[4.5,0,7.5,1.5], tag:[4.58,0.24,'start'] },
+  { k:'offnet', label:'Off net',      desc:'1.5–3 m off, center/right',   cx:6.55, cd:2.3,  rect:[4.5,1.5,7.5,3], tag:[4.58,1.74,'start'] },
+  { k:'right',  label:'Pushed right', desc:'toward the right sideline',   cx:8.3,  cd:1.75, rect:[7.5,0,9,3],     tag:[8.92,0.24,'end'] },
+  { k:'left',   label:'Pulled left',  desc:'left of center, inside 3 m',  cx:2.35, cd:1.75, rect:[0,0,4.5,3],     tag:[0.08,0.24,'start'] },
+  { k:'deep',   label:'Deep',         desc:'behind the 3 m line',         cx:5.6,  cd:5.7,  rect:[0,3,9,9],       tag:[0.08,3.24,'start'] }
+];
+const PM_DESTS = [
+  { k:'left',           label:'Outside (left)',   short:'OUTSIDE',  color:'#ff7a18', x:0.95, d:-1.0 },
+  { k:'middle/quick',   label:'Middle / quick',   short:'MIDDLE',   color:'#ffcc33', x:4.5,  d:-1.0 },
+  { k:'right/back-set', label:'Right / back set', short:'RIGHT',    color:'#ff4757', x:8.05, d:-1.0 },
+  { k:'back-row',       label:'Pipe / back row',  short:'PIPE',     color:'#7ec4ff', x:2.5,  d:4.15 }
+];
+const PM_PASS = [
+  { k:'all', label:'All', cls:'' },
+  { k:'3', label:'Perfect (3)', cls:'q3' },
+  { k:'2', label:'Good (2)', cls:'q2' },
+  { k:'1', label:'Poor (1)', cls:'q0' },
+  { k:'0', label:'Error (0)', cls:'q0' },
+  { k:'u', label:'Unrated pass', cls:'' },
+  { k:'dig', label:'Dig', cls:'' },
+  { k:'free', label:'Free ball', cls:'' }
+];
+let pmGame = 'all', pmFilter = 'all', pmSel = null, pmState = null;
+
+function pmKey(c){
+  if(c.pass!=null) return String(c.pass);
+  if(c.origin==='dig') return 'dig';
+  if(c.origin==='free') return 'free';
+  return 'u';
+}
+function pmArea(c){
+  const x = Math.max(-1, Math.min(10, c.setFrom[0])), d = Math.max(0, c.setFrom[1]);
+  if(d >= 3) return 'deep';
+  if(x < 4.5) return 'left';
+  if(x >= 7.5) return 'right';
+  return d < 1.5 ? 'target' : 'offnet';
+}
+// Whole-number percentages (plain rounding so equal counts always show equal %)
+function pmRoundShares(counts, total){
+  return counts.map(n => total ? Math.round(100*n/total) : 0);
 }
 
-function renderPassFilter(){
-  const box = document.getElementById('pass-filter');
-  const present = new Set(passData.chains.map(passKey));
-  const opts = [{ k:'all', label:'All passes', cls:'' }].concat(PASS_LEVELS.filter(l=>present.has(l.k)));
-  box.innerHTML = opts.map(o=>{
-    const n = o.k==='all' ? passData.chains.length : passData.chains.filter(c=>passKey(c)===o.k).length;
-    return `<button type="button" class="opt-btn ${o.cls}${passFilter===o.k?' selected':''}" data-value="${o.k}">${o.label}<span class="opt-sub">${n} pass${n===1?'':'es'}</span></button>`;
-  }).join('');
-}
-document.getElementById('pass-filter').addEventListener('click', (e)=>{
-  const b = e.target.closest('.opt-btn'); if(!b || !passData) return;
-  passFilter = b.dataset.value; renderPassAnalysis();
+TAB_HOOKS.diagnose = ()=>{ renderPassMap(); };
+
+document.getElementById('pass-game').addEventListener('change', (e)=>{
+  pmGame = e.target.value; pmFilter = 'all'; pmSel = null; renderPassMap();
 });
+document.getElementById('pass-filter').addEventListener('click', (e)=>{
+  const b = e.target.closest('.opt-btn'); if(!b) return;
+  pmFilter = b.dataset.value; pmSel = null; renderPassMap();
+});
+document.getElementById('pm-more').addEventListener('toggle', (e)=>{ if(e.target.open) loadPassDetails(); });
 
-function renderPassAnalysis(){
-  if(!passData) return;
-  renderPassFilter();
-  const all = passData.chains;
-  const shown = passFilter==='all' ? all : all.filter(c=>passKey(c)===passFilter);
+async function renderPassMap(){
   const body = document.getElementById('pass-body');
+  const sel = document.getElementById('pass-game');
+  const chips = document.getElementById('pass-filter');
+  let games = [];
+  try{ games = await loadAllGames(); }
+  catch(err){ body.innerHTML = `<div class="chart-missing">Couldn't load data/games (${escapeHtml(String(err.message||err))}).</div>`; return; }
+  if(!games.length){ chips.innerHTML=''; body.innerHTML = '<div class="chart-missing">No Balltime games in data/games yet.</div>'; return; }
+
+  if(pmGame!=='all' && !games.some(g=>g.id===pmGame)) pmGame = 'all';
+  sel.innerHTML = `<option value="all">All games (${games.length})</option>` +
+    games.slice().reverse().map(g=>`<option value="${escapeHtml(g.id)}">${escapeHtml(g.date||g.name||g.id)} · ${(g.chains||[]).length} sets</option>`).join('');
+  sel.value = pmGame;
+
+  const picked = pmGame==='all' ? games : games.filter(g=>g.id===pmGame);
+  const posGames = picked.filter(decHasPos), noPos = picked.filter(g=>!decHasPos(g));
+  const charted = posGames.flatMap(g=>(g.chains||[]).filter(c=>Array.isArray(c.setFrom) && c.setFrom.length>=2).map(c=>Object.assign({ _date:g.date }, c)));
+  const noSpot = posGames.reduce((s,g)=>s + (g.chains||[]).filter(c=>!(Array.isArray(c.setFrom) && c.setFrom.length>=2)).length, 0);
+  const gaps = noPos.map(g=>`<b>${escapeHtml(g.date||g.name)}</b>: ${(g.chains||[]).length} sets not charted — Balltime tagged no pass spot or set destination for that game`);
+  if(noSpot) gaps.push(`${noSpot} set${noSpot===1?'':'s'} with no tagged contact spot left out`);
+
+  if(!charted.length){
+    chips.innerHTML = '';
+    body.innerHTML = `<div class="chart-missing"><span><b>Can't chart yet.</b> ${gaps.join('<br>') || 'No pass spots tagged in this selection.'}<br>Load a Balltime match with positional tags to fill this in.</span></div>`;
+    return;
+  }
+
+  const present = PM_PASS.filter(o=>o.k==='all' || charted.some(c=>pmKey(c)===o.k));
+  if(!present.some(o=>o.k===pmFilter)) pmFilter = 'all';
+  chips.innerHTML = present.map(o=>{
+    const n = o.k==='all' ? charted.length : charted.filter(c=>pmKey(c)===o.k).length;
+    return `<button type="button" class="opt-btn ${o.cls}${pmFilter===o.k?' selected':''}" data-value="${o.k}">${o.label}<span class="opt-sub">${n}</span></button>`;
+  }).join('');
+
+  const shown = pmFilter==='all' ? charted : charted.filter(c=>pmKey(c)===pmFilter);
+  const areas = PM_AREAS.map(a=>{
+    const cs = shown.filter(c=>pmArea(c)===a.k);
+    const dests = PM_DESTS.map(d=>{ const dc = cs.filter(c=>c.bucket===d.k); return { d, n:dc.length, kills:dc.filter(c=>c.result==='kill').length }; });
+    const destPct = pmRoundShares(dests.map(x=>x.n), cs.length);
+    dests.forEach((x,i)=>x.pct = destPct[i]);
+    return { a, cs, n:cs.length, dests, other: cs.filter(c=>!PM_DESTS.some(d=>d.k===c.bucket)).length };
+  });
+  const areaPct = pmRoundShares(areas.map(x=>x.n), shown.length);
+  areas.forEach((x,i)=>x.pct = areaPct[i]);
+  const totalDest = PM_DESTS.map(d=>shown.filter(c=>c.bucket===d.k).length);
+  const totalPct = pmRoundShares(totalDest, shown.length);
+  if(pmSel && !areas.some(x=>x.a.k===pmSel && x.n)) pmSel = null;
+  pmState = { areas, shown, totalDest, totalPct, gaps, posGames };
+
+  const filtLabel = (PM_PASS.find(o=>o.k===pmFilter)||{}).label;
   body.innerHTML = `
-    <div class="pass-wrap">
+    <div class="pm-wrap">
       <div>
-        <svg class="pass-svg" id="pass-svg" viewBox="0 0 560 470" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Team A half court with pass landing spots and set destinations"></svg>
-        <div class="pass-legend">
-          ${PASS_LEVELS.filter(l=>all.some(c=>passKey(c)===l.k)).map(l=>`<span><i style="background:${l.color}"></i>${l.short} pass</span>`).join('')}
-          <span><i class="sq" style="background:#fff"></i>Set hit (white ring = kill, ✕ = error)</span>
-          <span>Dashed oval + cross = that pass level's zone and average spot</span>
+        <svg class="pm-svg" id="pass-svg" viewBox="0 0 400 418" role="img" aria-label="Half court: circles for pass areas with share of passes, arrows to set destinations"></svg>
+        <div class="pm-key">${PM_DESTS.map(d=>`<span><i style="background:${d.color}"></i>${d.label}</span>`).join('')}</div>
+      </div>
+      <div>
+        <div class="pm-detail" id="pm-detail"></div>
+        <div class="pm-note">
+          ${shown.length} ${pmFilter==='all'?'':escapeHtml(filtLabel.toLowerCase())+' '}first contacts charted from ${posGames.map(g=>escapeHtml(g.date||g.name)).join(', ')}. Pass spot = where you touched the second ball (Balltime's set-contact point). Destinations use the same buckets as the Decisions tab.
+          ${gaps.length ? '<br>' + gaps.join('<br>') : ''}
+          <br>AI-tagged, small sample — read it as a sketch, not a verdict.
         </div>
-        <div class="pass-legend">${PASS_LANES.slice(0,5).map(([k,l])=>`<span><i class="sq" style="background:${PASS_LANE_COLORS[k]}"></i>${l}</span>`).join('')}</div>
       </div>
-      <div>
-        <div class="pass-chart-box"><canvas id="chart-pass-lanes"></canvas></div>
-        <div class="pass-tbl-wrap" id="pass-table"></div>
-      </div>
-    </div>
-    <div class="pass-read" id="pass-read"></div>`;
-  drawPassCourt(shown);
-  renderPassTable(all);
-  renderPassChart(all);
-  renderPassReading(all);
+    </div>`;
+  drawPassMap();
+  renderPassMapDetail();
 }
 
-function drawPassCourt(cs){
+function drawPassMap(){
   const svg = document.getElementById('pass-svg');
-  const S = 40, X0 = 2.5, Y0 = 1.8; // px per metre; metres of margin left / over the net
-  const px = x => ((x + X0) * S).toFixed(1);
-  const py = d => ((Math.max(-1.6, Math.min(9.8, d)) + Y0) * S).toFixed(1);
-  const clampX = x => Math.max(-2.2, Math.min(11.2, x));
-  let h = '';
-  h += `<rect x="${px(-X0)}" y="0" width="560" height="${py(-0.02)}" fill="#0a111a"/>`;
-  h += `<rect x="${px(0)}" y="${py(0)}" width="${9*S}" height="${9*S}" fill="#1c3a63" stroke="#f4f2f0" stroke-width="2"/>`;
-  h += `<rect x="${px(0)}" y="${py(0)}" width="${9*S}" height="${3*S}" fill="#24497a"/>`;
-  h += `<line x1="${px(0)}" y1="${py(3)}" x2="${px(9)}" y2="${py(3)}" stroke="#ff6a00" stroke-width="2"/>`;
-  h += `<line x1="${px(-0.6)}" y1="${py(0)}" x2="${px(9.6)}" y2="${py(0)}" stroke="#f4f2f0" stroke-width="4"/>`;
-  h += `<text x="${px(4.5)}" y="${py(-0.35)}" fill="#a29fae" font-size="11" text-anchor="middle">NET — opponent's side above</text>`;
-  h += `<text x="${px(9.1)}" y="${py(3)-4}" fill="#ff6a00" font-size="10" text-anchor="end">3 m line</text>`;
-  h += `<text x="${px(0.1)}" y="${py(9)+14}" fill="#a29fae" font-size="10">left sideline</text>`;
-  h += `<text x="${px(8.9)}" y="${py(9)+14}" fill="#a29fae" font-size="10" text-anchor="end">right sideline</text>`;
-  // pass-level zones: mean spot +/- 1 SD of where that level's passes landed
-  PASS_LEVELS.forEach(l=>{
-    const pts = cs.filter(c=>passKey(c)===l.k && c.passTo).map(c=>c.passTo);
-    if(pts.length < 2 || l.k==='u') return;
-    const mx = passMean(pts.map(p=>p[0])), md = passMean(pts.map(p=>p[1]));
-    const rx = Math.max(0.5, passSd(pts.map(p=>p[0]))), rd = Math.max(0.5, passSd(pts.map(p=>p[1])));
-    h += `<ellipse cx="${px(mx)}" cy="${py(md)}" rx="${(rx*S).toFixed(1)}" ry="${(rd*S).toFixed(1)}" fill="${l.color}" fill-opacity=".13" stroke="${l.color}" stroke-dasharray="5 4" stroke-width="1.5"><title>${l.short} pass zone: average ${mx.toFixed(1)} m from the left sideline, ${md.toFixed(1)} m off the net (n=${pts.length})</title></ellipse>`;
-    h += `<path d="M${px(mx)-6},${py(md)}h12M${px(mx)},${py(md)-6}v12" stroke="${l.color}" stroke-width="2.5"/>`;
+  if(!svg || !pmState) return;
+  const { areas, shown, totalPct } = pmState;
+  const S = 36, X0 = -1.05, D0 = -2.1;
+  const px = x => (x - X0) * S, py = d => (d - D0) * S;
+  const f = v => v.toFixed(1);
+  const maxN = Math.max(1, ...areas.map(x=>x.n));
+  const radius = x => 15 + 12 * Math.sqrt(x.n / maxN);
+  let h = `<defs>${PM_DESTS.map((d,i)=>`<marker id="pm-arr-${i}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="${d.color}"/></marker>`).join('')}</defs>`;
+  // backdrop + opponent strip
+  h += `<rect class="pm-bg" x="0" y="0" width="400" height="418" fill="#141110"/>`;
+  h += `<rect x="0" y="0" width="400" height="${f(py(0))}" fill="#0c0a09"/>`;
+  // court
+  h += `<rect x="${f(px(0))}" y="${f(py(0))}" width="${9*S}" height="${9*S}" fill="#2a231d" stroke="#f7f1e8" stroke-width="2"/>`;
+  // areas
+  areas.forEach(x=>{
+    const [x1,d1,x2,d2] = x.a.rect, on = pmSel===x.a.k;
+    h += `<rect x="${f(px(x1))}" y="${f(py(d1))}" width="${f((x2-x1)*S)}" height="${f((d2-d1)*S)}" fill="${on?'#ff7a18':'#f7f1e8'}" fill-opacity="${on?.16:(x.n?.035:0)}" stroke="#f7f1e8" stroke-opacity=".22" stroke-dasharray="4 4" stroke-width="1"/>`;
+    const [tx,td,anchor] = x.a.tag;
+    h += `<text x="${f(px(tx))}" y="${f(py(td)+4)}" font-size="9.5" font-weight="700" letter-spacing=".08em" fill="#f7f1e8" fill-opacity="${pmSel && !on ? .25 : .55}" text-anchor="${anchor}" pointer-events="none">${x.a.label.toUpperCase()}</text>`;
   });
-  // set lines and contacts
-  cs.forEach(c=>{
-    if(!c.setTo || ['free','none'].includes(c.lane)) return;
-    const from = c.setFrom || c.passTo; if(!from) return;
-    const col = PASS_LANE_COLORS[c.lane] || '#fff';
-    h += `<line x1="${px(clampX(from[0]))}" y1="${py(from[1])}" x2="${px(clampX(c.setTo[0]))}" y2="${py(c.setTo[1])}" stroke="${col}" stroke-width="1.6" stroke-dasharray="4 3" opacity=".8"/>`;
+  h += `<line x1="${f(px(0))}" y1="${f(py(3))}" x2="${f(px(9))}" y2="${f(py(3))}" stroke="#ff7a18" stroke-width="2"/>`;
+  h += `<line x1="${f(px(-0.7))}" y1="${f(py(0))}" x2="${f(px(9.7))}" y2="${f(py(0))}" stroke="#f7f1e8" stroke-width="4"/>`;
+  h += `<text x="${f(px(9.7))}" y="${f(py(0)-5)}" font-size="9" letter-spacing=".1em" fill="#b8aea3" text-anchor="end" pointer-events="none">NET</text>`;
+  h += `<text x="${f(px(4.5))}" y="${f(py(9)+16)}" font-size="9.5" letter-spacing=".08em" fill="#b8aea3" text-anchor="middle" pointer-events="none">YOUR SIDE · BASELINE</text>`;
+
+  // arrows (thick first so thin ones stay visible)
+  const segs = [];
+  areas.forEach(x=>{
+    if(!x.n) return;
+    const r = radius(x);
+    x.dests.forEach((dd,i)=>{
+      if(!dd.n) return;
+      const sx = px(x.a.cx), sy = py(x.a.cd), tx = px(dd.d.x), ty = py(dd.d.d);
+      const dx = tx - sx, dy = ty - sy, len = Math.hypot(dx,dy) || 1, ux = dx/len, uy = dy/len;
+      const x1 = sx + ux*(r+2), y1 = sy + uy*(r+2), x2 = tx - ux*15, y2 = ty - uy*13;
+      const bend = (dd.d.x < x.a.cx ? -1 : 1) * Math.min(26, len*0.14);
+      const cx = (x1+x2)/2 - uy*bend, cy = (y1+y2)/2 + ux*bend;
+      const share = dd.n / x.n;
+      segs.push({ k:x.a.k, i, share, d:`M${f(x1)},${f(y1)}Q${f(cx)},${f(cy)} ${f(x2)},${f(y2)}`, color:dd.d.color });
+    });
   });
-  cs.forEach(c=>{
-    if(!c.setTo || ['free','none'].includes(c.lane)) return;
-    const col = PASS_LANE_COLORS[c.lane] || '#fff';
-    const x = px(clampX(c.setTo[0])), y = py(c.setTo[1]);
-    const tip = `Rally ${c.rally} (set ${c.set}): ${passLevel(passKey(c)).short} pass by #${c.passer||'?'} → ${c.setter?'#'+c.setter+' set':'no set'}${c.call?' "'+c.call+'"':''} → ${c.attacker?'#'+c.attacker+' ':''}${c.attackType||''} ${c.result||''}`;
-    h += `<rect x="${(x-5).toFixed(1)}" y="${(y-5).toFixed(1)}" width="10" height="10" rx="2" fill="${col}" stroke="${c.result==='kill'?'#fff':'#0a0a0e'}" stroke-width="${c.result==='kill'?2.2:1}"><title>${escapeHtml(tip)}</title></rect>`;
-    if(c.result==='error') h += `<path d="M${x-4},${y-4}L${+x+4},${+y+4}M${+x+4},${y-4}L${x-4},${+y+4}" stroke="#0a0a0e" stroke-width="2"/>`;
+  segs.sort((a,b)=>b.share-a.share).forEach(sg=>{
+    const on = !pmSel || pmSel===sg.k;
+    const w = 1.4 + 7.5 * sg.share;
+    h += `<path d="${sg.d}" fill="none" stroke="${sg.color}" stroke-width="${f(w)}" stroke-linecap="round" opacity="${on ? (pmSel ? .95 : .42) : .07}" marker-end="url(#pm-arr-${sg.i})" pointer-events="none"/>`;
   });
-  cs.forEach(c=>{
-    if(!c.passTo) return;
-    const l = passLevel(passKey(c));
-    const tip = `Rally ${c.rally} (set ${c.set}): ${l.label} pass by #${c.passer||'?'} landed ${c.passTo[0].toFixed(1)} m from the left sideline, ${c.passTo[1].toFixed(1)} m off the net → ${(PASS_LANES.find(p=>p[0]===c.lane)||['','—'])[1]}${c.call?' ("'+c.call+'")':''}${c.result?', '+c.result.replace('_',' '):''}`;
-    h += `<circle cx="${px(clampX(c.passTo[0]))}" cy="${py(c.passTo[1])}" r="7" fill="${l.color}" stroke="#0a0a0e" stroke-width="1.5"><title>${escapeHtml(tip)}</title></circle>`;
+
+  // destination pills (show % of all shown sets, or of the selected area)
+  const selArea = pmSel ? areas.find(x=>x.a.k===pmSel) : null;
+  PM_DESTS.forEach((d,i)=>{
+    const pct = selArea ? selArea.dests[i].pct : totalPct[i];
+    const n = selArea ? selArea.dests[i].n : pmState.totalDest[i];
+    const label = `${d.short} ${n ? pct + '%' : '—'}`;
+    const w = 14 + label.length * 6.6, cx = px(d.x), cy = py(d.d);
+    const dim = selArea && !n;
+    h += `<g opacity="${dim ? .35 : 1}" pointer-events="none"><rect x="${f(cx-w/2)}" y="${f(cy-11)}" width="${f(w)}" height="22" rx="11" fill="#141110" stroke="${d.color}" stroke-width="2"/>` +
+         `<text x="${f(cx)}" y="${f(cy+4.5)}" font-size="12" font-weight="800" letter-spacing=".04em" fill="${d.color}" text-anchor="middle">${label}</text></g>`;
+  });
+
+  // area circles on top
+  areas.forEach(x=>{
+    if(!x.n) return;
+    const r = radius(x), cx = px(x.a.cx), cy = py(x.a.cd), on = pmSel===x.a.k, dim = pmSel && !on;
+    const tip = `${x.a.label} (${x.a.desc}): ${x.n} of ${shown.length} passes (${x.pct}%)`;
+    h += `<g class="pm-area" data-k="${x.a.k}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${escapeHtml(tip)}" opacity="${dim ? .4 : 1}">` +
+         `<title>${escapeHtml(tip)}</title>` +
+         `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r+10)}" fill="transparent"/>` +
+         `<circle class="pm-dot" cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${on ? '#ff7a18' : '#f7f1e8'}" stroke="${on ? '#f7f1e8' : '#ff7a18'}" stroke-width="3"/>` +
+         `<text x="${f(cx)}" y="${f(cy + (r>19 ? 3 : 5))}" font-family="'Bebas Neue',sans-serif" font-size="${r>21 ? 21 : 18}" fill="#111" text-anchor="middle" pointer-events="none">${x.pct}%</text>` +
+         (r>19 ? `<text x="${f(cx)}" y="${f(cy+13)}" font-size="9" font-weight="700" fill="#3a332c" text-anchor="middle" pointer-events="none">n=${x.n}</text>` : '') +
+         `</g>`;
   });
   svg.innerHTML = h;
+
+  svg.onclick = (e)=>{
+    const g = e.target.closest('.pm-area');
+    pmSel = g ? (pmSel===g.dataset.k ? null : g.dataset.k) : null;
+    drawPassMap(); renderPassMapDetail();
+  };
+  svg.onkeydown = (e)=>{
+    const g = e.target.closest && e.target.closest('.pm-area');
+    if(!g || (e.key!=='Enter' && e.key!==' ')) return;
+    e.preventDefault();
+    pmSel = pmSel===g.dataset.k ? null : g.dataset.k;
+    drawPassMap(); renderPassMapDetail();
+    const again = document.querySelector(`#pass-svg .pm-area[data-k="${g.dataset.k}"]`); if(again) again.focus();
+  };
+}
+
+function renderPassMapDetail(){
+  const box = document.getElementById('pm-detail');
+  if(!box || !pmState) return;
+  const { areas, shown, totalDest, totalPct } = pmState;
+  const row = (label, color, pct, n, kills) =>
+    `<div class="pm-row"><div class="pm-name"><i style="background:${color}"></i>${escapeHtml(label)}</div>` +
+    `<div class="pm-bar"><b style="width:${n ? Math.max(3,pct) : 0}%;background:${color}"></b></div>` +
+    `<div class="pm-val">${n ? pct + '%' : '—'} <span>${n} set${n===1?'':'s'}${n ? ' · ' + kills + ' kill' + (kills===1?'':'s') : ''}</span></div></div>`;
+  const areaBtns = `<div class="pm-areas">${areas.filter(x=>x.n).map(x=>`<button type="button" data-k="${x.a.k}" class="${pmSel===x.a.k?'on':''}">${escapeHtml(x.a.label)} ${x.pct}%</button>`).join('')}</div>`;
+  const sel = pmSel ? areas.find(x=>x.a.k===pmSel) : null;
+  if(sel){
+    box.innerHTML = `<h3>${escapeHtml(sel.a.label)} · ${sel.pct}% of passes</h3>` +
+      `<div class="pm-hint">${escapeHtml(sel.a.desc)} — ${sel.n} of ${shown.length}. Where those sets went:</div>` +
+      sel.dests.map(x=>row(x.d.label, x.d.color, x.pct, x.n, x.kills)).join('') +
+      (sel.other ? `<div class="pm-hint" style="margin:6px 0 0;">${sel.other} not attacked / no destination tagged (still counted in the ${sel.n}).</div>` : '') +
+      areaBtns;
+  } else {
+    const maxN = Math.max(0, ...areas.map(x=>x.n));
+    const tops = areas.filter(x=>x.n && x.n===maxN);
+    let lead = '';
+    if(tops.length===1){
+      const top = tops[0], topDest = top.dests.slice().sort((a,b)=>b.n-a.n)[0];
+      if(topDest && topDest.n) lead = ` Most passes landed <b>${escapeHtml(top.a.label.toLowerCase())}</b> (${top.pct}%); from there you went <b>${escapeHtml(topDest.d.label.toLowerCase())}</b> ${topDest.pct}% of the time.`;
+    } else if(tops.length>1){
+      lead = ` <b>${tops.map(x=>escapeHtml(x.a.label)).join('</b> and <b>')}</b> tie for the most passes (${tops[0].pct}% each).`;
+    }
+    const notAtt = shown.filter(c=>!PM_DESTS.some(d=>d.k===c.bucket)).length;
+    box.innerHTML = `<h3>All areas · ${shown.length} passes</h3>` +
+      `<div class="pm-hint">Tap a circle (or a button below) to see only its arrows.${lead}</div>` +
+      PM_DESTS.map((d,i)=>{ const cs = shown.filter(c=>c.bucket===d.k); return row(d.label, d.color, totalPct[i], totalDest[i], cs.filter(c=>c.result==='kill').length); }).join('') +
+      (notAtt ? `<div class="pm-hint" style="margin:6px 0 0;">${notAtt} not attacked / no destination tagged.</div>` : '') +
+      areaBtns;
+  }
+  box.querySelectorAll('.pm-areas button').forEach(b=>b.addEventListener('click', ()=>{
+    pmSel = pmSel===b.dataset.k ? null : b.dataset.k; drawPassMap(); renderPassMapDetail();
+  }));
+}
+
+// July 10 reception table + notes (all Team A setters) — collapsed under the map
+async function loadPassDetails(){
+  if(passDetailDone || passLoading) return;
+  passLoading = true;
+  try{
+    if(!passData){
+      const res = await fetch(PASS_CHAINS_FILE, { cache:'no-cache' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if(!data || !Array.isArray(data.chains)) throw new Error('bad file');
+      passData = data;
+    }
+    renderPassTable(passData.chains);
+    renderPassReading(passData.chains);
+    passDetailDone = true;
+  }catch(err){
+    document.getElementById('pass-table').innerHTML = '<div class="sub">Couldn\'t load the July 10 pass data (' + escapeHtml(String(err.message||err)) + ').</div>';
+  }
+  passLoading = false;
 }
 
 function passLevelRows(all){
@@ -4691,23 +4900,6 @@ function renderPassTable(all){
   note.style.marginTop = '6px';
   note.textContent = 'Lane = where the set was hit: left/right pin = within 3 m of that sideline, middle = the center 3 m, back row = hit from more than 3 m off the net. Eff = (kills − errors) / swings. Balltime has no block data, so blocked swings count as errors or in-play.';
   document.getElementById('pass-table').after(note);
-}
-
-function renderPassChart(all){
-  const rows = passLevelRows(all);
-  destroyChart('chart-pass-lanes');
-  const lanes = PASS_LANES.filter(([k])=>rows.some(r=>r.lanes[k]));
-  chartRefs['chart-pass-lanes'] = new Chart(document.getElementById('chart-pass-lanes').getContext('2d'), {
-    type:'bar',
-    data:{ labels: rows.map(r=>`${r.l.short} (${r.n})`),
-           datasets: lanes.map(([k,l])=>({ label:l, backgroundColor:PASS_LANE_COLORS[k], data: rows.map(r=>Math.round(1000*r.lanes[k]/r.n)/10), counts: rows.map(r=>r.lanes[k]) })) },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ labels:{ color:'#a29fae', boxWidth:10, font:{ size:11 }, padding:8 } },
-                title:{ display:true, text: window.matchMedia('(max-width:480px)').matches ? 'Set destination by pass (%)' : 'Where the ball went, by pass quality (% of passes)', color:'#f4f2f0', font:{ size: window.matchMedia('(max-width:480px)').matches ? 12 : 14 } },
-                tooltip:{ callbacks:{ label:(ctx)=>`${ctx.dataset.label}: ${ctx.dataset.counts[ctx.dataIndex]} (${ctx.raw}%)` } } },
-      scales:{ x:{ stacked:true, max:100, ticks:{ color:'#a29fae', callback:v=>v+'%', font:{ size:11 } }, grid:{ color:'#2c2933' } },
-               y:{ stacked:true, ticks:{ color:'#f4f2f0', font:{ size:11 } }, grid:{ display:false } } } }
-  });
 }
 
 function renderPassReading(all){
