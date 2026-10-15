@@ -893,7 +893,7 @@
   <section id="decisions">
     <div class="card">
       <h2>Setter decisions</h2>
-      <div class="sub">Why the ball went where it did — from Balltime tags when they exist. Small sample (1–2 games).</div>
+      <div class="sub">Why the ball went where it did — from Balltime tags when they exist. <span id="dec-sample">Sample: loading…</span></div>
       <div class="row" style="max-width:420px;margin-top:8px;"><div><label>Game</label><select id="dec-game"></select></div></div>
       <div id="dec-head" class="pg-note" style="margin-top:8px;"></div>
       <div id="dec-confidence" class="data-conf" style="margin-top:6px;"></div>
@@ -4159,10 +4159,12 @@ async function renderDecisions(){
     return;
   }
   const latest = games[games.length-1];
-  const cur = decSelected || latest.id;
-  decSelected = (cur==='all' || games.some(g=>g.id===cur)) ? cur : latest.id;
-  sel.innerHTML = games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${(g.chains||[]).length} sets</option>`).join('') +
-    `<option value="all">All games</option>`;
+  const cur = decSelected || 'all';
+  decSelected = (cur==='all' || games.some(g=>g.id===cur)) ? cur : 'all';
+  const totSets = games.reduce((n,g)=>n+(g.chains||[]).length,0);
+  const tagged = games.filter(g=>decHasPass(g)&&decHasPos(g)).length;
+  const sEl=document.getElementById('dec-sample'); if(sEl) sEl.textContent=`Sample: ${games.length} game${games.length===1?'':'s'} · ${totSets} sets (${tagged} with pass + zone tags).`;
+  sel.innerHTML = `<option value="all">All games (${games.length} · ${totSets} sets)</option>` + games.slice().reverse().map(g=>`<option value="${g.id}">${escapeHtml(g.date||'')} · ${(g.chains||[]).length} sets</option>`).join('');
   sel.value = decSelected;
 
   const picked = decSelected==='all' ? games : games.filter(g=>g.id===decSelected);
@@ -4361,7 +4363,7 @@ function renderDecPredict(games, chains){
 
   box.innerHTML = `<div class="dec-score-grid">${cards.join('')}</div>` +
     `<div class="dec-method"><b>Method:</b> predictability here is <b>mode-share</b> — the percent of sets in that situation that went to the single most common choice. 100 = always the same option; ~equal split across options reads lower. Not a grade.</div>` +
-    `<div class="pg-note" style="margin-top:8px;">With only 1–2 games, treat these as sketches. July 8 lacks pass/zone tags, so several situation scores stay blank until more tagged film lands.</div>`;
+    `<div class="pg-note" style="margin-top:8px;">${(()=>{const t=games.filter(g=>decHasPass(g)&&decHasPos(g));const u=games.filter(g=>!(decHasPass(g)&&decHasPos(g)));return `Based on ${games.length} game${games.length===1?'':'s'} · ${chains.length} sets; pass/zone reads use the ${t.length} tagged game${t.length===1?'':'s'}`+(u.length?` (untagged: ${u.map(g=>escapeHtml(g.date||g.name)).join(', ')})`:'')+'. Small samples — treat as sketches.';})()}</div>`;
 }
 
 function renderDecWwys(games){
